@@ -58,7 +58,7 @@ export default function ResultPage() {
       }
 
       const response = await fetch(
-        `${getApiBaseUrl()}/generate/pdf`,
+        `https://res-to-pdf-api.vercel.app/generate/pdf`,
         {
           method: "POST",
           headers: {

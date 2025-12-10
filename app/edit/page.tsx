@@ -284,7 +284,7 @@ export default function EditPage() {
 
     try {
       const response = await fetch(
-        "https://res-to-pdf.vercel.app/generate/pdf",
+        "https://res-to-pdf-api.vercel.app/generate/pdf",
         {
           method: "POST",
           headers: {
