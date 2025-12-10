@@ -3,7 +3,7 @@
  * Uses sessionStorage for better security (tokens cleared when tab closes)
  */
 
-const API_BASE_URL ="https://res-to-pdf.vercel.app";
+const API_BASE_URL = "https://res-to-pdf-api.vercel.app";
 const TOKEN_KEY = "auth_token";
 
 /**

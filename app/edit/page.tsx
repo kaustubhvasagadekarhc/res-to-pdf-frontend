@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getAuthToken } from "../lib/auth";
+
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
@@ -10,14 +10,16 @@ import {
   GraduationCap,
   Code,
   FileText,
-  Save,
+  AlertCircle,
   Trash2,
   Plus,
   ArrowLeft,
   ArrowRight,
   Loader2,
   Calendar,
+  CheckCircle2,
 } from "lucide-react";
+import { getAuthToken } from "@/lib/auth";
 
 interface ResumeData {
   personal: {
@@ -137,21 +139,9 @@ export default function EditPage() {
 
   const calculateDuration = (from: string, to: string): string => {
     if (!from) return "";
-    const fromDate = new Date(from + "-01");
-    const toDate = to ? new Date(to + "-01") : new Date();
-
-    const months =
-      (toDate.getFullYear() - fromDate.getFullYear()) * 12 +
-      (toDate.getMonth() - fromDate.getMonth());
-    const years = Math.floor(months / 12);
-    const remainingMonths = months % 12;
-
-    if (years === 0)
-      return `${remainingMonths} month${remainingMonths !== 1 ? "s" : ""}`;
-    if (remainingMonths === 0)
-      return `${years} year${years !== 1 ? "s" : ""}`;
-    return `${years} year${years !== 1 ? "s" : ""} ${remainingMonths} month${remainingMonths !== 1 ? "s" : ""
-      }`;
+    const fromYear = from.split("-")[0];
+    const toYear = to ? to.split("-")[0] : "Present";
+    return `${fromYear}-${toYear}`;
   };
 
   const updateWorkExperience = (index: number, field: string, value: string) => {
@@ -337,6 +327,109 @@ export default function EditPage() {
     );
   }
 
+  const isEmpty = (val?: string | null) => !val || !val.toString().trim().length;
+  const isValidMonth = (val?: string | null) => !isEmpty(val) && /^\d{4}-\d{2}$/.test(val || "");
+
+  const getMissingFields = () => {
+    const groups: { section: string; fields: string[] }[] = [];
+
+    // Personal
+    const personalMissing: string[] = [];
+    if (isEmpty(resumeData.personal.name)) personalMissing.push("Full Name");
+    if (isEmpty(resumeData.personal.designation)) personalMissing.push("Designation");
+    if (isEmpty(resumeData.personal.email)) personalMissing.push("Email");
+    if (isEmpty(resumeData.personal.mobile)) personalMissing.push("Mobile");
+    if (isEmpty(resumeData.personal.location)) personalMissing.push("Location");
+    if (isEmpty(resumeData.personal.gender)) personalMissing.push("Gender");
+    if (isEmpty(resumeData.personal.marital_status)) personalMissing.push("Marital Status");
+
+    if (personalMissing.length) {
+      groups.push({ section: "Personal Details", fields: personalMissing });
+    }
+
+    // Summary
+    if (isEmpty(resumeData.summary)) {
+      groups.push({ section: "Summary", fields: ["Professional Summary"] });
+    }
+
+    // Skills
+    if (!resumeData.skills.length || !resumeData.skills.filter(Boolean).length) {
+      groups.push({ section: "Skills", fields: ["Technical Skills"] });
+    }
+
+    // Work Experience
+    const expMissing: string[] = [];
+    if (!resumeData.work_experience.length) {
+      expMissing.push("Add at least one experience");
+    } else {
+      resumeData.work_experience.forEach((exp, idx) => {
+        if (isEmpty(exp.company)) expMissing.push(`Role ${idx + 1}: Company`);
+        if (isEmpty(exp.position)) expMissing.push(`Role ${idx + 1}: Position`);
+        if (!isValidMonth(exp.period_from)) expMissing.push(`Role ${idx + 1}: Start Date`);
+        // Check end date unless it's strictly "Present"
+        if (exp.period_to !== "Present" && !isValidMonth(exp.period_to)) expMissing.push(`Role ${idx + 1}: End Date`);
+      });
+    }
+    if (expMissing.length) groups.push({ section: "Work Experience", fields: expMissing });
+
+    // Education
+    const eduMissing: string[] = [];
+    if (!resumeData.education.length) {
+      eduMissing.push("Add at least one education");
+    } else {
+      resumeData.education.forEach((edu, idx) => {
+        if (isEmpty(edu.institution)) eduMissing.push(`Education ${idx + 1}: Institution`);
+        if (isEmpty(edu.degree)) eduMissing.push(`Education ${idx + 1}: Degree`);
+        if (!isValidMonth(edu.graduation_year)) eduMissing.push(`Education ${idx + 1}: Year`);
+      });
+    }
+    if (eduMissing.length) groups.push({ section: "Education", fields: eduMissing });
+
+    return groups;
+  };
+
+  const missingFields = getMissingFields();
+
+  const getInputClassName = (value: any) => {
+    const isValid = !isEmpty(value);
+    return `w-full px-4 py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all ${isValid
+      ? "border-slate-200 focus:ring-blue-500/50 focus:border-blue-500"
+      : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
+      }`;
+  };
+
+  const getSelectClassName = (value: any) => {
+    const isValid = !isEmpty(value);
+    return `w-full appearance-none px-4 py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all ${isValid
+      ? "border-slate-200 focus:ring-blue-500/50 focus:border-blue-500"
+      : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
+      }`;
+  };
+
+  const getExpInputClassName = (value: any) => {
+    const isValid = !isEmpty(value);
+    return `w-full px-3 py-2 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all ${isValid
+      ? "border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
+      : "border-red-300 focus:border-red-500 focus:ring-red-200 bg-red-50"
+      }`;
+  };
+
+  const getExpDateClassName = (value: any) => {
+    const isValid = isValidMonth(value) || (value === "Present");
+    return `w-full px-3 py-2 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all text-sm ${isValid
+      ? "border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
+      : "border-red-300 focus:border-red-500 focus:ring-red-200 bg-red-50"
+      }`;
+  };
+
+  const getEduInputClassName = (value: any) => {
+    const isValid = !isEmpty(value);
+    return `w-full font-semibold text-slate-800 bg-transparent border-b transition-all ${isValid
+      ? "border-transparent focus:border-pink-500 focus:outline-none"
+      : "border-red-300 focus:border-red-500 bg-red-50/50 px-2 rounded"
+      }`;
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
       <div className="w-full bg-slate-900 text-white py-12 px-6 shadow-lg mb-8">
@@ -358,6 +451,7 @@ export default function EditPage() {
               <ArrowLeft className="w-4 h-4" /> Back to Upload
             </button>
           </div>
+
         </div>
       </div>
 
@@ -371,8 +465,61 @@ export default function EditPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
+          <div className="lg:col-span-4">
+            <div className="sticky top-6">
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="border-b border-slate-100 p-5 flex items-center gap-3 bg-slate-50/70">
+                  <div className="p-2 bg-red-100 rounded-lg text-red-600">
+                    <AlertCircle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500 font-semibold uppercase tracking-wide">
+                      Missing Fields
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Fill these to complete your profile
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-5 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+                  {missingFields.length ? (
+                    missingFields.map((group, idx) => (
+                      <div key={idx} className="space-y-2">
+                        <h4 className="text-xs font-bold uppercase text-slate-500 tracking-wider">
+                          {group.section}
+                        </h4>
+                        <div className="space-y-1">
+                          {group.fields.map((field, fIdx) => (
+                            <div
+                              key={fIdx}
+                              className="flex items-center gap-2 text-sm text-red-600 bg-red-50/50 px-2 py-1.5 rounded-lg border border-red-100"
+                            >
+                              <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                              <span>{field}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-3 py-3 text-sm text-emerald-700 flex items-center gap-3">
+                      <div className="p-1 bg-emerald-100 rounded-full">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">All set!</p>
+                        <p className="text-xs opacity-80">Ready to generate PDF.</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Main Content Area */}
-          <div className="lg:col-span-12 space-y-8">
+          <div className="lg:col-span-8 space-y-8">
 
             {/* Personal Information */}
             <motion.section
@@ -401,7 +548,7 @@ export default function EditPage() {
                       placeholder={placeholder}
                       value={(resumeData.personal as any)[field]}
                       onChange={(e) => updatePersonal(field, e.target.value)}
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                      className={getInputClassName((resumeData.personal as any)[field])}
                     />
                   </div>
                 ))}
@@ -412,7 +559,7 @@ export default function EditPage() {
                     <select
                       value={resumeData.personal.gender}
                       onChange={(e) => updatePersonal('gender', e.target.value)}
-                      className="w-full appearance-none px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                      className={getSelectClassName(resumeData.personal.gender)}
                     >
                       <option value="">Select Gender</option>
                       <option value="Male">Male</option>
@@ -431,7 +578,7 @@ export default function EditPage() {
                     <select
                       value={resumeData.personal.marital_status}
                       onChange={(e) => updatePersonal('marital_status', e.target.value)}
-                      className="w-full appearance-none px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                      className={getSelectClassName(resumeData.personal.marital_status)}
                     >
                       <option value="">Select Status</option>
                       <option value="Single">Single</option>
@@ -448,7 +595,7 @@ export default function EditPage() {
             </motion.section>
 
             {/* Summary & Skills */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
               <motion.section
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -465,7 +612,10 @@ export default function EditPage() {
                   <textarea
                     value={resumeData.summary}
                     onChange={(e) => updateSummary(e.target.value)}
-                    className="w-full h-full min-h-[150px] px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all resize-none leading-relaxed text-slate-700"
+                    className={`w-full h-full min-h-[150px] px-4 py-3 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all resize-none leading-relaxed text-slate-700 ${!isEmpty(resumeData.summary)
+                      ? "border-slate-200 focus:ring-indigo-500/50 focus:border-indigo-500"
+                      : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
+                      }`}
                     placeholder="Write a compelling summary about your professional background..."
                   />
                 </div>
@@ -487,7 +637,10 @@ export default function EditPage() {
                   <textarea
                     value={resumeData.skills.join(", ")}
                     onChange={(e) => updateSkills(e.target.value)}
-                    className="w-full h-full min-h-[150px] px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all resize-none leading-relaxed text-slate-700"
+                    className={`w-full h-full min-h-[150px] px-4 py-3 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all resize-none leading-relaxed text-slate-700 ${!isEmpty(resumeData.skills.join(", "))
+                      ? "border-slate-200 focus:ring-purple-500/50 focus:border-purple-500"
+                      : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
+                      }`}
                     placeholder="e.g. JavaScript, React, Node.js, Python (comma separated)"
                   />
                   <p className="text-xs text-slate-400 mt-2 text-right">Separate skills with commas</p>
@@ -540,7 +693,7 @@ export default function EditPage() {
                               type="text"
                               value={exp.company}
                               onChange={(e) => updateWorkExperience(expIdx, 'company', e.target.value)}
-                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                              className={getExpInputClassName(exp.company)}
                               placeholder="Company Name"
                             />
                           </div>
@@ -550,7 +703,7 @@ export default function EditPage() {
                               type="text"
                               value={exp.position}
                               onChange={(e) => updateWorkExperience(expIdx, 'position', e.target.value)}
-                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                              className={getExpInputClassName(exp.position)}
                               placeholder="Job Title"
                             />
                           </div>
@@ -561,7 +714,7 @@ export default function EditPage() {
                                 type="month"
                                 value={exp.period_from}
                                 onChange={(e) => updateWorkExperience(expIdx, 'period_from', e.target.value)}
-                                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-sm"
+                                className={getExpDateClassName(exp.period_from)}
                               />
                             </div>
                             <div className="space-y-1">
@@ -570,7 +723,7 @@ export default function EditPage() {
                                 type="month"
                                 value={exp.period_to === "Present" ? "" : exp.period_to}
                                 onChange={(e) => updateWorkExperience(expIdx, 'period_to', e.target.value)}
-                                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-sm"
+                                className={getExpDateClassName(exp.period_to)}
                               />
                             </div>
                           </div>
@@ -671,14 +824,17 @@ export default function EditPage() {
                         value={edu.institution}
                         onChange={(e) => updateEducation(idx, 'institution', e.target.value)}
                         placeholder="University / School"
-                        className="w-full font-semibold text-slate-800 bg-transparent border-b border-transparent focus:border-pink-500 focus:outline-none pb-1"
+                        className={getEduInputClassName(edu.institution)}
                       />
                       <input
                         type="text"
                         value={edu.degree}
                         onChange={(e) => updateEducation(idx, 'degree', e.target.value)}
                         placeholder="Degree (e.g. B.Sc)"
-                        className="w-full text-sm text-slate-600 bg-transparent border-b border-transparent focus:border-pink-500 focus:outline-none pb-1"
+                        className={`w-full text-sm text-slate-600 bg-transparent border-b transition-all pb-1 ${!isEmpty(edu.degree)
+                          ? "border-transparent focus:border-pink-500 focus:outline-none"
+                          : "border-red-300 focus:border-red-500 bg-red-50/50 px-2 rounded"
+                          }`}
                       />
                       <div className="flex items-center gap-2 text-slate-400">
                         <Calendar className="w-3 h-3" />
@@ -686,7 +842,8 @@ export default function EditPage() {
                           type="month"
                           value={edu.graduation_year}
                           onChange={(e) => updateEducation(idx, 'graduation_year', e.target.value)}
-                          className="bg-transparent text-xs focus:outline-none text-slate-500"
+                          className={`bg-transparent text-xs focus:outline-none transition-all ${isValidMonth(edu.graduation_year) ? "text-slate-500" : "text-red-500 font-medium placeholder:text-red-400"
+                            }`}
                         />
                       </div>
                     </div>
@@ -788,7 +945,6 @@ export default function EditPage() {
           </div>
         </div>
       </div>
-
     </div>
   );
 }
