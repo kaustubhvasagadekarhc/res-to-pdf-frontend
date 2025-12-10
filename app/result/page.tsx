@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { getAuthToken, getApiBaseUrl } from "@/lib/auth";
 
 export default function ResultPage() {
   const [pdfGenerated] = useState(() => !!sessionStorage.getItem("pdfResponse"));
@@ -28,11 +29,21 @@ export default function ResultPage() {
         return;
       }
 
+      // Get authentication token
+      const token = await getAuthToken();
+      if (!token) {
+        alert("Access token required. Please refresh the page to get a new token.");
+        return;
+      }
+
       const response = await fetch(
-        "https://res-to-pdf.vercel.app/generate/pdf",
+        `${getApiBaseUrl()}/generate/pdf`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: resumeData,
         }
       );

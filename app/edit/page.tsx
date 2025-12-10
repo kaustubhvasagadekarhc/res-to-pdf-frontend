@@ -1,7 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { getAuthToken } from "../lib/auth";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  User,
+  Briefcase,
+  GraduationCap,
+  Code,
+  FileText,
+  Save,
+  Trash2,
+  Plus,
+  ArrowLeft,
+  ArrowRight,
+  Loader2,
+  Calendar,
+} from "lucide-react";
 
 interface ResumeData {
   personal: {
@@ -45,16 +61,16 @@ export default function EditPage() {
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
     // Load data from sessionStorage
-    const storedData = sessionStorage.getItem('resumeData');
+    const storedData = sessionStorage.getItem("resumeData");
     if (storedData) {
       setResumeData(JSON.parse(storedData));
     } else {
-      router.push('/');
+      router.push("/");
     }
     setLoading(false);
   }, [router]);
@@ -62,7 +78,10 @@ export default function EditPage() {
   useEffect(() => {
     // Saving data to sessionStorage whenever it changes
     if (resumeData) {
-      sessionStorage.setItem('resumeData', JSON.stringify(resumeData));
+      const dataToSave = { ...resumeData }; // Create a copy to avoid mutation if needed
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("resumeData", JSON.stringify(dataToSave));
+      }
     }
   }, [resumeData]);
 
@@ -83,7 +102,7 @@ export default function EditPage() {
     if (!resumeData) return;
     setResumeData({
       ...resumeData,
-      skills: value.split(',').map((s) => s.trim()),
+      skills: value.split(",").map((s) => s.trim()),
     });
   };
 
@@ -101,10 +120,10 @@ export default function EditPage() {
       education: [
         ...resumeData.education,
         {
-          institution: '',
-          degree: '',
-          field: '',
-          graduation_year: '',
+          institution: "",
+          degree: "",
+          field: "",
+          graduation_year: "",
         },
       ],
     });
@@ -117,31 +136,36 @@ export default function EditPage() {
   };
 
   const calculateDuration = (from: string, to: string): string => {
-    if (!from) return '';
-    const fromDate = new Date(from + '-01');
-    const toDate = to ? new Date(to + '-01') : new Date();
-    
-    const months = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth());
+    if (!from) return "";
+    const fromDate = new Date(from + "-01");
+    const toDate = to ? new Date(to + "-01") : new Date();
+
+    const months =
+      (toDate.getFullYear() - fromDate.getFullYear()) * 12 +
+      (toDate.getMonth() - fromDate.getMonth());
     const years = Math.floor(months / 12);
     const remainingMonths = months % 12;
-    
-    if (years === 0) return `${remainingMonths} month${remainingMonths !== 1 ? 's' : ''}`;
-    if (remainingMonths === 0) return `${years} year${years !== 1 ? 's' : ''}`;
-    return `${years} year${years !== 1 ? 's' : ''} ${remainingMonths} month${remainingMonths !== 1 ? 's' : ''}`;
+
+    if (years === 0)
+      return `${remainingMonths} month${remainingMonths !== 1 ? "s" : ""}`;
+    if (remainingMonths === 0)
+      return `${years} year${years !== 1 ? "s" : ""}`;
+    return `${years} year${years !== 1 ? "s" : ""} ${remainingMonths} month${remainingMonths !== 1 ? "s" : ""
+      }`;
   };
 
   const updateWorkExperience = (index: number, field: string, value: string) => {
     if (!resumeData) return;
     const updated = [...resumeData.work_experience];
     updated[index] = { ...updated[index], [field]: value };
-    
+
     // Auto-calculate duration when period_from or period_to changes
-    if (field === 'period_from' || field === 'period_to') {
-      const from = field === 'period_from' ? value : updated[index].period_from;
-      const to = field === 'period_to' ? value : updated[index].period_to;
+    if (field === "period_from" || field === "period_to") {
+      const from = field === "period_from" ? value : updated[index].period_from;
+      const to = field === "period_to" ? value : updated[index].period_to;
       updated[index].duration = calculateDuration(from, to);
     }
-    
+
     setResumeData({ ...resumeData, work_experience: updated });
   };
 
@@ -152,11 +176,11 @@ export default function EditPage() {
       work_experience: [
         ...resumeData.work_experience,
         {
-          company: '',
-          position: '',
-          duration: '',
-          period_from: '',
-          period_to: '',
+          company: "",
+          position: "",
+          duration: "",
+          period_from: "",
+          period_to: "",
           projects: [],
         },
       ],
@@ -173,8 +197,8 @@ export default function EditPage() {
     if (!resumeData) return;
     const updated = [...resumeData.work_experience];
     updated[expIndex].projects.push({
-      name: '',
-      description: '',
+      name: "",
+      description: "",
       responsibilities: [],
       technologies: [],
     });
@@ -198,14 +222,14 @@ export default function EditPage() {
   ) => {
     if (!resumeData) return;
     const updated = [...resumeData.work_experience];
-    if (field === 'technologies') {
+    if (field === "technologies") {
       updated[expIndex].projects[projIndex].technologies = value
-        .split(',')
+        .split(",")
         .map((t) => t.trim())
         .filter((t) => t);
-    } else if (field === 'responsibilities') {
+    } else if (field === "responsibilities") {
       updated[expIndex].projects[projIndex].responsibilities = value
-        .split('\n')
+        .split("\n")
         .map((r) => r.trim())
         .filter((r) => r);
     } else {
@@ -217,12 +241,16 @@ export default function EditPage() {
     setResumeData({ ...resumeData, work_experience: updated });
   };
 
-  const updateStandaloneProject = (index: number, field: string, value: string) => {
+  const updateStandaloneProject = (
+    index: number,
+    field: string,
+    value: string
+  ) => {
     if (!resumeData) return;
     const updated = [...resumeData.projects];
-    if (field === 'technologies') {
+    if (field === "technologies") {
       updated[index].technologies = value
-        .split(',')
+        .split(",")
         .map((t) => t.trim())
         .filter((t) => t);
     } else {
@@ -238,8 +266,8 @@ export default function EditPage() {
       projects: [
         ...resumeData.projects,
         {
-          name: '',
-          description: '',
+          name: "",
+          description: "",
           technologies: [],
         },
       ],
@@ -254,24 +282,40 @@ export default function EditPage() {
 
   const handleGenerate = async () => {
     setGenerating(true);
-    setError('');
+    setError("");
+
+    // Get authentication token
+    const token = await getAuthToken();
+    if (!token) {
+      setError("Authentication required. Please refresh the page.");
+      setGenerating(false);
+      return;
+    }
 
     try {
-      const response = await fetch('https://res-to-pdf.vercel.app/generate/pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(resumeData),
-      });
+      const response = await fetch(
+        "https://res-to-pdf.vercel.app/generate/pdf",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(resumeData),
+        }
+      );
 
       if (response.ok) {
         // Store generated PDF response and navigate to result page
-        sessionStorage.setItem('pdfResponse', JSON.stringify({ success: true }));
-        router.push('/result');
+        sessionStorage.setItem("pdfResponse", JSON.stringify({ success: true }));
+        router.push("/result");
       } else {
-        setError('Failed to generate PDF');
+        setError("Failed to generate PDF");
       }
     } catch (err) {
-      setError(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setError(
+        `Error: ${err instanceof Error ? err.message : "Unknown error"}`
+      );
     } finally {
       setGenerating(false);
     }
@@ -279,370 +323,472 @@ export default function EditPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
       </div>
     );
   }
 
   if (!resumeData) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-red-600">No resume data found</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <p className="text-xl text-slate-500 font-medium">No resume data found</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 p-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-slate-800">Edit Resume</h1>
-          <button
-            onClick={() => router.push('/')}
-            className="px-4 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg font-medium transition"
-          >
-            ← Back
-          </button>
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
+      <div className="w-full bg-slate-900 text-white py-12 px-6 shadow-lg mb-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
+                <FileText className="w-8 h-8 text-blue-400" />
+                Edit Resume Profile
+              </h1>
+              <p className="text-slate-400">
+                Review and refine your parsed data before generating the PDF.
+              </p>
+            </div>
+            <button
+              onClick={() => router.push("/")}
+              className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition text-sm font-medium"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back to Upload
+            </button>
+          </div>
         </div>
+      </div>
 
+      <div className="max-w-6xl mx-auto px-4 lg:px-6">
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg">
+          <div className="mb-8 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-center gap-3 animate-pulse">
+            <div className="w-2 h-2 rounded-full bg-red-500" />
             {error}
           </div>
         )}
 
-        {/* Personal Information */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-slate-700 mb-4 pb-2 border-b-2 border-indigo-300">
-            Personal Information
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              type="text"
-              placeholder="Name"
-              value={resumeData.personal.name}
-              onChange={(e) => updatePersonal('name', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="text"
-              placeholder="Designation"
-              value={resumeData.personal.designation}
-              onChange={(e) => updatePersonal('designation', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              value={resumeData.personal.email}
-              onChange={(e) => updatePersonal('email', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="text"
-              placeholder="Mobile"
-              value={resumeData.personal.mobile}
-              onChange={(e) => updatePersonal('mobile', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="text"
-              placeholder="Location"
-              value={resumeData.personal.location}
-              onChange={(e) => updatePersonal('location', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <select
-              value={resumeData.personal.gender}
-              onChange={(e) => updatePersonal('gender', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select Gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-            <select
-              value={resumeData.personal.marital_status}
-              onChange={(e) => updatePersonal('marital_status', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select Marital Status</option>
-              <option value="Single">Single</option>
-              <option value="Married">Married</option>
-              <option value="Divorced">Divorced</option>
-              <option value="Widowed">Widowed</option>
-            </select>
-          </div>
-        </section>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-        {/* Summary */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-slate-700 mb-4 pb-2 border-b-2 border-indigo-300">
-            Professional Summary
-          </h2>
-          <textarea
-            value={resumeData.summary}
-            onChange={(e) => updateSummary(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-40"
-            placeholder="Enter your professional summary..."
-          />
-        </section>
+          {/* Main Content Area */}
+          <div className="lg:col-span-12 space-y-8">
 
-        {/* Skills */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-slate-700 mb-4 pb-2 border-b-2 border-indigo-300">
-            Skills
-          </h2>
-          <textarea
-            value={resumeData.skills.join(', ')}
-            onChange={(e) => updateSkills(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-24"
-            placeholder="Enter skills separated by commas..."
-          />
-        </section>
-
-        {/* Education */}
-        <section className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold text-slate-700 pb-2 border-b-2 border-indigo-300 flex-1">
-              Education
-            </h2>
-            <button
-              onClick={addEducation}
-              className="ml-4 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
+            {/* Personal Information */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"
             >
-              + Add Education
-            </button>
-          </div>
-          {resumeData.education.map((edu, idx) => (
-            <div key={idx} className="bg-slate-50 p-4 rounded-lg mb-4 border-l-4 border-indigo-400 relative shadow-sm">
-              <button
-                onClick={() => deleteEducation(idx)}
-                className="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition"
-              >
-                Delete
-              </button>
-              <input
-                type="text"
-                placeholder="Institution"
-                value={edu.institution}
-                onChange={(e) => updateEducation(idx, 'institution', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <input
-                type="text"
-                placeholder="Degree"
-                value={edu.degree}
-                onChange={(e) => updateEducation(idx, 'degree', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <input
-                type="month"
-                placeholder="Graduation Year"
-                value={edu.graduation_year}
-                onChange={(e) => updateEducation(idx, 'graduation_year', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          ))}
-        </section>
-
-        {/* Work Experience */}
-        <section className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold text-slate-700 pb-2 border-b-2 border-emerald-300 flex-1">
-              Work Experience
-            </h2>
-            <button
-              onClick={addWorkExperience}
-              className="ml-4 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
-            >
-              + Add Experience
-            </button>
-          </div>
-          {resumeData.work_experience.map((exp, expIdx) => (
-            <div key={expIdx} className="bg-slate-50 p-4 rounded-lg mb-6 border-l-4 border-emerald-400 relative shadow-sm">
-              <button
-                onClick={() => deleteWorkExperience(expIdx)}
-                className="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition"
-              >
-                Delete
-              </button>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                <input
-                  type="text"
-                  placeholder="Company"
-                  value={exp.company}
-                  onChange={(e) => updateWorkExperience(expIdx, 'company', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Position"
-                  value={exp.position}
-                  onChange={(e) => updateWorkExperience(expIdx, 'position', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Duration"
-                  value={exp.duration}
-                  onChange={(e) => updateWorkExperience(expIdx, 'duration', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="month"
-                  placeholder="Period From"
-                  value={exp.period_from}
-                  onChange={(e) => updateWorkExperience(expIdx, 'period_from', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="month"
-                  placeholder="Period To"
-                  value={exp.period_to === 'Present' ? '' : exp.period_to}
-                  onChange={(e) => updateWorkExperience(expIdx, 'period_to', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+              <div className="border-b border-slate-100 p-6 flex items-center gap-3 bg-slate-50/50">
+                <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                  <User className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-bold text-slate-800">Personal Information</h2>
               </div>
+              <div className="p-6 lg:p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[
+                  { label: "Full Name", field: "name", placeholder: "e.g. John Doe" },
+                  { label: "Designation", field: "designation", placeholder: "e.g. Software Engineer" },
+                  { label: "Email", field: "email", placeholder: "e.g. john@example.com", type: "email" },
+                  { label: "Mobile", field: "mobile", placeholder: "e.g. +1 234 567 890" },
+                  { label: "Location", field: "location", placeholder: "e.g. New York, USA" },
+                ].map(({ label, field, placeholder, type }) => (
+                  <div key={field} className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</label>
+                    <input
+                      type={type || "text"}
+                      placeholder={placeholder}
+                      value={(resumeData.personal as any)[field]}
+                      onChange={(e) => updatePersonal(field, e.target.value)}
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                    />
+                  </div>
+                ))}
 
-              {/* Projects within Work Experience */}
-              <div className="mt-6 bg-white p-4 rounded-lg border-l-4 border-violet-300 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-semibold text-slate-700">Projects in this Role</h4>
-                  <button
-                    onClick={() => addProject(expIdx)}
-                    className="bg-violet-500 hover:bg-violet-600 text-white px-3 py-1 rounded text-sm font-medium transition shadow-sm"
-                  >
-                    + Add Project
-                  </button>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Gender</label>
+                  <div className="relative">
+                    <select
+                      value={resumeData.personal.gender}
+                      onChange={(e) => updatePersonal('gender', e.target.value)}
+                      className="w-full appearance-none px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    <div className="absolute right-3 top-3 pointer-events-none text-slate-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                  </div>
                 </div>
 
-                {exp.projects.length === 0 ? (
-                  <p className="text-slate-500 text-sm italic">No projects added yet</p>
-                ) : (
-                  exp.projects.map((proj, projIdx) => (
-                    <div key={projIdx} className="bg-slate-50 p-3 rounded-lg mb-3 border border-slate-200 text-slate-800 relative shadow-sm">
-                      <button
-                        onClick={() => deleteProject(expIdx, projIdx)}
-                        className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs transition"
-                      >
-                        Delete
-                      </button>
-                      
-                      <input
-                        type="text"
-                        placeholder="Project Name"
-                        value={proj.name}
-                        onChange={(e) =>
-                          updateProjectField(expIdx, projIdx, 'name', e.target.value)
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 text-gray-800 rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      />
-                      
-                      <textarea
-                        placeholder="Project Description"
-                        value={proj.description}
-                        onChange={(e) =>
-                          updateProjectField(expIdx, projIdx, 'description', e.target.value)
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 text-gray-800 rounded-lg mb-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-20"
-                      />
-                      
-                      <textarea
-                        placeholder="Responsibilities (one per line)"
-                        value={proj.responsibilities.join('\n')}
-                        onChange={(e) =>
-                          updateProjectField(expIdx, projIdx, 'responsibilities', e.target.value)
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 text-gray-800 rounded-lg mb-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-20"
-                      />
-                      
-                      <input
-                        type="text"
-                        placeholder="Technologies (comma-separated)"
-                        value={proj.technologies.join(', ')}
-                        onChange={(e) =>
-                          updateProjectField(expIdx, projIdx, 'technologies', e.target.value)
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 text-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      />
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Marital Status</label>
+                  <div className="relative">
+                    <select
+                      value={resumeData.personal.marital_status}
+                      onChange={(e) => updatePersonal('marital_status', e.target.value)}
+                      className="w-full appearance-none px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                    >
+                      <option value="">Select Status</option>
+                      <option value="Single">Single</option>
+                      <option value="Married">Married</option>
+                      <option value="Divorced">Divorced</option>
+                      <option value="Widowed">Widowed</option>
+                    </select>
+                    <div className="absolute right-3 top-3 pointer-events-none text-slate-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
-                  ))
-                )}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
-        </section>
+            </motion.section>
 
-        {/* Standalone Projects */}
-        <section className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold text-slate-700 pb-2 border-b-2 border-violet-300 flex-1">
-              Standalone Projects
-            </h2>
-            <button
-              onClick={addStandaloneProject}
-              className="ml-4 bg-violet-500 hover:bg-violet-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
-            >
-              + Add Project
-            </button>
-          </div>
-          {resumeData.projects.map((proj, idx) => (
-            <div key={idx} className="bg-slate-50 p-4 rounded-lg mb-4 border-l-4 border-violet-400 relative shadow-sm">
-              <button
-                onClick={() => deleteStandaloneProject(idx)}
-                className="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition"
+            {/* Summary & Skills */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <motion.section
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full"
               >
-                Delete
-              </button>
-              
-              <input
-                type="text"
-                placeholder="Project Name"
-                value={proj.name}
-                onChange={(e) => updateStandaloneProject(idx, 'name', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-              
-              <textarea
-                placeholder="Project Description"
-                value={proj.description}
-                onChange={(e) => updateStandaloneProject(idx, 'description', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-24"
-              />
-              
-              <input
-                type="text"
-                placeholder="Technologies (comma-separated)"
-                value={proj.technologies.join(', ')}
-                onChange={(e) => updateStandaloneProject(idx, 'technologies', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-          ))}
-        </section>
+                <div className="border-b border-slate-100 p-6 flex items-center gap-3 bg-slate-50/50">
+                  <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-800">Professional Summary</h2>
+                </div>
+                <div className="p-6 flex-grow">
+                  <textarea
+                    value={resumeData.summary}
+                    onChange={(e) => updateSummary(e.target.value)}
+                    className="w-full h-full min-h-[150px] px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all resize-none leading-relaxed text-slate-700"
+                    placeholder="Write a compelling summary about your professional background..."
+                  />
+                </div>
+              </motion.section>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4">
-          <button
-            onClick={() => router.push('/')}
-            className="flex-1 px-6 py-3 bg-slate-500 hover:bg-slate-600 text-white font-medium rounded-lg transition shadow-sm"
-          >
-            ← Back
-          </button>
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            className="flex-1 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-400 text-white font-medium rounded-lg transition shadow-sm"
-          >
-            {generating ? 'Generating PDF...' : 'Generate PDF →'}
-          </button>
+              <motion.section
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full"
+              >
+                <div className="border-b border-slate-100 p-6 flex items-center gap-3 bg-slate-50/50">
+                  <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
+                    <Code className="w-5 h-5" />
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-800">Skills</h2>
+                </div>
+                <div className="p-6 flex-grow">
+                  <textarea
+                    value={resumeData.skills.join(", ")}
+                    onChange={(e) => updateSkills(e.target.value)}
+                    className="w-full h-full min-h-[150px] px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all resize-none leading-relaxed text-slate-700"
+                    placeholder="e.g. JavaScript, React, Node.js, Python (comma separated)"
+                  />
+                  <p className="text-xs text-slate-400 mt-2 text-right">Separate skills with commas</p>
+                </div>
+              </motion.section>
+            </div>
+
+
+            {/* Work Experience */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"
+            >
+              <div className="border-b border-slate-100 p-6 flex items-center justify-between bg-slate-50/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+                    <Briefcase className="w-5 h-5" />
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-800">Work Experience</h2>
+                </div>
+                <button onClick={addWorkExperience} className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition">
+                  <Plus className="w-4 h-4" /> Add Experience
+                </button>
+              </div>
+
+              <div className="p-6 lg:p-8 space-y-8">
+                <AnimatePresence>
+                  {resumeData.work_experience.map((exp, expIdx) => (
+                    <motion.div
+                      key={expIdx}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="relative pl-6 border-l-2 border-slate-200 pb-2"
+                    >
+                      <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-emerald-100 border-2 border-emerald-500"></div>
+
+                      <div className="bg-slate-50 rounded-xl p-6 border border-slate-200 group">
+                        <div className="flex justify-end mb-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => deleteWorkExperience(expIdx)} className="text-red-400 hover:text-red-600 p-1">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-slate-500 uppercase">Company</label>
+                            <input
+                              type="text"
+                              value={exp.company}
+                              onChange={(e) => updateWorkExperience(expIdx, 'company', e.target.value)}
+                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                              placeholder="Company Name"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-slate-500 uppercase">Position</label>
+                            <input
+                              type="text"
+                              value={exp.position}
+                              onChange={(e) => updateWorkExperience(expIdx, 'position', e.target.value)}
+                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                              placeholder="Job Title"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-slate-500 uppercase">From</label>
+                              <input
+                                type="month"
+                                value={exp.period_from}
+                                onChange={(e) => updateWorkExperience(expIdx, 'period_from', e.target.value)}
+                                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-sm"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-slate-500 uppercase">To</label>
+                              <input
+                                type="month"
+                                value={exp.period_to === "Present" ? "" : exp.period_to}
+                                onChange={(e) => updateWorkExperience(expIdx, 'period_to', e.target.value)}
+                                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-sm"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-slate-500 uppercase">Duration (Auto)</label>
+                            <input
+                              type="text"
+                              value={exp.duration}
+                              onChange={(e) => updateWorkExperience(expIdx, 'duration', e.target.value)}
+                              className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-slate-500 cursor-not-allowed"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Nested Projects */}
+                        <div className="mt-6 border-t border-slate-200 pt-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                              <Briefcase className="w-3 h-3" /> Key Projects
+                            </h4>
+                            <button onClick={() => addProject(expIdx)} className="text-xs font-medium text-blue-600 hover:text-blue-700">Add Project</button>
+                          </div>
+
+                          <div className="space-y-4">
+                            {exp.projects.map((proj, projIdx) => (
+                              <div key={projIdx} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm relative">
+                                <button onClick={() => deleteProject(expIdx, projIdx)} className="absolute top-2 right-2 text-slate-300 hover:text-red-500 transition">
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                                <input
+                                  type="text"
+                                  value={proj.name}
+                                  onChange={(e) => updateProjectField(expIdx, projIdx, 'name', e.target.value)}
+                                  placeholder="Project Name"
+                                  className="font-semibold text-slate-800 w-full border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:outline-none mb-2 bg-transparent transition"
+                                />
+                                <textarea
+                                  value={proj.description}
+                                  onChange={(e) => updateProjectField(expIdx, projIdx, 'description', e.target.value)}
+                                  placeholder="Brief description..."
+                                  className="w-full text-sm text-slate-600 bg-transparent resize-none focus:outline-none mb-2 min-h-[40px]"
+                                />
+                                <textarea
+                                  value={proj.responsibilities.join('\n')}
+                                  onChange={(e) => updateProjectField(expIdx, projIdx, 'responsibilities', e.target.value)}
+                                  placeholder="Responsibilities (one per line)"
+                                  className="w-full text-sm text-slate-600 bg-slate-50 p-2 rounded border border-transparent focus:border-blue-300 focus:outline-none resize-none min-h-[60px]"
+                                />
+                                <input
+                                  type="text"
+                                  value={proj.technologies.join(', ')}
+                                  onChange={(e) => updateProjectField(expIdx, projIdx, 'technologies', e.target.value)}
+                                  placeholder="Tech Stack (comma separated)"
+                                  className="mt-2 w-full text-xs text-blue-600 bg-blue-50 rounded px-2 py-1 focus:outline-none"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </motion.section>
+
+            {/* Education */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"
+            >
+              <div className="border-b border-slate-100 p-6 flex items-center justify-between bg-slate-50/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-pink-100 rounded-lg text-pink-600">
+                    <GraduationCap className="w-5 h-5" />
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-800">Education</h2>
+                </div>
+                <button onClick={addEducation} className="text-sm font-semibold text-pink-600 hover:text-pink-700 flex items-center gap-1 bg-pink-50 hover:bg-pink-100 px-3 py-1.5 rounded-lg transition">
+                  <Plus className="w-4 h-4" /> Add Education
+                </button>
+              </div>
+
+              <div className="p-6 lg:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                {resumeData.education.map((edu, idx) => (
+                  <div key={idx} className="relative bg-slate-50 p-5 rounded-xl border border-slate-200 group">
+                    <button
+                      onClick={() => deleteEducation(idx)}
+                      className="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        value={edu.institution}
+                        onChange={(e) => updateEducation(idx, 'institution', e.target.value)}
+                        placeholder="University / School"
+                        className="w-full font-semibold text-slate-800 bg-transparent border-b border-transparent focus:border-pink-500 focus:outline-none pb-1"
+                      />
+                      <input
+                        type="text"
+                        value={edu.degree}
+                        onChange={(e) => updateEducation(idx, 'degree', e.target.value)}
+                        placeholder="Degree (e.g. B.Sc)"
+                        className="w-full text-sm text-slate-600 bg-transparent border-b border-transparent focus:border-pink-500 focus:outline-none pb-1"
+                      />
+                      <div className="flex items-center gap-2 text-slate-400">
+                        <Calendar className="w-3 h-3" />
+                        <input
+                          type="month"
+                          value={edu.graduation_year}
+                          onChange={(e) => updateEducation(idx, 'graduation_year', e.target.value)}
+                          className="bg-transparent text-xs focus:outline-none text-slate-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.section>
+
+            {/* Standalone Projects */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"
+            >
+              <div className="border-b border-slate-100 p-6 flex items-center justify-between bg-slate-50/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-orange-100 rounded-lg text-orange-600">
+                    <Code className="w-5 h-5" />
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-800">Additional Projects</h2>
+                </div>
+                <button onClick={addStandaloneProject} className="text-sm font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-lg transition">
+                  <Plus className="w-4 h-4" /> Add Project
+                </button>
+              </div>
+              <div className="p-6 lg:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                {resumeData.projects.map((proj, idx) => (
+                  <div key={idx} className="relative bg-slate-50 p-5 rounded-xl border border-slate-200 group">
+                    <button
+                      onClick={() => deleteStandaloneProject(idx)}
+                      className="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={proj.name}
+                        onChange={(e) => updateStandaloneProject(idx, 'name', e.target.value)}
+                        placeholder="Project Name"
+                        className="w-full font-bold text-slate-800 bg-transparent border-b border-transparent focus:border-orange-500 focus:outline-none pb-1"
+                      />
+                      <textarea
+                        value={proj.description}
+                        onChange={(e) => updateStandaloneProject(idx, 'description', e.target.value)}
+                        placeholder="Project description..."
+                        className="w-full text-sm text-slate-600 bg-transparent resize-none focus:outline-none min-h-[60px]"
+                      />
+                      <div className="pt-2">
+                        <input
+                          type="text"
+                          value={proj.technologies.join(', ')}
+                          onChange={(e) => updateStandaloneProject(idx, 'technologies', e.target.value)}
+                          placeholder="Technologies used..."
+                          className="w-full text-xs text-orange-600 bg-orange-50/50 rounded px-2 py-1 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.section>
+
+          </div>
         </div>
       </div>
+
+      {/* Floating Action Bar */}
+      <div className="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 p-4 z-50 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.1)]">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <p className="text-sm text-slate-500 hidden md:block">
+            Changes are saved automatically to your session.
+          </p>
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <button
+              onClick={() => router.push("/")}
+              className="flex-1 md:flex-none px-6 py-3 rounded-xl font-semibold text-slate-600 hover:bg-slate-100 transition border border-transparent"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-lg hover:shadow-blue-500/30 hover:translate-y-[-2px] active:translate-y-[0px] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {generating ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Building PDF...</span>
+                </>
+              ) : (
+                <>
+                  <span>Generate PDF</span>
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }
