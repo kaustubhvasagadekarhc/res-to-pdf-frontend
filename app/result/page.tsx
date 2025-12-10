@@ -4,8 +4,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function ResultPage() {
-  const [pdfGenerated] = useState(() => typeof window !== 'undefined' ? !!sessionStorage.getItem("pdfResponse") : false);
-  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(() => typeof window !== 'undefined' ? sessionStorage.getItem("pdfBlobUrl") : null);
+  const [pdfGenerated] = useState(() =>
+    typeof window !== "undefined"
+      ? !!sessionStorage.getItem("pdfResponse")
+      : false
+  );
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(() =>
+    typeof window !== "undefined" ? sessionStorage.getItem("pdfBlobUrl") : null
+  );
   const router = useRouter();
 
   const handleDownloadPDF = async () => {
@@ -29,7 +35,7 @@ export default function ResultPage() {
       }
 
       const response = await fetch(
-        "https://res-to-pdf.vercel.app/generate/pdf",
+        "https://res-to-pdf-api.vercel.app/generate/pdf",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
