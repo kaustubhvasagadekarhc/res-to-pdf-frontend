@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function ResultPage() {
-  const [pdfGenerated] = useState(() => !!sessionStorage.getItem("pdfResponse"));
-  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(() => sessionStorage.getItem("pdfBlobUrl"));
+  const [pdfGenerated] = useState(() => typeof window !== 'undefined' ? !!sessionStorage.getItem("pdfResponse") : false);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(() => typeof window !== 'undefined' ? sessionStorage.getItem("pdfBlobUrl") : null);
   const router = useRouter();
 
   const handleDownloadPDF = async () => {
