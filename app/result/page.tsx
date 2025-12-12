@@ -15,10 +15,14 @@ import {
 import confetti from "canvas-confetti";
 
 export default function ResultPage() {
-  const [pdfGenerated] = useState(() => typeof window !== 'undefined' ? !!sessionStorage.getItem("pdfResponse") : false);
-  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(() => typeof window !== 'undefined' ? sessionStorage.getItem("pdfBlobUrl") : null);
-  // const [pdfGenerated] = useState(() => !!sessionStorage.getItem("pdfResponse"));
-  // const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(() => sessionStorage.getItem("pdfBlobUrl"));
+  const [pdfGenerated] = useState(() =>
+    typeof window !== "undefined"
+      ? !!sessionStorage.getItem("pdfResponse")
+      : false
+  );
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(() =>
+    typeof window !== "undefined" ? sessionStorage.getItem("pdfBlobUrl") : null
+  );
   const router = useRouter();
 
   useEffect(() => {
@@ -40,7 +44,7 @@ export default function ResultPage() {
       if (!token) return null;
 
       const response = await fetch(
-        `https://res-to-pdf-api.vercel.app/generate/pdf`,
+        "https://res-to-pdf-api.vercel.app/generate/pdf",
         {
           method: "POST",
           headers: {
