@@ -1,23 +1,24 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { getAuthToken, getApiBaseUrl } from "@/lib/auth";
+import { useEffect, useState, useCallback } from "react";
+import { getAuthToken } from "@/lib/auth";
 import { motion } from "framer-motion";
 import {
   Download,
   RotateCcw,
   Edit3,
-  CheckCircle2,
+
   AlertCircle,
-  FileCheck,
-  ArrowRight
+
 } from "lucide-react";
 import confetti from "canvas-confetti";
 
 export default function ResultPage() {
-  const [pdfGenerated] = useState(() => !!sessionStorage.getItem("pdfResponse"));
-  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(() => sessionStorage.getItem("pdfBlobUrl"));
+  const [pdfGenerated] = useState(() => typeof window !== 'undefined' ? !!sessionStorage.getItem("pdfResponse") : false);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(() => typeof window !== 'undefined' ? sessionStorage.getItem("pdfBlobUrl") : null);
+  // const [pdfGenerated] = useState(() => !!sessionStorage.getItem("pdfResponse"));
+  // const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(() => sessionStorage.getItem("pdfBlobUrl"));
   const router = useRouter();
 
   useEffect(() => {
@@ -30,15 +31,13 @@ export default function ResultPage() {
     }
   }, [pdfGenerated]);
 
-  const generatePdfBlob = async () => {
-    if (pdfBlobUrl) return;
-
+  const createPdfUrl = useCallback(async () => {
     try {
       const resumeData = sessionStorage.getItem("resumeData");
-      if (!resumeData) return;
+      if (!resumeData) return null;
 
       const token = await getAuthToken();
-      if (!token) return;
+      if (!token) return null;
 
       const response = await fetch(
         `https://res-to-pdf-api.vercel.app/generate/pdf`,
@@ -56,30 +55,40 @@ export default function ResultPage() {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         sessionStorage.setItem("pdfBlobUrl", url);
-        setPdfBlobUrl(url);
+        return url;
       }
     } catch (err) {
       console.error("Error generating PDF preview:", err);
     }
-  };
+    return null;
+  }, []);
 
   useEffect(() => {
     if (pdfGenerated && !pdfBlobUrl) {
-      generatePdfBlob();
+      createPdfUrl().then((url) => {
+        if (url) {
+          setPdfBlobUrl(url);
+        }
+      });
     }
-  }, [pdfGenerated, pdfBlobUrl]);
+  }, [pdfGenerated, pdfBlobUrl, createPdfUrl]);
 
   const handleDownloadPDF = async () => {
-    if (!pdfBlobUrl) {
-      await generatePdfBlob();
+    let currentUrl = pdfBlobUrl;
+    if (!currentUrl) {
+      currentUrl = await createPdfUrl();
+      if (currentUrl) {
+        setPdfBlobUrl(currentUrl);
+      }
     }
 
     // Check again if we have the URL after attempting generation
-    const currentUrl = sessionStorage.getItem("pdfBlobUrl") || pdfBlobUrl;
+    const storedUrl = sessionStorage.getItem("pdfBlobUrl");
+    const finalUrl = currentUrl || storedUrl;
 
-    if (currentUrl) {
+    if (finalUrl) {
       const a = document.createElement("a");
-      a.href = currentUrl;
+      a.href = finalUrl;
       a.download = `resume_${new Date().getTime()}.pdf`;
       document.body.appendChild(a);
       a.click();
@@ -134,7 +143,7 @@ export default function ResultPage() {
                   <AlertCircle className="w-8 h-8 text-amber-500" />
                 </div>
                 <h2 className="text-xl font-bold text-slate-800 mb-2">No PDF Generated</h2>
-                <p className="text-slate-500 mb-6">It looks like the resume generation process wasn't completed.</p>
+                <p className="text-slate-500 mb-6">It looks like the resume generation process wasn&apos;t completed.</p>
                 <button
                   onClick={() => router.push("/")}
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"

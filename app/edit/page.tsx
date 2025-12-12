@@ -390,7 +390,7 @@ export default function EditPage() {
 
   const missingFields = getMissingFields();
 
-  const getInputClassName = (value: any) => {
+  const getInputClassName = (value: string | null | undefined) => {
     const isValid = !isEmpty(value);
     return `w-full px-4 py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all ${isValid
       ? "border-slate-200 focus:ring-blue-500/50 focus:border-blue-500"
@@ -398,7 +398,7 @@ export default function EditPage() {
       }`;
   };
 
-  const getSelectClassName = (value: any) => {
+  const getSelectClassName = (value: string | null | undefined) => {
     const isValid = !isEmpty(value);
     return `w-full appearance-none px-4 py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all ${isValid
       ? "border-slate-200 focus:ring-blue-500/50 focus:border-blue-500"
@@ -406,7 +406,7 @@ export default function EditPage() {
       }`;
   };
 
-  const getExpInputClassName = (value: any) => {
+  const getExpInputClassName = (value: string | null | undefined) => {
     const isValid = !isEmpty(value);
     return `w-full px-3 py-2 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all ${isValid
       ? "border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
@@ -414,7 +414,7 @@ export default function EditPage() {
       }`;
   };
 
-  const getExpDateClassName = (value: any) => {
+  const getExpDateClassName = (value: string | null | undefined) => {
     const isValid = isValidMonth(value) || (value === "Present");
     return `w-full px-3 py-2 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all text-sm ${isValid
       ? "border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
@@ -422,7 +422,7 @@ export default function EditPage() {
       }`;
   };
 
-  const getEduInputClassName = (value: any) => {
+  const getEduInputClassName = (value: string | null | undefined) => {
     const isValid = !isEmpty(value);
     return `w-full font-semibold text-slate-800 bg-transparent border-b transition-all ${isValid
       ? "border-transparent focus:border-pink-500 focus:outline-none"
@@ -546,9 +546,9 @@ export default function EditPage() {
                     <input
                       type={type || "text"}
                       placeholder={placeholder}
-                      value={(resumeData.personal as any)[field]}
+                      value={(resumeData.personal as Record<string, string>)[field]}
                       onChange={(e) => updatePersonal(field, e.target.value)}
-                      className={getInputClassName((resumeData.personal as any)[field])}
+                      className={getInputClassName((resumeData.personal as Record<string, string>)[field])}
                     />
                   </div>
                 ))}
