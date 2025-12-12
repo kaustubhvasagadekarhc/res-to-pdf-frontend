@@ -13,9 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Resume to PDF Converter",
-  description: "Convert your resume to a professionally formatted PDF document",
+  title: "Hirelyze",
+  description: "AI-powered hiring platform",
+  icons: {
+    icon: "/logo.jpg",
+  },
 };
+
 
 export default function RootLayout({
   children,
