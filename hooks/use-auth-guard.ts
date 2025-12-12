@@ -22,7 +22,7 @@ export function useAuthGuard(requiredRole?: UserType) {
 
         const ensure = async () => {
             if (!authService.isAuthenticated()) {
-                router.replace('/');
+                router.replace('/auth');
                 return;
             }
 
@@ -44,7 +44,7 @@ export function useAuthGuard(requiredRole?: UserType) {
             // If no cache, fetch once and enforce role
             const userId = authService.getUserId();
             if (!userId) {
-                router.replace('/');
+                router.replace('/auth');
                 return;
             }
 

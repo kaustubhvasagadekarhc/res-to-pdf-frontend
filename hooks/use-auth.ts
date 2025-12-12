@@ -22,7 +22,7 @@ export function useAuth() {
     } else if (response?.data?.user?.userType === 'admin') {
       router.push('/dashboard/admin');
     } else {
-      router.push('/dashboard');
+      router.push('/dashboard/user');
     }
   };
 
@@ -43,7 +43,7 @@ export function useAuth() {
     } else if (response?.data?.user?.userType === 'admin') {
       router.push('/dashboard/Admin');
     } else {
-      router.push('/dashboard');
+      router.push('/dashboard/user');
     }
   };
 
@@ -54,7 +54,7 @@ export function useAuth() {
   const logout = async () => {
     try {
       await authService.logout();
-      router.push('/auth?view=login');
+      router.push('/auth');
     } catch (error) {
       console.error('Logout failed:', error);
     }
