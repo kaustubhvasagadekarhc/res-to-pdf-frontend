@@ -2,6 +2,26 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### Environment Setup
+
+1. **Copy the environment file:**
+   ```bash
+   cp .env.example .env.local
+   ```
+
+2. **Update `.env.local` with your configuration:**
+   ```env
+   # For local development, point to your local backend
+   NEXT_PUBLIC_API_URL=http://localhost:4000
+   
+   # For production, use the deployed backend URL
+   # NEXT_PUBLIC_API_URL=https://res-to-pdf.vercel.app
+   ```
+
+   **Note:** If you don't create `.env.local`, the app will use the default production URL (`https://res-to-pdf.vercel.app`).
+
+### Running the Development Server
+
 First, run the development server:
 
 ```bash

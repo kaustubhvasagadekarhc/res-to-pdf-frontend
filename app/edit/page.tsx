@@ -300,19 +300,122 @@ export default function EditPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
       </div>
     );
   }
 
   if (!resumeData) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-red-600">No resume data found</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <p className="text-xl text-slate-500 font-medium">No resume data found</p>
       </div>
     );
   }
+
+  const isEmpty = (val?: string | null) => !val || !val.toString().trim().length;
+  const isValidMonth = (val?: string | null) => !isEmpty(val) && /^\d{4}-\d{2}$/.test(val || "");
+
+  const getMissingFields = () => {
+    const groups: { section: string; fields: string[] }[] = [];
+
+    // Personal
+    const personalMissing: string[] = [];
+    if (isEmpty(resumeData.personal.name)) personalMissing.push("Full Name");
+    if (isEmpty(resumeData.personal.designation)) personalMissing.push("Designation");
+    if (isEmpty(resumeData.personal.email)) personalMissing.push("Email");
+    if (isEmpty(resumeData.personal.mobile)) personalMissing.push("Mobile");
+    if (isEmpty(resumeData.personal.location)) personalMissing.push("Location");
+    if (isEmpty(resumeData.personal.gender)) personalMissing.push("Gender");
+    if (isEmpty(resumeData.personal.marital_status)) personalMissing.push("Marital Status");
+
+    if (personalMissing.length) {
+      groups.push({ section: "Personal Details", fields: personalMissing });
+    }
+
+    // Summary
+    if (isEmpty(resumeData.summary)) {
+      groups.push({ section: "Summary", fields: ["Professional Summary"] });
+    }
+
+    // Skills
+    if (!resumeData.skills.length || !resumeData.skills.filter(Boolean).length) {
+      groups.push({ section: "Skills", fields: ["Technical Skills"] });
+    }
+
+    // Work Experience
+    const expMissing: string[] = [];
+    if (!resumeData.work_experience.length) {
+      expMissing.push("Add at least one experience");
+    } else {
+      resumeData.work_experience.forEach((exp, idx) => {
+        if (isEmpty(exp.company)) expMissing.push(`Role ${idx + 1}: Company`);
+        if (isEmpty(exp.position)) expMissing.push(`Role ${idx + 1}: Position`);
+        if (!isValidMonth(exp.period_from)) expMissing.push(`Role ${idx + 1}: Start Date`);
+        // Check end date unless it's strictly "Present"
+        if (exp.period_to !== "Present" && !isValidMonth(exp.period_to)) expMissing.push(`Role ${idx + 1}: End Date`);
+      });
+    }
+    if (expMissing.length) groups.push({ section: "Work Experience", fields: expMissing });
+
+    // Education
+    const eduMissing: string[] = [];
+    if (!resumeData.education.length) {
+      eduMissing.push("Add at least one education");
+    } else {
+      resumeData.education.forEach((edu, idx) => {
+        if (isEmpty(edu.institution)) eduMissing.push(`Education ${idx + 1}: Institution`);
+        if (isEmpty(edu.degree)) eduMissing.push(`Education ${idx + 1}: Degree`);
+        if (!isValidMonth(edu.graduation_year)) eduMissing.push(`Education ${idx + 1}: Year`);
+      });
+    }
+    if (eduMissing.length) groups.push({ section: "Education", fields: eduMissing });
+
+    return groups;
+  };
+
+  const missingFields = getMissingFields();
+
+  const getInputClassName = (value: string | null | undefined) => {
+    const isValid = !isEmpty(value);
+    return `w-full px-4 py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all ${isValid
+      ? "border-slate-200 focus:ring-blue-500/50 focus:border-blue-500"
+      : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
+      }`;
+  };
+
+  const getSelectClassName = (value: string | null | undefined) => {
+    const isValid = !isEmpty(value);
+    return `w-full appearance-none px-4 py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all ${isValid
+      ? "border-slate-200 focus:ring-blue-500/50 focus:border-blue-500"
+      : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
+      }`;
+  };
+
+  const getExpInputClassName = (value: string | null | undefined) => {
+    const isValid = !isEmpty(value);
+    return `w-full px-3 py-2 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all ${isValid
+      ? "border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
+      : "border-red-300 focus:border-red-500 focus:ring-red-200 bg-red-50"
+      }`;
+  };
+
+  const getExpDateClassName = (value: string | null | undefined) => {
+    const isValid = isValidMonth(value) || (value === "Present");
+    return `w-full px-3 py-2 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all text-sm ${isValid
+      ? "border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
+      : "border-red-300 focus:border-red-500 focus:ring-red-200 bg-red-50"
+      }`;
+  };
+
+  const getEduInputClassName = (value: string | null | undefined) => {
+    const isValid = !isEmpty(value);
+    return `w-full font-semibold text-slate-800 bg-transparent border-b transition-all ${isValid
+      ? "border-transparent focus:border-pink-500 focus:outline-none"
+      : "border-red-300 focus:border-red-500 bg-red-50/50 px-2 rounded"
+      }`;
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4">
@@ -326,9 +429,12 @@ export default function EditPage() {
             ← Back
           </button>
         </div>
+      </div>
 
+      <div className="max-w-6xl mx-auto px-4 lg:px-6">
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg">
+          <div className="mb-8 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-center gap-3 animate-pulse">
+            <div className="w-2 h-2 rounded-full bg-red-500" />
             {error}
           </div>
         )}
@@ -474,18 +580,14 @@ export default function EditPage() {
                 className="w-full px-4 py-2 border border-gray-300 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-          ))}
-        </section>
 
-        {/* Work Experience */}
-        <section className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold text-slate-700 pb-2 border-b-2 border-emerald-300 flex-1">
-              Work Experience
-            </h2>
-            <button
-              onClick={addWorkExperience}
-              className="ml-4 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
+
+            {/* Work Experience */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"
             >
               + Add Experience
             </button>
@@ -563,6 +665,10 @@ export default function EditPage() {
                     + Add Project
                   </button>
                 </div>
+                <button onClick={addEducation} className="text-sm font-semibold text-pink-600 hover:text-pink-700 flex items-center gap-1 bg-pink-50 hover:bg-pink-100 px-3 py-1.5 rounded-lg transition">
+                  <Plus className="w-4 h-4" /> Add Education
+                </button>
+              </div>
 
                 {exp.projects.length === 0 ? (
                   <p className="text-slate-500 text-sm italic">
@@ -638,25 +744,60 @@ export default function EditPage() {
                         }
                         className="w-full px-3 py-2 border border-gray-300 text-gray-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
+                      <textarea
+                        value={proj.description}
+                        onChange={(e) => updateStandaloneProject(idx, 'description', e.target.value)}
+                        placeholder="Project description..."
+                        className="w-full text-sm text-slate-600 bg-transparent resize-none focus:outline-none min-h-[60px]"
+                      />
+                      <div className="pt-2">
+                        <input
+                          type="text"
+                          value={proj.technologies.join(', ')}
+                          onChange={(e) => updateStandaloneProject(idx, 'technologies', e.target.value)}
+                          placeholder="Technologies used..."
+                          className="w-full text-xs text-orange-600 bg-orange-50/50 rounded px-2 py-1 focus:outline-none"
+                        />
+                      </div>
                     </div>
-                  ))
-                )}
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
-        </section>
+            </motion.section>
 
-        {/* Standalone Projects */}
-        <section className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold text-slate-700 pb-2 border-b-2 border-violet-300 flex-1">
-              Standalone Projects
-            </h2>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating Action Bar */}
+      <div className="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 p-4 z-50 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.1)]">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <p className="text-sm text-slate-500 hidden md:block">
+            Changes are saved automatically to your session.
+          </p>
+          <div className="flex items-center gap-4 w-full md:w-auto">
             <button
-              onClick={addStandaloneProject}
-              className="ml-4 bg-violet-500 hover:bg-violet-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
+              onClick={() => router.push("/")}
+              className="flex-1 md:flex-none px-6 py-3 rounded-xl font-semibold text-slate-600 hover:bg-slate-100 transition border border-transparent"
             >
-              + Add Project
+              Cancel
+            </button>
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-lg hover:shadow-blue-500/30 hover:translate-y-[-2px] active:translate-y-[0px] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {generating ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Building PDF...</span>
+                </>
+              ) : (
+                <>
+                  <span>Generate PDF</span>
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
             </button>
           </div>
           {resumeData.projects.map((proj, idx) => (
