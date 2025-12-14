@@ -1,7 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { getAuthToken } from "@/lib/auth";
+import { motion } from "framer-motion";
+import {
+  Download,
+  RotateCcw,
+  Edit3,
+  AlertCircle,
+
+} from "lucide-react";
+import confetti from "canvas-confetti";
 
 export default function ResultPage() {
   const [pdfGenerated] = useState(() =>
@@ -14,31 +24,32 @@ export default function ResultPage() {
   );
   const router = useRouter();
 
-  const handleDownloadPDF = async () => {
-    // If we have a stored PDF blob URL, use it directly
-    if (pdfBlobUrl) {
-      const a = document.createElement("a");
-      a.href = pdfBlobUrl;
-      a.download = `resume_${new Date().getTime()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      return;
+  useEffect(() => {
+    if (pdfGenerated) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
     }
+  }, [pdfGenerated]);
 
+  const createPdfUrl = useCallback(async () => {
     try {
-      // Fallback: Fetch the PDF from your API if blob URL wasn't stored
       const resumeData = sessionStorage.getItem("resumeData");
-      if (!resumeData) {
-        alert("No resume data found");
-        return;
-      }
+      if (!resumeData) return null;
+
+      const token = await getAuthToken();
+      if (!token) return null;
 
       const response = await fetch(
         "https://res-to-pdf-api.vercel.app/generate/pdf",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: resumeData,
         }
       );
@@ -46,23 +57,47 @@ export default function ResultPage() {
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
-
-        // Store the blob URL for future downloads
         sessionStorage.setItem("pdfBlobUrl", url);
-        setPdfBlobUrl(url);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `resume_${new Date().getTime()}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } else {
-        alert("Failed to download PDF");
+        return url;
       }
     } catch (err) {
-      alert(`Error: ${err instanceof Error ? err.message : "Unknown error"}`);
+      console.error("Error generating PDF preview:", err);
+    }
+    return null;
+  }, []);
+
+  useEffect(() => {
+    if (pdfGenerated && !pdfBlobUrl) {
+      createPdfUrl().then((url) => {
+        if (url) {
+          setPdfBlobUrl(url);
+        }
+      });
+    }
+  }, [pdfGenerated, pdfBlobUrl, createPdfUrl]);
+
+  const handleDownloadPDF = async () => {
+    let currentUrl = pdfBlobUrl;
+    if (!currentUrl) {
+      currentUrl = await createPdfUrl();
+      if (currentUrl) {
+        setPdfBlobUrl(currentUrl);
+      }
+    }
+
+    // Check again if we have the URL after attempting generation
+    const storedUrl = sessionStorage.getItem("pdfBlobUrl");
+    const finalUrl = currentUrl || storedUrl;
+
+    if (finalUrl) {
+      const a = document.createElement("a");
+      a.href = finalUrl;
+      a.download = `resume_${new Date().getTime()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else {
+      alert("Unable to generate PDF for download. Please try again.");
     }
   };
 
@@ -86,125 +121,78 @@ export default function ResultPage() {
   }, [pdfBlobUrl]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-2xl p-8">
-        {pdfGenerated ? (
-          <>
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
-                <svg
-                  className="w-10 h-10 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                Success!
-              </h1>
-              <p className="text-gray-600">
-                Your resume PDF has been generated successfully
-              </p>
-            </div>
+    <div className="min-h-screen flex flex-col bg-slate-100 font-sans text-slate-900">
 
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-              <h3 className="font-semibold text-green-900 mb-2">
-                What&apos;s Next?
-              </h3>
-              <ul className="text-sm text-green-800 space-y-1">
-                <li>✓ Resume parsed successfully</li>
-                <li>✓ All information formatted</li>
-                <li>✓ PDF ready to download</li>
-              </ul>
-            </div>
-
-            <div className="space-y-3">
-              <button
-                onClick={handleDownloadPDF}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition flex items-center justify-center gap-2"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
-                Download PDF
-              </button>
-
-              <button
-                onClick={() => router.push("/edit")}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition"
-              >
-                Edit Resume
-              </button>
-
-              <button
-                onClick={handleStartOver}
-                className="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition"
-              >
-                Upload New Resume
-              </button>
-            </div>
-          </>
+      {/* PDF View Area */}
+      <div className="flex-grow flex items-center justify-center p-4 pb-24 h-screen">
+        {pdfGenerated && pdfBlobUrl ? (
+          <div className="w-full max-w-5xl h-full bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-200">
+            <iframe
+              src={pdfBlobUrl}
+              className="w-full h-full"
+              title="Generated Resume PDF"
+            />
+          </div>
         ) : (
-          <>
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-yellow-100 rounded-full mb-4">
-                <svg
-                  className="w-10 h-10 text-yellow-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+          <div className="text-center p-10">
+            {pdfGenerated ? (
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                <p className="text-slate-500 font-medium">Loading PDF...</p>
               </div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                No Resume Generated
-              </h1>
-              <p className="text-gray-600">
-                Please go back and complete the process
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <button
-                onClick={() => router.push("/edit")}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition"
-              >
-                Back to Edit
-              </button>
-
-              <button
-                onClick={handleStartOver}
-                className="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition"
-              >
-                Upload New Resume
-              </button>
-            </div>
-          </>
+            ) : (
+              <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md mx-auto">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-50 rounded-full mb-4">
+                  <AlertCircle className="w-8 h-8 text-amber-500" />
+                </div>
+                <h2 className="text-xl font-bold text-slate-800 mb-2">No PDF Generated</h2>
+                <p className="text-slate-500 mb-6">It looks like the resume generation process wasn&apos;t completed.</p>
+                <button
+                  onClick={() => router.push("/")}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+                >
+                  Start Over
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
+
+      {/* Floating Bottom Navbar */}
+      <motion.div
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        className="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.1)] z-50 p-4"
+      >
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 w-full sm:w-auto">
+            <button
+              onClick={handleStartOver}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 transition"
+            >
+              <RotateCcw className="w-4 h-4" />
+              New
+            </button>
+            <button
+              onClick={() => router.push("/edit")}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 transition"
+            >
+              <Edit3 className="w-4 h-4" />
+              Edit
+            </button>
+          </div>
+
+          <button
+            onClick={handleDownloadPDF}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-8 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:shadow-lg hover:shadow-green-500/30 hover:-translate-y-0.5 transition-all"
+          >
+            <Download className="w-5 h-5" />
+            Download PDF
+          </button>
+        </div>
+      </motion.div>
+
     </div>
   );
 }
