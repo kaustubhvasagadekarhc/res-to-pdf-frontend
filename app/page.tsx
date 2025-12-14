@@ -17,6 +17,15 @@ export default function Home() {
     }
   };
 
+  //example usage of pdfService
+
+  // import { pdfService } from "./api/client";
+  // const handleFileChangjhasdhjvase = async(e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const response = await pdfService.postGeneratePdf({
+  //     file: e.target.files?.[0],
+  //   })
+  // };
+
   const handleUpload = async () => {
     if (!file) {
       setError("Please select a file first");
