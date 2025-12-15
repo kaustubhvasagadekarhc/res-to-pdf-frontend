@@ -2,11 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { authService as legacyAuthService } from "@/services/auth.services";
-import {  User, Bell } from "lucide-react";
+import {  User, Bell, LogOut, FileCheck } from "lucide-react";
 
 import { useRouter } from "next/navigation";
-import { useUser } from "@/contexts/UserContext";
-import Image from "next/image";
+
 
 export function Header() {
   const router = useRouter();
@@ -18,35 +17,44 @@ export function Header() {
   };
 
   return (
-    <header className="h-20 flex items-center justify-between px-10 bg-white/60 backdrop-blur-md sticky top-0 z-20 border-b border-indigo-50/50 transition-all duration-300">
+    <header className="h-20 flex items-center justify-between px-10 bg-white/70 backdrop-blur-xl sticky top-0 z-20 border-b border-indigo-100/50 transition-all duration-300 shadow-sm">
    
-        
-     <div className="h-10 w-1">
-         {/* <Image src="" alt="Logo" width={80} height={80} /> */}
+      <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push("/dashboard/user")}>
+        <div className="h-10 w-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-600/20">
+          <FileCheck className="h-6 w-6" />
         </div>
+        <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-900 to-violet-900 tracking-tight">
+          ResToPDF
+        </span>
+      </div>
       
-      <div className="flex items-center gap-5">
-        <Button variant="ghost" size="icon" className="text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
-            <Bell className="h-[1.2rem] w-[1.2rem]" />
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" className="text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
+            <Bell className="h-5 w-5" />
         </Button>
-        {/* <div className="h-8 w-px bg-indigo-100/50 mx-1" /> */}
+        <div className="h-6 w-px bg-indigo-100 mx-2" />
+        
         <Button
           variant="ghost"
           size="sm"
           onClick={() => router.push("/user/profile")}
-          className="text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-xl px-2 py-2 font-medium transition-all group"
+          className="text-indigo-900 hover:text-indigo-700 hover:bg-indigo-50 rounded-xl px-3 py-2 font-medium transition-all group gap-2"
         >
-          <div className="h-7 w-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+          <div className="h-8 w-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition-transform">
              <User className="h-4 w-4" />
           </div>
           <span className="text-sm">Profile</span>
         </Button>
+
         <Button
           variant="ghost"
           size="sm"
           onClick={handleLogout}
-          className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl px-1 transition-all"
-        ></Button>
+          className="text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl px-3 py-2 font-medium transition-all gap-2"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Logout</span>
+        </Button>
       </div>
     </header>
   );

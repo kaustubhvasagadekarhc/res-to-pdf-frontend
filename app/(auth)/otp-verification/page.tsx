@@ -2,9 +2,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
-import { authService } from "@/app/api/client";
+import { authService, apiClient } from "@/app/api/client";
 import { authService as tokenService } from "@/services/auth.services";
-import { useUser } from "@/contexts/UserContext";
 
 function OTPVerificationContent() {
   const [otp, setOtp] = useState("");
@@ -13,7 +12,10 @@ function OTPVerificationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
-  const { refreshUser } = useUser();
+  // Don't rely on `useUser` here because this page is rendered outside the
+  // `UserProvider`. Instead we'll refresh the API client and persist
+  // dashboard data directly to `localStorage` after successful verification.
+  // const { refreshUser } = useUser();
 
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,23 +32,35 @@ function OTPVerificationContent() {
       
       console.log("OTP verification successful:", response);
       
-      // Extract token and store in cookies
+      // Server sets `auth-token` cookie; refresh API client from cookies
+      // Server sets `auth-token` cookie; refresh API client from cookies
+      apiClient.refreshTokenFromCookies();
+
+      // Also attempt to persist token in localStorage if returned in body
       const token = response.token || response.data?.token;
       if (token) {
         tokenService.setToken(token);
-        await refreshUser(); // Refresh user context with new data
-        
-        // Extract user data and route based on userType
-        const user = response.user || response.data?.user;
-        const userType = user?.userType || user?.type || "user";
-        
-        if (userType === "admin" || userType === "ADMIN") {
-          router.push("/admin");
-        } else {
-          router.push("/user");
+        apiClient.setAuthToken(token);
+      }
+
+      // Extract user data from response and persist a lightweight
+      // `dashboardData` cache used across the app for routing/UI
+      const user = response.user || response.data?.user;
+      try {
+        if (user) {
+          localStorage.setItem('dashboardData', JSON.stringify(user));
+        } else if (response.data?.user) {
+          localStorage.setItem('dashboardData', JSON.stringify(response.data.user));
         }
+      } catch (err) {
+        console.error('Failed to persist dashboardData', err);
+      }
+      const userType = user?.userType || user?.type || "user";
+      
+      if (userType === "admin" || userType === "ADMIN") {
+        router.push("/admin");
       } else {
-        router.push("/user"); // fallback
+        router.push("/user");
       }
     } catch (error: unknown) {
       console.error("OTP verification failed:", error);
