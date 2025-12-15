@@ -31,7 +31,7 @@ export function Header() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.push("/dashboard/user/profile")}
+          onClick={() => router.push("/user/profile")}
           className="text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-xl px-2 py-2 font-medium transition-all group"
         >
           <div className="h-7 w-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">

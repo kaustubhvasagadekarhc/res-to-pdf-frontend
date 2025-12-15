@@ -18,8 +18,8 @@ export function useAuthGuard(requiredRole?: 'Admin' | 'User') {
       if (cached) {
         const data = JSON.parse(cached);
         const userType = data.userType || data.user?.userType;
-        if (requiredRole === 'Admin' && userType !== 'admin') {
-          router.replace('/dashboard/user');
+        if (requiredRole === 'Admin' && userType !== 'ADMIN') {
+          router.replace('/user');
         }
       }
     }
