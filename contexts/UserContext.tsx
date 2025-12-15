@@ -26,8 +26,23 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       apiClient.refreshTokenFromCookies();
       const userData = await authService.getAuthMe();
       setUser(userData);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to fetch user data:", error);
+      
+      // Handle specific API errors
+      if (error && typeof error === 'object' && 'status' in error) {
+        const apiError = error as { status: number; body?: unknown };
+        if (apiError.status === 400) {
+          console.warn("Bad request to /me endpoint - user may not be fully authenticated");
+        } else if (apiError.status === 401) {
+          console.warn("Unauthorized - clearing token and redirecting to login");
+          // Clear invalid token
+          if (typeof window !== 'undefined') {
+            document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          }
+        }
+      }
+      
       setUser(null);
     } finally {
       setLoading(false);

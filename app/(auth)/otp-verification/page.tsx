@@ -1,10 +1,9 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react";
-import { authService } from "@/app/api/client";
+import { apiClient, authService } from "@/app/api/client";
 import { authService as tokenService } from "@/services/auth.services";
-import { useUser } from "@/contexts/UserContext";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 
 function OTPVerificationContent() {
   const [otp, setOtp] = useState("");
@@ -13,7 +12,6 @@ function OTPVerificationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
-  const { refreshUser } = useUser();
 
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,27 +20,37 @@ function OTPVerificationContent() {
 
     try {
       const response = await authService.postAuthVerifyOtp({
-        requestBody: { 
-          email: email!, 
-          otp 
+        requestBody: {
+          email: email!,
+          otp,
         },
       });
-      
+
       console.log("OTP verification successful:", response);
-      
+
       // Extract token and store in cookies
       const token = response.token || response.data?.token;
       if (token) {
         tokenService.setToken(token);
-        await refreshUser(); // Refresh user context with new data
-        
-        // Extract user data and route based on userType
-        const user = response.user || response.data?.user;
-        const userType = user?.userType || user?.type || "user";
-        
-        if (userType === "admin" || userType === "ADMIN") {
-          router.push("/admin");
-        } else {
+        // Ensure API client uses the new cookie/header
+        try {
+          apiClient.refreshTokenFromCookies();
+        } catch (e) {
+          console.warn("Could not refresh API client token from cookies", e);
+        }
+
+        // Attempt to fetch the user, then route
+        try {
+          const user = await authService.getAuthMe();
+          const userData = user as { userType?: string; type?: string };
+          const userType = userData?.userType || userData?.type || "user";
+          if (userType === "admin" || userType === "ADMIN") {
+            router.push("/admin");
+          } else {
+            router.push("/user");
+          }
+        } catch (meErr) {
+          console.warn("Failed to fetch user after OTP verification:", meErr);
           router.push("/user");
         }
       } else {
