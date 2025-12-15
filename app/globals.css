@@ -1,44 +1,38 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand & Actions (authoritative palette) */
-  --primary: #1F2A44;
-  /* Brand Indigo */
-  --primary-foreground: #ffffff;
-  --action: #2CB1BC;
-  /* Teal - primary CTAs */
-  --action-foreground: #ffffff;
+  /* Brand & Actions (Fresh & Professional) */
+  /* Primary: Deep Navy/Indigo - strong, authoritative but modern */
+  --primary: #1E1B4B; /* Indigo 950 */
+  --primary-foreground: #FFFFFF;
 
-  /* Neutrals */
-  --background: #F7F9FC;
-  /* App background */
+  /* Action: Electric Blue/Violet - Fresh and Digital */
+  --action: #4F46E5; /* Indigo 600 */
+  --action-foreground: #FFFFFF;
+
+  /* Backgrounds: Crisp & Bright */
+  --background: #FFFFFF; /* Pure White */
   --card: #FFFFFF;
-  /* Surface / Cards */
-  --card-foreground: #1E1E1E;
-  /* Primary text on cards */
-  --foreground: #1E1E1E;
-  /* Primary text */
-  --muted: #6B7280;
-  /* Muted text */
-  --muted-foreground: #6B7280;
-  --border: #E5E7EB;
-  /* Border / Divider */
-  --input: #FFFFFF;
-  /* input bg stays neutral */
+  --card-foreground: #1E1E2E;
+
+  /* Neutrals - Replacing Greys with Cool Tints */
+  --foreground: #1E293B; /* Slate 800 - Deep, rich text */
+  --muted: #EEF2FF; /* Indigo 50 - Fresh tint instead of grey */
+  --muted-foreground: #6366F1; /* Indigo 500 - Playful but readable secondary text */
+  
+  /* Borders */
+  --border: #E0E7FF; /* Indigo 100 - Subtle purple/blue tint border */
+  --input: #F5F7FF; /* Very light cool background */
 
   /* Status */
-  --success: #22C55E;
-  --warning: #F59E0B;
-  --error: #EF4444;
+  --success: #10B981; /* Emerald 500 */
+  --warning: #F59E0B; /* Amber 500 */
+  --error: #EF4444; /* Red 500 */
 
-  /* Interactive / focus */
-  --ring: rgba(44, 177, 188, 0.35);
-  /* translucent action for focus rings */
+  /* Focus rings */
+  --ring: rgba(79, 70, 229, 0.4);
 
-  --destructive: var(--error);
-  --destructive-foreground: #ffffff;
-
-  --radius: 0.75rem;
+  --radius: 1rem; /* Slightly softer corners */
 }
 
 @theme inline {
@@ -52,8 +46,8 @@
   --color-action-foreground: var(--action-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive: var(--error);
+  --color-destructive-foreground: #ffffff;
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -62,23 +56,62 @@
   --radius: var(--radius);
 }
 
-
-
 body {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background-color: #F8FAFC; /* Fallback */
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), 
+    radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), 
+    radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
+  background-attachment: fixed;
   color: var(--foreground);
-  font-family: var(--font-sans), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 400;
-  line-height: 1.6;
-  letter-spacing: -0.01em;
+  font-family: var(--font-sans), 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-* {
-  border-color: var(--border);
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C7D2FE; /* Indigo 200 */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #818CF8; /* Indigo 400 */
+}
+
+/* Utilities */
 .glass-effect {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(224, 231, 255, 0.6);
+  box-shadow: 
+    0 4px 6px -1px rgba(79, 70, 229, 0.05), 
+    0 10px 15px -3px rgba(79, 70, 229, 0.05);
+}
+
+.text-gradient {
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(135deg, var(--primary), var(--action));
+}
+
+.bg-fresh-gradient {
+  background: linear-gradient(135deg, #EEF2FF 0%, #FFFFFF 100%);
 }

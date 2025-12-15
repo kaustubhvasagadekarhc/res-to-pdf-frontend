@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 export default function HomePage() {
   const router = useRouter();
@@ -12,8 +13,11 @@ export default function HomePage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <div className="text-slate-600">Redirecting to login...</div>
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="h-10 w-10 text-indigo-600 animate-spin" />
+        <div className="text-indigo-600 font-medium animate-pulse">Redirecting to login...</div>
+      </div>
     </div>
   );
 }
