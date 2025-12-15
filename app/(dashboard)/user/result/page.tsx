@@ -1,17 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
 import { getAuthToken } from "@/lib/auth";
-import { motion } from "framer-motion";
-import {
-  Download,
-  RotateCcw,
-  Edit3,
-  AlertCircle,
-
-} from "lucide-react";
 import confetti from "canvas-confetti";
+import { motion } from "framer-motion";
+import { AlertCircle, Download, Edit3, RotateCcw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 export default function ResultPage() {
   const [pdfGenerated] = useState(() =>
@@ -29,7 +23,7 @@ export default function ResultPage() {
       confetti({
         particleCount: 100,
         spread: 70,
-        origin: { y: 0.6 }
+        origin: { y: 0.6 },
       });
     }
   }, [pdfGenerated]);
@@ -121,12 +115,11 @@ export default function ResultPage() {
   }, [pdfBlobUrl]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100 font-sans text-slate-900">
-
+    <div className="flex flex-col h-full font-sans text-foreground bg-card">
       {/* PDF View Area */}
-      <div className="flex-grow flex items-center justify-center p-4 pb-24 h-screen">
+      <div className="flex-grow flex items-center justify-center p-4 pb-24 min-h-[calc(100vh-100px)]">
         {pdfGenerated && pdfBlobUrl ? (
-          <div className="w-full max-w-5xl h-full bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-200">
+          <div className="w-full max-w-5xl h-[80vh] bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-200">
             <iframe
               src={pdfBlobUrl}
               className="w-full h-full"
@@ -137,19 +130,23 @@ export default function ResultPage() {
           <div className="text-center p-10">
             {pdfGenerated ? (
               <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                <div className="w-12 h-12 border-4 border-action/20 border-t-action rounded-full animate-spin"></div>
                 <p className="text-slate-500 font-medium">Loading PDF...</p>
               </div>
             ) : (
-              <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md mx-auto">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-50 rounded-full mb-4">
-                  <AlertCircle className="w-8 h-8 text-amber-500" />
+              <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md mx-auto border border-slate-100">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-warning/10 rounded-full mb-4">
+                  <AlertCircle className="w-8 h-8 text-warning" />
                 </div>
-                <h2 className="text-xl font-bold text-slate-800 mb-2">No PDF Generated</h2>
-                <p className="text-slate-500 mb-6">It looks like the resume generation process wasn&apos;t completed.</p>
+                <h2 className="text-xl font-bold text-foreground mb-2">
+                  No PDF Generated
+                </h2>
+                <p className="text-muted mb-6">
+                  It looks like the resume generation process was not completed.
+                </p>
                 <button
-                  onClick={() => router.push("/")}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+                  onClick={() => router.push("/dashboard/user")}
+                  className="bg-action text-action-foreground px-6 py-2 rounded-lg font-semibold hover:bg-action/90 transition"
                 >
                   Start Over
                 </button>
@@ -163,7 +160,7 @@ export default function ResultPage() {
       <motion.div
         initial={{ y: 100 }}
         animate={{ y: 0 }}
-        className="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.1)] z-50 p-4"
+        className="fixed bottom-0 left-0 md:left-64 right-0 bg-white border-t border-slate-200 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.1)] z-50 p-4"
       >
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 w-full sm:w-auto">
@@ -175,7 +172,7 @@ export default function ResultPage() {
               New
             </button>
             <button
-              onClick={() => router.push("/edit")}
+              onClick={() => router.push("/dashboard/user/edit")}
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 transition"
             >
               <Edit3 className="w-4 h-4" />
@@ -192,7 +189,6 @@ export default function ResultPage() {
           </button>
         </div>
       </motion.div>
-
     </div>
   );
 }

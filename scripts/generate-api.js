@@ -1,12 +1,13 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * Generates a typed frontend client from a Swagger/OpenAPI spec.
  * Uses openapi-typescript-codegen (pure TypeScript, no Java required).
  *
  * Usage:
- *   NEXT_PUBLIC_OPENAPI_URL="http://localhost:5000/api/v1/docs" npm run generate
+ *   NEXT_PUBLIC_OPENAPI_URL="http://localhost:5000/api/docs" npm run generate
  *   # or provide path/URL as arg
- *   npm run generate -- http://localhost:5000/api/v1/docs
+ *   npm run generate -- http://localhost:5000/api/docs
  */
 const { spawnSync } = require("child_process");
 const path = require("path");
@@ -93,7 +94,7 @@ fs.rmSync(outputDir, { recursive: true, force: true });
   if (specInput.startsWith("http://") || specInput.startsWith("https://")) {
     try {
       console.log(`Fetching OpenAPI spec from: ${specInput}`);
-      const { url, data } = await tryFetchSpec(specInput);
+      const { data } = await tryFetchSpec(specInput);
       fs.writeFileSync(tempFile, data, "utf8");
       specFile = tempFile;
       console.log(`Saved spec to temporary file: ${tempFile}`);
@@ -174,4 +175,3 @@ fs.rmSync(outputDir, { recursive: true, force: true });
 
   console.log("API client generated successfully.");
 })();
- 

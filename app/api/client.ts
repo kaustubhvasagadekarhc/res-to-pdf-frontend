@@ -21,10 +21,10 @@ export class ApiClient {
     headers?: Record<string, string>
   ) {
     this.axios = axios;
-    this.baseURL =
-      baseURL ||
-      process.env.NEXT_PUBLIC_API_URL ||
-      "http://localhost:5000/api/v1";
+      this.baseURL =
+        baseURL ||
+        process.env.NEXT_PUBLIC_API_URL ||
+        "http://localhost:5000";
 
     this.defaultHeaders = {
       "Content-Type": "application/json",
@@ -32,7 +32,7 @@ export class ApiClient {
     };
   }
 
-  async request<T = any>(config: AxiosRequestConfig): Promise<T> {
+  async request<T = unknown>(config: AxiosRequestConfig): Promise<T> {
     const fullConfig: AxiosRequestConfig = {
       ...config,
       baseURL: this.baseURL,
@@ -46,35 +46,35 @@ export class ApiClient {
     return response.data;
   }
 
-  async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
     return this.request<T>({ ...config, method: "GET", url });
   }
 
-  async post<T = any>(
+  async post<T = unknown>(
     url: string,
-    data?: any,
+    data?: unknown,
     config?: AxiosRequestConfig
   ): Promise<T> {
     return this.request<T>({ ...config, method: "POST", url, data });
   }
 
-  async put<T = any>(
+  async put<T = unknown>(
     url: string,
-    data?: any,
+    data?: unknown,
     config?: AxiosRequestConfig
   ): Promise<T> {
     return this.request<T>({ ...config, method: "PUT", url, data });
   }
 
-  async patch<T = any>(
+  async patch<T = unknown>(
     url: string,
-    data?: any,
+    data?: unknown,
     config?: AxiosRequestConfig
   ): Promise<T> {
     return this.request<T>({ ...config, method: "PATCH", url, data });
   }
 
-  async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  async delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
     return this.request<T>({ ...config, method: "DELETE", url });
   }
 

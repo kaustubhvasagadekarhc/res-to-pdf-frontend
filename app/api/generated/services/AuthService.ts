@@ -29,7 +29,7 @@ export class AuthService {
             email?: string;
             password?: string;
             name?: string;
-            userType?: 'user' | 'admin';
+            userType?: 'USER' | 'ADMIN';
             jobTitle?: string;
         },
     }): CancelablePromise<any> {
@@ -97,6 +97,17 @@ export class AuthService {
             url: '/auth/resend-otp',
             body: requestBody,
             mediaType: 'application/json',
+        });
+    }
+    /**
+     * User logout
+     * @returns any Logout successful
+     * @throws ApiError
+     */
+    public static postAuthLogout(): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/auth/logout',
         });
     }
     /**
