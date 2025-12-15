@@ -18,10 +18,11 @@ export function Header() {
 
   return (
     <header className="h-20 flex items-center justify-between px-10 bg-white/60 backdrop-blur-md sticky top-0 z-20 border-b border-indigo-50/50 transition-all duration-300">
-      <div className="flex flex-col space-y-0.5">
-        <h1 className="font-extrabold text-xl text-slate-800 tracking-tight">Dashboard</h1>
-        <p className="text-xs font-medium text-slate-400">Welcome back, let&apos;s get to work.</p>
-      </div>
+   
+        
+     <div className="h-10 w-10 bg-gradient-to-br from-indigo-500 to-[#6600ff] rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/20 ring-4 ring-indigo-50">
+          R
+        </div>
       
       <div className="flex items-center gap-5">
         <Button variant="ghost" size="icon" className="text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">

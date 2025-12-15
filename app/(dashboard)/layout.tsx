@@ -45,8 +45,7 @@ function DashboardContent({
   const { user, loading } = useUser();
   
   const items = user?.userType === "ADMIN" ? adminItems : userItems;
-  //   const router = useRouter();
-  //   const pathname = usePathname();
+  
 
   if (loading) {
     return null; // Or a loading skeleton
@@ -54,7 +53,7 @@ function DashboardContent({
 
   return (
     <DashboardShell>
-      <Sidebar items={items} />
+     {user?.userType === "ADMIN" && <Sidebar items={items} />}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header />
         <main className="flex-1 overflow-y-auto p-6  bg-[#ccccff]  ">

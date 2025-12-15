@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { getAuthToken } from "@/lib/auth";
+import { pdfService, apiClient } from "@/app/api/client";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
@@ -277,40 +277,25 @@ export default function EditPage() {
     setGenerating(true);
     setError("");
 
-    // Get authentication token
-    const token = await getAuthToken();
-    if (!token) {
-      setError("Authentication required. Please refresh the page.");
-      setGenerating(false);
-      return;
-    }
-
     try {
-      const response = await fetch(
-        "https://res-to-pdf-api.vercel.app/generate/pdf",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(resumeData),
-        }
-      );
+      apiClient.refreshTokenFromCookies(); // Ensure token is set from cookies
+      
+      const response = await pdfService.postGeneratePdf({
+        requestBody: resumeData!,
+      });
 
-      if (response.ok) {
-        // Store generated PDF response and navigate to result page
-        sessionStorage.setItem(
-          "pdfResponse",
-          JSON.stringify({ success: true })
-        );
-        router.push("/result");
-      } else {
-        setError("Failed to generate PDF");
-      }
-    } catch (err) {
+      console.log("PDF generation successful:", response);
+      
+      // Store generated PDF response and navigate to result page
+      sessionStorage.setItem(
+        "pdfResponse",
+        JSON.stringify({ success: true, data: response })
+      );
+      router.push("/user/result");
+    } catch (error: unknown) {
+      console.error("PDF generation failed:", error);
       setError(
-        `Error: ${err instanceof Error ? err.message : "Unknown error"}`
+        error instanceof Error ? error.message : "Failed to generate PDF"
       );
     } finally {
       setGenerating(false);
@@ -1076,7 +1061,7 @@ export default function EditPage() {
                   >
                     <button
                       onClick={() => deleteStandaloneProject(idx)}
-                      className="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
+                      className="absolute top-2 right-2 text-slate-300 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -1088,7 +1073,7 @@ export default function EditPage() {
                           updateStandaloneProject(idx, "name", e.target.value)
                         }
                         placeholder="Project Name"
-                        className="w-full font-bold text-slate-800 bg-transparent border-b border-transparent focus:border-orange-500 focus:outline-none pb-1"
+                        className="w-full font-bold text-slate-800 bg-transparent border-b border-transparent focus:border-500 focus:outline-none pb-1"
                       />
                       <textarea
                         value={proj.description}
@@ -1104,14 +1089,14 @@ export default function EditPage() {
                       />
                       <div className="pt-3">
                         <div className="flex items-center gap-2 mb-2">
-                          <Code className="w-3 h-3 text-orange-500" />
-                          <span className="text-xs font-medium text-orange-700">Technologies</span>
+                          <Code className="w-3 h-3 " />
+                          <span className="text-xs font-medium ">Technologies</span>
                         </div>
                         <div className="flex flex-wrap gap-2 mb-2">
                           {proj.technologies.map((tech, techIdx) => (
                             <span
                               key={techIdx}
-                              className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full font-medium"
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium"
                             >
                               {tech}
                               <button
@@ -1119,7 +1104,7 @@ export default function EditPage() {
                                   const newTechs = proj.technologies.filter((_, i) => i !== techIdx);
                                   updateStandaloneProject(idx, "technologies", newTechs.join(", "));
                                 }}
-                                className="ml-1 text-orange-500 hover:text-orange-700"
+                                className="ml-1  hover:text-orange-700"
                               >
                                 ×
                               </button>
@@ -1129,7 +1114,7 @@ export default function EditPage() {
                         <input
                           type="text"
                           placeholder="Add technology (press Enter)"
-                          className="w-full text-xs text-slate-600 bg-white border border-orange-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent"
+                          className="w-full text-xs text-slate-600 bg-white border border-orange-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2  focus:border-transparent"
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                               const newTech = e.currentTarget.value.trim();
@@ -1152,7 +1137,7 @@ export default function EditPage() {
       </div>
 
       {/* Floating Action Bar */}
-      <div className="fixed bottom-0 left-0 md:left-64 right-0 bg-white border-t border-slate-200 p-4 z-50 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.1)]">
+      <div className="fixed bottom-0 left-0 md:right-0 bg-white border-t border-slate-200 p-2 z-50 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.1)]">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <p className="text-sm text-slate-500 hidden md:block">
             Changes are saved automatically to your session.
