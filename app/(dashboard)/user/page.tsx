@@ -89,26 +89,23 @@ export default function UserDashboard() {
   };
 
   return (
-    <div className="flex items-center justify-center p-4 min-h-[calc(100vh-100px)]">
-      <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        {/* Left Column: Hero Text */}
+    <div className="min-h-[calc(100vh-100px)] p-4 flex items-center justify-center bg-gradient-to-br from-slate-50 via-indigo-50/30 to-rose-50/30">
+      <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        {/* Left Column: Text & Video (Span 7) */}
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="space-y-8"
+          className="lg:col-span-7 space-y-8"
         >
-          <div className="inline-flex items-center space-x-2 bg-action/10 border border-action/20 rounded-full px-4 py-1.5 text-action text-sm font-semibold">
-            <Sparkles className="w-4 h-4" />
-            <span>AI-Powered Resume Parser</span>
-          </div>
+          
 
-          <h1 className="text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1]">
+          <h1 className="text-3xl lg:text-5xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
             Transform your <br />
-            <span className="text-action relative">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 relative">
               Resume
               <svg
-                className="absolute w-full h-3 -bottom-1 left-0 text-action/30 -z-10"
+                className="absolute w-full h-3 -bottom-1 left-0 text-indigo-600/30 -z-10"
                 viewBox="0 0 100 10"
                 preserveAspectRatio="none"
               >
@@ -123,54 +120,64 @@ export default function UserDashboard() {
             into a PDF
           </h1>
 
-          <p className="text-lg text-slate-600 max-w-lg leading-relaxed">
-            Upload your existing resume and let our advanced AI extract, format,
-            and generate a professional, ATS-friendly PDF in seconds.
-          </p>
+          
 
-          <div className="space-y-4">
-            {[
-              "Smart Information Extraction",
-              "Professional Templates",
-              "Instant PDF Generation",
-            ].map((feature, idx) => (
-              <div
-                key={idx}
-                className="flex items-center space-x-3 text-slate-700"
-              >
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
-                <span className="font-medium">{feature}</span>
-              </div>
-            ))}
+          
+
+          {/* Feature Video with Creative Text Overlay */}
+          <div className="relative mt-12 rounded-2xl overflow-hidden shadow-2xl border-4 border-white/80 ring-1 ring-slate-900/5 group h-[320px]">
+             {/* Gradient Overlay */}
+             <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-transparent to-transparent z-10" />
+             
+             {/* Video */}
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105"
+            >
+              <source src="/dashboard gif.mp4" type="video/mp4" />
+            </video>
+
+            {/* Creative Text Overlay */}
+            {/* <div className="absolute bottom-6 left-6 right-6 z-20">
+                 <div className="bg-white/10 backdrop-blur-md border border-white/60 p-5 rounded-2xl shadow-lg transform transition-all duration-500 hover:bg-white/80 hover:scale-[1.02]">
+                    <p className="text-lg font-medium text-slate-800 leading-relaxed text-center">
+                        Upload your existing resume and let our <span className="text-indigo-600 font-bold bg-indigo-50/80 px-1 rounded-md">advanced AI</span> extract, format,
+                        and generate a professional PDF in seconds.
+                    </p>
+                 </div>
+            </div> */}
           </div>
         </motion.div>
 
-        {/* Right Column: Upload Card */}
+        {/* Right Column: Upload Card (Span 5) */}
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 lg:p-10 relative"
+          className="lg:col-span-5 bg-white/30 backdrop-blur-2xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/40 p-8 relative hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300"
         >
-          <div className="mb-8 text-center">
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">
+          <div className="mb-8 ">
+            <h2 className="text-3xl font-bold text-slate-800 mb-2">
               Upload Resume
             </h2>
-            <p className="text-slate-500 text-sm">
+            <p className="text-slate-500">
               Supported format: PDF (Max 10MB)
             </p>
           </div>
 
           <div
             className={`
-                        relative group border-2 border-dashed rounded-xl p-8 transition-all duration-300 ease-in-out
-                        flex flex-col items-center justify-center text-center cursor-pointer
+                        relative group border-2 border-dashed rounded-2xl p-10 transition-all duration-300 ease-in-out
+                        flex flex-col items-center justify-center text-center cursor-pointer overflow-hidden
                         ${
                           isDragOver
-                            ? "border-action bg-action/10 scale-[1.02]"
-                            : "border-slate-300 hover:border-action/40 hover:bg-slate-50/50"
+                            ? "border-indigo-500 bg-indigo-500/10"
+                            : "border-slate-300/60 hover:border-indigo-500/50 hover:bg-white/40"
                         }
-                        ${file ? "bg-action/20 border-action/30" : ""}
+                        ${file ? "bg-indigo-50/50 border-indigo-500/50" : ""}
                     `}
             onDragOver={(e) => {
               e.preventDefault();
@@ -187,35 +194,36 @@ export default function UserDashboard() {
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
             />
 
-            <div className="z-10 transition-transform duration-300 group-hover:scale-110 mb-4">
+            <div className="z-10 transition-transform duration-300 group-hover:scale-110 mb-6 relative">
+              <div className="absolute inset-0 bg-indigo-500/0 blur-2xl rounded-full" />
               {file ? (
-                <FileText className="w-16 h-16 text-action" />
+                <FileText className="w-20 h-20 text-indigo-600 relative" />
               ) : (
-                <div className="bg-action/10 p-4 rounded-full">
-                  <Upload className="w-8 h-8 text-action" />
+                <div className="bg-white p-5 rounded-2xl shadow-sm relative">
+                  <Upload className="w-10 h-10 text-indigo-600" />
                 </div>
               )}
             </div>
 
-            <div className="z-10">
+            <div className="z-10 ">
               {file ? (
                 <div>
-                  <p className="font-semibold text-action text-lg truncate max-w-[200px] mx-auto">
+                  <p className="font-semibold text-indigo-900 text-lg truncate max-w-[200px] mx-auto">
                     {file.name}
                   </p>
-                  <p className="text-sm text-action/80 mt-1">
+                  <p className="text-sm text-indigo-600/80 mt-1">
                     {(file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
-                  <p className="text-xs text-action/60 mt-2">
-                    Click to change file
-                  </p>
+                  <button className="mt-4 text-xs font-medium text-indigo-600 bg-indigo-100/50 px-3 py-1 rounded-full hover:bg-indigo-100 transition-colors">
+                    Change File
+                  </button>
                 </div>
-              ) : (
-                <div>
-                  <p className="font-semibold text-slate-700 text-lg mb-1">
+              ) : ( 
+                <div className="space-y-2 ">
+                  <p className="font-bold text-slate-700 text-xl">
                     Drop your resume here
                   </p>
-                  <p className="text-sm text-slate-500">or click to browse</p>
+                  <p className="text-sm text-slate-500 font-medium">or click to browse</p>
                 </div>
               )}
             </div>
@@ -227,10 +235,10 @@ export default function UserDashboard() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="mt-6 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-start space-x-3"
+                className="mt-6 bg-rose-50/80 backdrop-blur-sm border border-rose-200/50 text-rose-700 p-4 rounded-2xl flex items-start space-x-3"
               >
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <div className="text-sm">{error}</div>
+                <div className="text-sm font-medium">{error}</div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -239,12 +247,12 @@ export default function UserDashboard() {
             onClick={handleUpload}
             disabled={loading || !file}
             className={`
-                        w-full mt-8 py-4 px-6 rounded-xl font-bold text-white shadow-lg shadow-blue-500/30
+                        w-full mt-8 py-4 px-6 rounded-2xl font-bold text-lg shadow-lg shadow-indigo-500/20
                         transition-all duration-300 flex items-center justify-center space-x-2
                         ${
                           loading || !file
-                            ? "bg-slate-300 cursor-not-allowed shadow-none text-slate-500"
-                            : "bg-action hover:bg-action/90 hover:translate-y-[-2px] hover:shadow-action/30 hover:shadow-xl active:translate-y-[0px]"
+                            ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                            : "bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
                         }
                     `}
           >

@@ -6,6 +6,7 @@ import {  User, Bell } from "lucide-react";
 
 import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
+import Image from "next/image";
 
 export function Header() {
   const router = useRouter();
@@ -20,8 +21,8 @@ export function Header() {
     <header className="h-20 flex items-center justify-between px-10 bg-white/60 backdrop-blur-md sticky top-0 z-20 border-b border-indigo-50/50 transition-all duration-300">
    
         
-     <div className="h-10 w-10 bg-gradient-to-br from-indigo-500 to-[#6600ff] rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/20 ring-4 ring-indigo-50">
-          R
+     <div className="h-10 w-1">
+         {/* <Image src="" alt="Logo" width={80} height={80} /> */}
         </div>
       
       <div className="flex items-center gap-5">
