@@ -167,14 +167,14 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
         return;
       }
 
-      // If user not verified, redirect to OTP verification
+      // If user not verified, show an informative error but do NOT redirect here.
       if (
         errorMessage.includes("not verified") ||
         errorMessage.includes("verify") ||
         errorMessage.includes("verification")
       ) {
-        router.push(
-          `/otp-verification?email=${encodeURIComponent(formData.email)}`
+        setError(
+          "Email not verified. Please check your inbox for the verification email or register again."
         );
         return;
       }
