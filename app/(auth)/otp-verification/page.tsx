@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { authService } from "@/app/api/client";
 import { authService as tokenService } from "@/services/auth.services";
 import { useUser } from "@/contexts/UserContext";
 
-export default function OTPVerificationPage() {
+function OTPVerificationContent() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -106,5 +106,13 @@ export default function OTPVerificationPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OTPVerificationPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OTPVerificationContent />
+    </Suspense>
   );
 }
