@@ -4,6 +4,7 @@
 
 import axiosInstance from "@/lib/axiosInstance";
 import type { AxiosInstance, AxiosRequestConfig } from "axios";
+import Cookies from "js-cookie";
 import { AuthService, OpenAPI, PdfService } from "./generated";
 
 // ============================================
@@ -11,9 +12,9 @@ import { AuthService, OpenAPI, PdfService } from "./generated";
 // ============================================
 
 export class ApiClient {
-  protected axios: AxiosInstance;                    // FIX: was private
-  protected baseURL: string;                         // FIX: was private
-  protected defaultHeaders: Record<string, string>;  // FIX: was private
+  protected axios: AxiosInstance; // FIX: was private
+  protected baseURL: string; // FIX: was private
+  protected defaultHeaders: Record<string, string>; // FIX: was private
 
   constructor(
     axios: AxiosInstance,
@@ -21,15 +22,19 @@ export class ApiClient {
     headers?: Record<string, string>
   ) {
     this.axios = axios;
-      this.baseURL =
-        baseURL ||
-        process.env.NEXT_PUBLIC_API_URL ||
-        "http://localhost:5000";
+    this.baseURL =
+      baseURL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
     this.defaultHeaders = {
       "Content-Type": "application/json",
       ...headers,
     };
+
+    // Set token from cookies if available
+    const token = Cookies.get("auth-token");
+    if (token) {
+      this.setAuthToken(token);
+    }
   }
 
   async request<T = unknown>(config: AxiosRequestConfig): Promise<T> {
@@ -74,7 +79,10 @@ export class ApiClient {
     return this.request<T>({ ...config, method: "PATCH", url, data });
   }
 
-  async delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  async delete<T = unknown>(
+    url: string,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
     return this.request<T>({ ...config, method: "DELETE", url });
   }
 
@@ -96,6 +104,17 @@ export class ApiClient {
     OpenAPI.TOKEN = undefined;
   }
 
+  refreshTokenFromCookies(): void {
+    const token = Cookies.get("auth-token");
+    if (token) {
+      this.setAuthToken(token);
+      OpenAPI.TOKEN = token; // Ensure OpenAPI client is updated
+    } else {
+      this.clearAuthToken();
+      OpenAPI.TOKEN = undefined;
+    }
+  }
+
   getAxiosInstance(): AxiosInstance {
     return this.axios;
   }
@@ -108,7 +127,6 @@ export class ApiClient {
 export class ApiClientWithServices extends ApiClient {
   public auth = AuthService; // Static service
   public pdf = PdfService;
-  
 
   constructor(
     axios: AxiosInstance,
@@ -117,8 +135,16 @@ export class ApiClientWithServices extends ApiClient {
   ) {
     super(axios, baseURL, headers);
 
-    // Configure global OpenAPI client using protected property
+    // Configure global OpenAPI client
     OpenAPI.BASE = this.baseURL;
+    OpenAPI.WITH_CREDENTIALS = true;
+    OpenAPI.CREDENTIALS = "include";
+
+    // Set token from cookies for OpenAPI client
+    const token = Cookies.get("auth-token");
+    if (token) {
+      OpenAPI.TOKEN = token;
+    }
   }
 }
 

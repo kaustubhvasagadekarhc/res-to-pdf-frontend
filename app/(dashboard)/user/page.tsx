@@ -9,11 +9,13 @@ import {
   CheckCircle2,
   FileText,
   Loader2,
-  Sparkles,
+ 
   Upload,
+  
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function UserDashboard() {
   useAuthGuard("User");
@@ -74,7 +76,7 @@ export default function UserDashboard() {
 
       // TODO: Replace with typed API client call if available.
       // Using fetch here to preserve existing working logic pattern but with correct token source.
-      const response = await fetch("https://res-to-pdf-api.vercel.app/upload", {
+      const response = await fetch("http://localhost:5000/upload", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -91,7 +93,7 @@ export default function UserDashboard() {
         }
 
         sessionStorage.setItem("resumeData", JSON.stringify(result.parsed));
-        router.push("/dashboard/user/edit");
+        router.push("/user/edit");
       } else {
         setError(`Error: ${result.error || "Upload failed"}`);
       }
@@ -105,59 +107,39 @@ export default function UserDashboard() {
   };
 
   return (
-    <div className="flex items-center justify-center p-4 min-h-[calc(100vh-100px)]">
-      <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+    <div className="flex items-center justify-center p-6 min-h-[calc(100vh-100px)]">
+      <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         {/* Left Column: Hero Text */}
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="space-y-8"
+          className="space-y-10"
         >
-          <div className="inline-flex items-center space-x-2 bg-action/10 border border-action/20 rounded-full px-4 py-1.5 text-action text-sm font-semibold">
-            <Sparkles className="w-4 h-4" />
-            <span>AI-Powered Resume Parser</span>
-          </div>
+          
 
-          <h1 className="text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-            Transform your <br />
-            <span className="text-action relative">
-              Resume
-              <svg
-                className="absolute w-full h-3 -bottom-1 left-0 text-action/30 -z-10"
-                viewBox="0 0 100 10"
-                preserveAspectRatio="none"
-              >
-                <path
-                  d="M0 5 Q 50 10 100 5"
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  fill="none"
-                />
-              </svg>
-            </span>{" "}
-            into a PDF
+          <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
+            Elevate Your <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 relative">
+              Career Journey
+            </span>
           </h1>
 
-          <p className="text-lg text-slate-600 max-w-lg leading-relaxed">
-            Upload your existing resume and let our advanced AI extract, format,
-            and generate a professional, ATS-friendly PDF in seconds.
+          <p className="text-lg text-slate-600 max-w-xl leading-relaxed font-medium">
+            Stop struggling with formatting. Upload your current resume and let our AI rigorously analyze and rebuild it into a stunning, ATS-optimized PDF document that stands out.
           </p>
 
-          <div className="space-y-4">
-            {[
-              "Smart Information Extraction",
-              "Professional Templates",
-              "Instant PDF Generation",
-            ].map((feature, idx) => (
-              <div
-                key={idx}
-                className="flex items-center space-x-3 text-slate-700"
-              >
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
-                <span className="font-medium">{feature}</span>
-              </div>
-            ))}
+          <div className="flex flex-col gap-4">
+             
+             <div className="flex items-center gap-4 group">
+                 <div className="h-12 w-12 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600 group-hover:scale-110 transition-transform shadow-sm">
+                    <FileText className="h-6 w-6" />
+                 </div>
+                 <div>
+                     <h4 className="font-bold text-slate-800 text-lg">ATS Optimized</h4>
+                     <p className="text-sm text-slate-500 font-medium">Formats designed to pass screening software.</p>
+                 </div>
+             </div>
           </div>
         </motion.div>
 
@@ -166,116 +148,126 @@ export default function UserDashboard() {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 lg:p-10 relative"
+          className="relative"
         >
-          <div className="mb-8 text-center">
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">
-              Upload Resume
-            </h2>
-            <p className="text-slate-500 text-sm">
-              Supported format: PDF (Max 10MB)
-            </p>
-          </div>
+            {/* Decorative blobs */}
+            <div className="absolute -top-20 -right-20 w-80 h-80 bg-violet-200 rounded-full mix-blend-multiply filter blur-[64px] opacity-40 animate-blob"></div>
+            <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-indigo-200 rounded-full mix-blend-multiply filter blur-[64px] opacity-40 animate-blob animation-delay-2000"></div>
 
-          <div
-            className={`
-                        relative group border-2 border-dashed rounded-xl p-8 transition-all duration-300 ease-in-out
-                        flex flex-col items-center justify-center text-center cursor-pointer
-                        ${
-                          isDragOver
-                            ? "border-action bg-action/10 scale-[1.02]"
-                            : "border-slate-300 hover:border-action/40 hover:bg-slate-50/50"
-                        }
-                        ${file ? "bg-action/20 border-action/30" : ""}
-                    `}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragOver(true);
-            }}
-            onDragLeave={() => setIsDragOver(false)}
-            onDrop={handleDrop}
-          >
-            <input
-              type="file"
-              id="fileInput"
-              accept=".pdf"
-              onChange={handleFileChange}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-            />
-
-            <div className="z-10 transition-transform duration-300 group-hover:scale-110 mb-4">
-              {file ? (
-                <FileText className="w-16 h-16 text-action" />
-              ) : (
-                <div className="bg-action/10 p-4 rounded-full">
-                  <Upload className="w-8 h-8 text-action" />
-                </div>
-              )}
+          <div className="glass-card rounded-[2rem] p-8 lg:p-12 relative overflow-hidden">
+             
+            <div className="mb-10 text-center">
+              <h2 className="text-3xl font-extrabold text-slate-800 mb-3">
+                Upload Resume
+              </h2>
+              <p className="text-slate-500 font-medium">
+                Support for PDF files up to 10MB
+              </p>
             </div>
 
-            <div className="z-10">
-              {file ? (
-                <div>
-                  <p className="font-semibold text-action text-lg truncate max-w-[200px] mx-auto">
-                    {file.name}
-                  </p>
-                  <p className="text-sm text-action/80 mt-1">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                  <p className="text-xs text-action/60 mt-2">
-                    Click to change file
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <p className="font-semibold text-slate-700 text-lg mb-1">
-                    Drop your resume here
-                  </p>
-                  <p className="text-sm text-slate-500">or click to browse</p>
-                </div>
-              )}
+            <div
+              className={`
+                 relative group border-2 border-dashed rounded-2xl p-10 transition-all duration-300 ease-out
+                 flex flex-col items-center justify-center text-center cursor-pointer
+                 ${
+                   isDragOver
+                     ? "border-indigo-500 bg-indigo-50/50 scale-[1.01] shadow-inner"
+                     : "border-indigo-100 hover:border-indigo-400 hover:bg-indigo-50/30"
+                 }
+                 ${file ? "bg-indigo-50/40 border-indigo-200" : "bg-white/50"}
+              `}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+              }}
+              onDragLeave={() => setIsDragOver(false)}
+              onDrop={handleDrop}
+              onClick={() => document.getElementById("fileInput")?.click()}
+            >
+              <input
+                type="file"
+                id="fileInput"
+                accept=".pdf"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+
+              <div className="z-10 transition-transform duration-300 group-hover:-translate-y-2 mb-6">
+                {file ? (
+                  <div className="relative">
+                      <div className="absolute -inset-4 bg-indigo-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <FileText className="w-20 h-20 text-indigo-600 relative z-10 drop-shadow-sm" />
+                      <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white p-1.5 rounded-full border-4 border-white shadow-sm">
+                          <CheckCircle2 className="w-4 h-4" />
+                      </div>
+                  </div>
+                ) : (
+                  <div className="bg-indigo-50 p-6 rounded-full group-hover:bg-indigo-100 transition-colors shadow-sm">
+                    <Upload className="w-10 h-10 text-indigo-600" />
+                  </div>
+                )}
+              </div>
+
+              <div className="z-10 space-y-1">
+                {file ? (
+                  <div className="animate-in fade-in zoom-in duration-300">
+                    <p className="font-bold text-slate-800 text-xl truncate max-w-[240px] mx-auto">
+                      {file.name}
+                    </p>
+                    <p className="text-sm text-slate-500 font-medium">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                    <p className="text-xs text-indigo-600 mt-3 font-bold uppercase tracking-wide">
+                      Click to change
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="font-bold text-slate-800 text-xl mb-2">
+                      Drop your resume here
+                    </p>
+                    <p className="text-sm text-slate-500 font-medium">or click to browse from your computer</p>
+                  </div>
+                )}
+              </div>
             </div>
+
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                  animate={{ opacity: 1, height: "auto", marginTop: 24 }}
+                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                  className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3"
+                >
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  <span className="text-sm font-semibold">{error}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <Button
+              onClick={handleUpload}
+              disabled={loading || !file}
+              className={`
+                  w-full mt-8 py-6 text-lg font-bold rounded-xl shadow-xl shadow-indigo-500/20
+                  transition-all duration-300 bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-700 hover:to-violet-700
+                  ${loading || !file ? 'opacity-70 cursor-not-allowed grayscale' : 'hover:scale-[1.02] hover:shadow-indigo-500/40'}
+              `}
+              size="lg"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Generate PDF <ArrowRight className="w-5 h-5 ml-2" />
+                </>
+              )}
+            </Button>
           </div>
-
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-6 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-start space-x-3"
-              >
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <div className="text-sm">{error}</div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <button
-            onClick={handleUpload}
-            disabled={loading || !file}
-            className={`
-                        w-full mt-8 py-4 px-6 rounded-xl font-bold text-white shadow-lg shadow-blue-500/30
-                        transition-all duration-300 flex items-center justify-center space-x-2
-                        ${
-                          loading || !file
-                            ? "bg-slate-300 cursor-not-allowed shadow-none text-slate-500"
-                            : "bg-action hover:bg-action/90 hover:translate-y-[-2px] hover:shadow-action/30 hover:shadow-xl active:translate-y-[0px]"
-                        }
-                    `}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Processing...</span>
-              </>
-            ) : (
-              <>
-                <span>Generate PDF</span>
-                <ArrowRight className="w-5 h-5" />
-              </>
-            )}
-          </button>
         </motion.div>
       </div>
     </div>

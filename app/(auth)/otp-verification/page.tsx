@@ -1,15 +1,19 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import { authService } from "@/app/api/client";
+import { authService as tokenService } from "@/services/auth.services";
+import { useUser } from "@/contexts/UserContext";
 
-export default function OTPVerificationPage() {
+function OTPVerificationContent() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
+  const { refreshUser } = useUser();
 
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,20 +21,36 @@ export default function OTPVerificationPage() {
     setError("");
 
     try {
-      const response = await fetch("/api/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp }),
+      const response = await authService.postAuthVerifyOtp({
+        requestBody: { 
+          email: email!, 
+          otp 
+        },
       });
-
-      if (response.ok) {
-        router.push("/user");
+      
+      console.log("OTP verification successful:", response);
+      
+      // Extract token and store in cookies
+      const token = response.token || response.data?.token;
+      if (token) {
+        tokenService.setToken(token);
+        await refreshUser(); // Refresh user context with new data
+        
+        // Extract user data and route based on userType
+        const user = response.user || response.data?.user;
+        const userType = user?.userType || user?.type || "user";
+        
+        if (userType === "admin" || userType === "ADMIN") {
+          router.push("/admin");
+        } else {
+          router.push("/user");
+        }
       } else {
-        const data = await response.json();
-        setError(data.message || "Invalid OTP");
+        router.push("/user"); // fallback
       }
-    } catch {
-      setError("Verification failed. Please try again.");
+    } catch (error: unknown) {
+      console.error("OTP verification failed:", error);
+      setError(error instanceof Error ? error.message : "Invalid OTP");
     } finally {
       setLoading(false);
     }
@@ -86,5 +106,13 @@ export default function OTPVerificationPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OTPVerificationPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OTPVerificationContent />
+    </Suspense>
   );
 }

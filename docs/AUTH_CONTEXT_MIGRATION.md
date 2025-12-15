@@ -7,6 +7,7 @@ Managing authentication state using localStorage and sessionStorage has several 
 ## Why Replace LocalStorage/SessionStorage?
 
 ### Limitations of Browser Storage
+
 1. **Security Risks**: Data in localStorage/sessionStorage can be accessed by any JavaScript code in your app, making it vulnerable to XSS attacks
 2. **No Automatic Cleanup**: Tokens remain even after browser crashes or unexpected exits
 3. **Memory Consumption**: Persistent storage increases memory usage
@@ -14,6 +15,7 @@ Managing authentication state using localStorage and sessionStorage has several 
 5. **State Consistency**: No centralized state management leading to inconsistencies
 
 ### Benefits of Context API
+
 1. **Centralized State Management**: Single source of truth for authentication state
 2. **Better Performance**: In-memory state is faster than disk-based storage
 3. **Easy Debugging**: Track state changes using React DevTools
@@ -61,21 +63,27 @@ export interface AuthContextType extends AuthState {
 
 ```typescript
 // contexts/AuthContext.tsx
-'use client';
+"use client";
 
-import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { AuthContextType, AuthState } from '@/types/auth';
-import { authService, apiClient } from '@/app/api/client';
+import {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  ReactNode,
+} from "react";
+import { AuthContextType, AuthState } from "@/types/auth";
+import { authService, apiClient } from "@/app/api/client";
 
 // Define action types
 type AuthAction =
-  | { type: 'LOGIN_START' }
-  | { type: 'LOGIN_SUCCESS'; payload: { user: AuthUser; token: string } }
-  | { type: 'LOGIN_FAILURE'; payload: string }
-  | { type: 'LOGOUT' }
-  | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'VERIFY_TOKEN_SUCCESS'; payload: AuthUser }
-  | { type: 'TOKEN_REFRESHED'; payload: { token: string } };
+  | { type: "LOGIN_START" }
+  | { type: "LOGIN_SUCCESS"; payload: { user: AuthUser; token: string } }
+  | { type: "LOGIN_FAILURE"; payload: string }
+  | { type: "LOGOUT" }
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "VERIFY_TOKEN_SUCCESS"; payload: AuthUser }
+  | { type: "TOKEN_REFRESHED"; payload: { token: string } };
 
 // Initial state
 const initialState: AuthState = {
@@ -88,12 +96,12 @@ const initialState: AuthState = {
 // Reducer function
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
-    case 'LOGIN_START':
+    case "LOGIN_START":
       return {
         ...state,
         isLoading: true,
       };
-    case 'LOGIN_SUCCESS':
+    case "LOGIN_SUCCESS":
       return {
         ...state,
         user: action.payload.user,
@@ -101,7 +109,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isAuthenticated: true,
         isLoading: false,
       };
-    case 'LOGIN_FAILURE':
+    case "LOGIN_FAILURE":
       return {
         ...state,
         user: null,
@@ -109,7 +117,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isAuthenticated: false,
         isLoading: false,
       };
-    case 'LOGOUT':
+    case "LOGOUT":
       return {
         ...state,
         user: null,
@@ -117,19 +125,19 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isAuthenticated: false,
         isLoading: false,
       };
-    case 'SET_LOADING':
+    case "SET_LOADING":
       return {
         ...state,
         isLoading: action.payload,
       };
-    case 'VERIFY_TOKEN_SUCCESS':
+    case "VERIFY_TOKEN_SUCCESS":
       return {
         ...state,
         user: action.payload,
         isAuthenticated: true,
         isLoading: false,
       };
-    case 'TOKEN_REFRESHED':
+    case "TOKEN_REFRESHED":
       return {
         ...state,
         token: action.payload.token,
@@ -154,7 +162,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Initialize authentication state from persisted storage
   const initializeAuth = async () => {
     try {
-      const storedToken = localStorage.getItem('auth_token');
+      const storedToken = localStorage.getItem("auth-token");
       if (storedToken) {
         // Verify the token and restore user session
         const isValid = await verifyToken(storedToken);
@@ -162,21 +170,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           apiClient.setAuthToken(storedToken);
         } else {
           // Token is invalid, clear it
-          localStorage.removeItem('auth_token');
-          dispatch({ type: 'LOGOUT' });
+          localStorage.removeItem("auth-token");
+          dispatch({ type: "LOGOUT" });
         }
       } else {
-        dispatch({ type: 'LOGOUT' });
+        dispatch({ type: "LOGOUT" });
       }
     } catch (error) {
-      console.error('Error initializing auth:', error);
-      dispatch({ type: 'LOGOUT' });
+      console.error("Error initializing auth:", error);
+      dispatch({ type: "LOGOUT" });
     }
   };
 
   // Login function
   const login = async (email: string, password: string) => {
-    dispatch({ type: 'LOGIN_START' });
+    dispatch({ type: "LOGIN_START" });
 
     try {
       // Call the generated API using our client wrapper
@@ -189,18 +197,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { token, user } = response; // Modify according to your API response
 
       // Save token to localStorage for persistence
-      localStorage.setItem('auth_token', token);
+      localStorage.setItem("auth-token", token);
 
       // Set token in API client for subsequent requests
       apiClient.setAuthToken(token);
 
       // Update context state
       dispatch({
-        type: 'LOGIN_SUCCESS',
+        type: "LOGIN_SUCCESS",
         payload: { user, token },
       });
     } catch (error) {
-      dispatch({ type: 'LOGIN_FAILURE', payload: error.message || 'Login failed' });
+      dispatch({
+        type: "LOGIN_FAILURE",
+        payload: error.message || "Login failed",
+      });
       throw error;
     }
   };
@@ -208,18 +219,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Logout function
   const logout = () => {
     // Clear token from localStorage
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem("auth-token");
 
     // Clear token from API client
     apiClient.clearAuthToken();
 
     // Update context state
-    dispatch({ type: 'LOGOUT' });
+    dispatch({ type: "LOGOUT" });
   };
 
   // Register function
-  const register = async (userData: { email: string; password: string; name: string }) => {
-    dispatch({ type: 'SET_LOADING', payload: true });
+  const register = async (userData: {
+    email: string;
+    password: string;
+    name: string;
+  }) => {
+    dispatch({ type: "SET_LOADING", payload: true });
 
     try {
       const response = await authService.postAuthRegister({
@@ -229,10 +244,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Auto-login after registration if desired
       await login(userData.email, userData.password);
     } catch (error) {
-      dispatch({ type: 'LOGIN_FAILURE', payload: error.message || 'Registration failed' });
+      dispatch({
+        type: "LOGIN_FAILURE",
+        payload: error.message || "Registration failed",
+      });
       throw error;
     } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
@@ -241,16 +259,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       // Call an authenticated endpoint to verify the token
       // This could be a profile endpoint or similar
-      const response = await apiClient.get('/profile'); // Adjust the endpoint as needed
+      const response = await apiClient.get("/profile"); // Adjust the endpoint as needed
       if (response) {
         dispatch({
-          type: 'VERIFY_TOKEN_SUCCESS',
+          type: "VERIFY_TOKEN_SUCCESS",
           payload: response.user, // Adjust according to your API response
         });
         return true;
       }
     } catch (error) {
-      console.error('Token verification failed:', error);
+      console.error("Token verification failed:", error);
     }
     return false;
   };
@@ -262,18 +280,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const newToken = response.token; // Adjust according to your API response
 
       if (newToken) {
-        localStorage.setItem('auth_token', newToken);
+        localStorage.setItem("auth-token", newToken);
         apiClient.setAuthToken(newToken);
 
         dispatch({
-          type: 'TOKEN_REFRESHED',
+          type: "TOKEN_REFRESHED",
           payload: { token: newToken },
         });
 
         return newToken;
       }
     } catch (error) {
-      console.error('Token refresh failed:', error);
+      console.error("Token refresh failed:", error);
     }
     return null;
   };
@@ -287,14 +305,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     refreshToken,
   };
 
-  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
+  );
 };
 
 // Custom hook to use auth context
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -306,7 +326,7 @@ Update your main application layout to include the AuthProvider:
 
 ```typescript
 // app/layout.tsx (or where you want to provide auth context)
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider } from "@/contexts/AuthContext";
 
 export default function RootLayout({
   children,
@@ -316,9 +336,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
@@ -329,32 +347,32 @@ export default function RootLayout({
 
 ```typescript
 // components/auth/login-form.tsx
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const { login } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       await login(email, password);
       // Redirect after successful login
-      router.push('/dashboard');
+      router.push("/dashboard");
       router.refresh(); // Optionally refresh to update UI
     } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
+      setError(err.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -386,7 +404,7 @@ export default function LoginForm() {
       </div>
       {error && <p className="error">{error}</p>}
       <button type="submit" disabled={loading}>
-        {loading ? 'Logging in...' : 'Login'}
+        {loading ? "Logging in..." : "Login"}
       </button>
     </form>
   );
@@ -399,9 +417,9 @@ Create a higher-order component or hook for protected routes:
 
 ```typescript
 // hooks/useProtectedRoute.ts
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useProtectedRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -409,7 +427,7 @@ export const useProtectedRoute = () => {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [isAuthenticated, isLoading, router]);
 
@@ -421,10 +439,10 @@ And use it in your protected pages:
 
 ```typescript
 // app/dashboard/page.tsx
-'use client';
+"use client";
 
-import { useProtectedRoute } from '@/hooks/useProtectedRoute';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProtectedRoute } from "@/hooks/useProtectedRoute";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function DashboardPage() {
   const { isAuthenticated, isLoading } = useProtectedRoute();
@@ -456,27 +474,27 @@ For enhanced security, consider the following approaches:
 export const AuthStorage = {
   // Securely store auth token
   setToken(token: string) {
-    localStorage.setItem('auth_token', token);
+    localStorage.setItem("auth-token", token);
   },
 
   // Retrieve auth token
   getToken(): string | null {
-    return localStorage.getItem('auth_token');
+    return localStorage.getItem("auth-token");
   },
 
   // Clear auth token
   removeToken() {
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem("auth-token");
   },
 
   // Optional: Store session data separately
   setSession(sessionData: any) {
-    sessionStorage.setItem('auth_session', JSON.stringify(sessionData));
+    sessionStorage.setItem("auth_session", JSON.stringify(sessionData));
   },
 
   getSession(): any {
     try {
-      const session = sessionStorage.getItem('auth_session');
+      const session = sessionStorage.getItem("auth_session");
       return session ? JSON.parse(session) : null;
     } catch {
       return null;
@@ -484,8 +502,8 @@ export const AuthStorage = {
   },
 
   clearSession() {
-    sessionStorage.removeItem('auth_session');
-  }
+    sessionStorage.removeItem("auth_session");
+  },
 };
 ```
 

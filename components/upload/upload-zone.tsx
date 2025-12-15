@@ -113,7 +113,7 @@ export function UploadZone() {
         sessionStorage.setItem("resumeData", JSON.stringify(result.parsed));
 
         // Redirect to Edit page (Draft)
-        router.push("/dashboard/user/edit/draft");
+        router.push("/user/edit/draft");
       } else {
         setError(`Error: ${result.error || "Upload failed"}`);
       }
@@ -131,7 +131,7 @@ export function UploadZone() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 lg:p-10 relative max-w-2xl mx-auto"
+      className=" backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 lg:p-10 relative max-w-2xl mx-auto"
     >
       <div className="mb-8 text-center">
         <h2 className="text-2xl font-bold text-slate-800 mb-2">

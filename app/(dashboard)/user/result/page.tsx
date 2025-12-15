@@ -145,7 +145,7 @@ export default function ResultPage() {
                   It looks like the resume generation process was not completed.
                 </p>
                 <button
-                  onClick={() => router.push("/dashboard/user")}
+                  onClick={() => router.push("/user")}
                   className="bg-action text-action-foreground px-6 py-2 rounded-lg font-semibold hover:bg-action/90 transition"
                 >
                   Start Over
@@ -172,7 +172,7 @@ export default function ResultPage() {
               New
             </button>
             <button
-              onClick={() => router.push("/dashboard/user/edit")}
+              onClick={() => router.push("/user/edit")}
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 transition"
             >
               <Edit3 className="w-4 h-4" />
