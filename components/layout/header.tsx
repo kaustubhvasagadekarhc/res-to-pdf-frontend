@@ -2,14 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import { authService as legacyAuthService } from "@/services/auth.services";
-import { LogOut, User, Bell } from "lucide-react";
+import {  User, Bell } from "lucide-react";
 
 import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
 
 export function Header() {
   const router = useRouter();
-  const { user: userData } = useUser();
+  // const { user: userData } = useUser();
 
   const handleLogout = () => {
     legacyAuthService.clearToken();

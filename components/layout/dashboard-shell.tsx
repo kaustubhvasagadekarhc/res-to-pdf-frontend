@@ -10,7 +10,7 @@ export function DashboardShell({
   return (
     <div
       className={cn(
-        "flex min-h-screen bg-background text-foreground",
+        "flex h-screen overflow-hidden bg-background text-foreground",
         className
       )}
       {...props}
