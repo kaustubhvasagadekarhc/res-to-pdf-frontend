@@ -80,9 +80,9 @@ export function Sidebar({ items, className }: SidebarProps) {
                     strokeWidth={isActive ? 2.5 : 2}
                   />
                   <span className="text-[15px]  tracking-tight">{item.label}</span>
-                  {isActive && (
+                  {/* {isActive && (
                     <div className="absolute right-3 w-2 h-2 rounded-full bg-indigo-500 shadow-md ring-2 ring-white" />
-                  )}
+                  )} */}
                 </Button>
               </div>
             </Link>

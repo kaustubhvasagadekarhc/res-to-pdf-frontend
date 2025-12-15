@@ -985,7 +985,7 @@ export default function EditPage() {
                 </button>
               </div>
 
-              <div className="p-6 lg:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-6 lg:p-8 grid grid-cols-1 md:grid-cols-1 gap-6">
                 {resumeData.education.map((edu, idx) => (
                   <div
                     key={idx}
@@ -1068,7 +1068,7 @@ export default function EditPage() {
                   <Plus className="w-4 h-4" /> Add Project
                 </button>
               </div>
-              <div className="p-6 lg:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-6 lg:p-8 space-y-6">
                 {resumeData.projects.map((proj, idx) => (
                   <div
                     key={idx}
@@ -1102,19 +1102,44 @@ export default function EditPage() {
                         placeholder="Project description..."
                         className="w-full text-sm text-slate-600 bg-transparent resize-none focus:outline-none min-h-[60px]"
                       />
-                      <div className="pt-2">
+                      <div className="pt-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Code className="w-3 h-3 text-orange-500" />
+                          <span className="text-xs font-medium text-orange-700">Technologies</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {proj.technologies.map((tech, techIdx) => (
+                            <span
+                              key={techIdx}
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full font-medium"
+                            >
+                              {tech}
+                              <button
+                                onClick={() => {
+                                  const newTechs = proj.technologies.filter((_, i) => i !== techIdx);
+                                  updateStandaloneProject(idx, "technologies", newTechs.join(", "));
+                                }}
+                                className="ml-1 text-orange-500 hover:text-orange-700"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
                         <input
                           type="text"
-                          value={proj.technologies.join(", ")}
-                          onChange={(e) =>
-                            updateStandaloneProject(
-                              idx,
-                              "technologies",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Technologies used..."
-                          className="w-full text-xs text-orange-600 bg-orange-50/50 rounded px-2 py-1 focus:outline-none"
+                          placeholder="Add technology (press Enter)"
+                          className="w-full text-xs text-slate-600 bg-white border border-orange-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                              const newTech = e.currentTarget.value.trim();
+                              const currentTechs = proj.technologies.filter(t => t.trim());
+                              if (!currentTechs.includes(newTech)) {
+                                updateStandaloneProject(idx, "technologies", [...currentTechs, newTech].join(", "));
+                              }
+                              e.currentTarget.value = '';
+                            }
+                          }}
                         />
                       </div>
                     </div>
