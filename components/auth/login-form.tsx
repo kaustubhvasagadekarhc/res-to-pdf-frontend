@@ -13,10 +13,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authService as tokenService } from "@/services/auth.services";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 /**
  * Props for the LoginForm component.
@@ -187,88 +188,111 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto shadow-none border-0 sm:border sm:shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-2xl text-center">Login</CardTitle>
-        <CardDescription className="text-center">
-          Enter your email to access your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="m@example.com"
-              required
-              value={formData.email}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              <Link
-                href="/forgot-password"
-                className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              >
-                Forgot password?
-              </Link>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card className="w-full max-w-md mx-auto shadow-2xl border-0 bg-white/80 backdrop-blur-xl rounded-2xl overflow-hidden ring-1 ring-white/50">
+        <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-1.5 w-full" />
+        <CardHeader className="text-center pb-2 pt-8">
+          <CardTitle className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-br from-indigo-600 to-violet-700">
+            Welcome Back
+          </CardTitle>
+          <CardDescription className="text-slate-500 font-medium mt-2">
+            Enter your credentials to access your workspace
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6 pt-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-slate-700 font-semibold">Email Address</Label>
+              <div className="relative group">
+                <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="name@company.com"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="pl-10 h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-200 rounded-xl transition-all duration-200"
+                />
+              </div>
             </div>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-            />
-          </div>
 
-          {/* <div className="flex items-center justify-between">
-            <label className="inline-flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                className="w-4 h-4 rounded border border-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action/40"
-              />
-              <span className="text-sm text-muted">Remember me</span>
-            </label>
-            <div />
-          </div> */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-slate-700 font-semibold">Password</Label>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-semibold text-indigo-600 hover:text-indigo-500 hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative group">
+                <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="••••••••"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="pl-10 h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-200 rounded-xl transition-all duration-200"
+                />
+              </div>
+            </div>
 
-          {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="text-sm text-rose-600 bg-rose-50 p-3 rounded-xl flex items-center gap-2 border border-rose-100 font-medium"
+                >
+                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                   {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Sign In
-          </Button>
-        </form>
-      </CardContent>
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-slate-500">
-          Don&apos;t have an account?{" "}
-          {onRegisterClick ? (
-            <button
-              type="button"
-              onClick={onRegisterClick}
-              className="font-medium text-action hover:underline"
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold py-6 rounded-xl shadow-lg shadow-indigo-500/30 transition-all duration-300 hover:shadow-indigo-500/50 hover:-translate-y-0.5"
+              disabled={loading}
             >
-              Register
-            </button>
-          ) : (
-            <Link
-              href="/register"
-              className="font-medium text-action hover:underline"
-            >
-              Register
-            </Link>
-          )}
-        </p>
-      </CardFooter>
-    </Card>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Sign In
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-center border-t border-slate-100 mt-2 py-6 bg-slate-50/50">
+          <p className="text-sm text-slate-500 font-medium">
+            Don&apos;t have an account?{" "}
+            {onRegisterClick ? (
+              <button
+                type="button"
+                onClick={onRegisterClick}
+                className="font-bold text-indigo-600 hover:text-indigo-500 hover:underline transition-colors"
+              >
+                Create Account
+              </button>
+            ) : (
+              <Link
+                href="/register"
+                className="font-bold text-indigo-600 hover:text-indigo-500 hover:underline transition-colors"
+              >
+                Create Account
+              </Link>
+            )}
+          </p>
+        </CardFooter>
+      </Card>
+    </motion.div>
   );
 }
