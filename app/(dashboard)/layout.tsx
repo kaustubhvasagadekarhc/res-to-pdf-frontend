@@ -13,59 +13,40 @@ import {
   User,
   Users,
 } from "lucide-react";
-// import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+// import { useState } from "react";
+import { UserProvider, useUser } from "@/contexts/UserContext";
 
 // Admin Sidebar Items
 const adminItems: SidebarItem[] = [
-  { label: "Overview", href: "/dashboard/admin", icon: Home },
-  { label: "User Management", href: "/dashboard/admin/users", icon: Users },
-  { label: "Analytics", href: "/dashboard/admin/analytics", icon: BarChart3 },
+  { label: "Overview", href: "/admin", icon: Home },
+  { label: "User Management", href: "/admin/users", icon: Users },
+  { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   {
     label: "System Settings",
-    href: "/dashboard/admin/settings",
+    href: "/admin/settings",
     icon: Settings,
   },
-  { label: "Activity Logs", href: "/dashboard/admin/logs", icon: Activity },
+  { label: "Activity Logs", href: "/admin/logs", icon: Activity },
 ];
 
 // User Sidebar Items
 const userItems: SidebarItem[] = [
-  { label: "My Resume", href: "/dashboard/user", icon: FileText },
-  { label: "Edit Resume", href: "/dashboard/user/edit", icon: Settings },
-  { label: "Results", href: "/dashboard/user/result", icon: BookDown },
-  { label: "Profile", href: "/dashboard/user/profile", icon: User },
+  { label: "My Resume", href: "/user", icon: FileText },
+  { label: "Edit Resume", href: "/user/edit", icon: Settings },
+  { label: "Results", href: "/user/result", icon: BookDown },
+  { label: "Profile", href: "/user/profile", icon: User },
 ];
 
-export default function DashboardLayout({
+function DashboardContent({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const initialItems = (() => {
-    const dashboardData =
-      typeof window !== "undefined"
-        ? localStorage.getItem("dashboardData")
-        : null;
-    let userType = "user";
-
-    if (dashboardData) {
-      try {
-        const parsed = JSON.parse(dashboardData as string);
-        userType = parsed.userType || parsed.user?.userType || "user";
-      } catch (e) {
-        console.error("Failed to parse dashboard data", e);
-      }
-    }
-
-    return userType === "admin" ? adminItems : userItems;
-  })();
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [items, setItems] = useState<SidebarItem[]>(initialItems);
-  const [loading] = useState(false);
-//   const router = useRouter();
-//   const pathname = usePathname();
+  const { user, loading } = useUser();
+  
+  const items = user?.userType === "ADMIN" ? adminItems : userItems;
+  //   const router = useRouter();
+  //   const pathname = usePathname();
 
   if (loading) {
     return null; // Or a loading skeleton
@@ -81,5 +62,17 @@ export default function DashboardLayout({
         </main>
       </div>
     </DashboardShell>
+  );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <UserProvider>
+      <DashboardContent>{children}</DashboardContent>
+    </UserProvider>
   );
 }

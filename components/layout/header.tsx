@@ -1,15 +1,17 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { authService } from "@/services/auth.services";
-import { LogOut, User } from "lucide-react"; // simple icons
+import { authService as legacyAuthService } from "@/services/auth.services";
+import { LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/contexts/UserContext";
 
 export function Header() {
   const router = useRouter();
+  const { user: userData } = useUser();
 
   const handleLogout = () => {
-    authService.clearToken();
+    legacyAuthService.clearToken();
     router.push("/login");
   };
 
@@ -17,13 +19,12 @@ export function Header() {
     <header className="h-16 border-b bg-card flex items-center justify-between px-6">
       <div className="font-semibold text-lg text-foreground">Dashboard</div>
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push("/dashboard/user/profile")}
-        >
-          <User className="h-5 w-5 text-foreground" />
-        </Button>
+        {userData && (
+          <div className="flex items-center gap-2 text-sm text-foreground">
+            <User className="h-4 w-4" />
+            <span>{userData.name || userData.email}</span>
+          </div>
+        )}
         <Button
           variant="ghost"
           size="sm"

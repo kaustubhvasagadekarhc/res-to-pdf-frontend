@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authService as tokenService } from "@/services/auth.services";
+import { apiClient } from "@/app/api/client";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -113,14 +114,11 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
 
       if (token) {
         tokenService.setToken(token);
+        apiClient.refreshTokenFromCookies(); // Refresh API client with new token
 
         if (user) {
           const userType =
             (user.type as string) || (user.userType as string) || "user";
-          localStorage.setItem(
-            "dashboardData",
-            JSON.stringify({ user, userType })
-          );
 
           if (userType === "admin" || userType === "ADMIN") {
             router.push("/admin");
@@ -212,12 +210,6 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
-              <Link
-                href="/forgot-password"
-                className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              >
-                Forgot password?
-              </Link>
             </div>
             <Input
               id="password"
@@ -246,6 +238,15 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Sign In
           </Button>
+          {/* left align forgot password */}
+          {/* <div className=" flex justify-end">
+            <Link
+              href="/forgot-password"
+              className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              Forgot password?
+            </Link>
+          </div> */}
         </form>
       </CardContent>
       <CardFooter className="flex justify-center">

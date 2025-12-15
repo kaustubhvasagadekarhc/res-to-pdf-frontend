@@ -74,7 +74,7 @@ export default function UserDashboard() {
 
       // TODO: Replace with typed API client call if available.
       // Using fetch here to preserve existing working logic pattern but with correct token source.
-      const response = await fetch("https://res-to-pdf-api.vercel.app/upload", {
+      const response = await fetch("http://localhost:5000/upload", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -91,7 +91,7 @@ export default function UserDashboard() {
         }
 
         sessionStorage.setItem("resumeData", JSON.stringify(result.parsed));
-        router.push("/dashboard/user/edit");
+        router.push("/user/edit");
       } else {
         setError(`Error: ${result.error || "Upload failed"}`);
       }
