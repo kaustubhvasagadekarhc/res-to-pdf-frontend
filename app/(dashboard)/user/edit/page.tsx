@@ -57,6 +57,16 @@ interface ResumeData {
   }>;
 }
 
+interface ApiResponse {
+  status: string;
+  data: {
+    id: string;
+    fileName: string;
+    fileUrl: string;
+    createdAt: string;
+  };
+}
+
 export default function EditPage() {
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -285,8 +295,30 @@ export default function EditPage() {
 
       console.log("PDF generation successful:", response);
 
+      // Check if response matches the new API format: { status: "success", data: { fileUrl: "...", ... } }
+      if (
+        response &&
+        typeof response === "object" &&
+        (response as unknown as ApiResponse).status === "success" &&
+        (response as unknown as ApiResponse).data &&
+        (response as unknown as ApiResponse).data.fileUrl
+      ) {
+        const apiResponse = response as unknown as ApiResponse;
+        // Store the API response with the file URL
+        sessionStorage.setItem(
+          "pdfResponse",
+          JSON.stringify({
+            success: true,
+            data: apiResponse.data,
+            pdfUrl: apiResponse.data.fileUrl,
+            fileName:
+              apiResponse.data.fileName ||
+              `${resumeData!.personal.name || "resume"}.pdf`,
+          })
+        );
+      }
       // Check if response is a Blob
-      if (response instanceof Blob) {
+      else if (response instanceof Blob) {
         const pdfUrl = URL.createObjectURL(response);
         sessionStorage.setItem(
           "pdfResponse",
@@ -296,7 +328,9 @@ export default function EditPage() {
             fileName: `${resumeData!.personal.name || "resume"}.pdf`,
           })
         );
-      } else {
+      }
+      // Fallback for other response formats
+      else {
         // Handle non-blob response (fallback)
         // If the API returned a base64-data URL or embedded base64, convert it to a blob URL now
         try {

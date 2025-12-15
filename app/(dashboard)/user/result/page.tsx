@@ -33,6 +33,9 @@ export default function ResultPage() {
           // If pdfUrl already saved, return it
           if (parsed.pdfUrl) return parsed.pdfUrl;
 
+          // Check for new API format: { data: { fileUrl: "...", ... } }
+          if (parsed.data && parsed.data.fileUrl) return parsed.data.fileUrl;
+
           // If server returned nested data with base64 PDF string
           // attempt to convert and persist pdfUrl
           const maybeData = parsed.data || parsed;
@@ -60,6 +63,17 @@ export default function ResultPage() {
     }
     return null;
   });
+
+  // Define types for the API response
+  interface ApiResponse {
+    status: string;
+    data: {
+      id: string;
+      fileName: string;
+      fileUrl: string;
+      createdAt: string;
+    };
+  }
 
   const [previewError, setPreviewError] = useState<string | null>(null);
   const router = useRouter();
@@ -95,8 +109,23 @@ export default function ResultPage() {
         return url;
       }
 
+      // Check if response matches the new API format: { status: "success", data: { fileUrl: "...", ... } }
+      if (response && typeof response === "object" &&
+          (response as ApiResponse).status === "success" &&
+          (response as ApiResponse).data &&
+          (response as ApiResponse).data.fileUrl) {
+
+        const fileUrl = (response as ApiResponse).data.fileUrl;
+        const pdfResponse = {
+          success: true,
+          pdfUrl: fileUrl,
+          data: (response as ApiResponse).data
+        };
+        sessionStorage.setItem("pdfResponse", JSON.stringify(pdfResponse));
+        return fileUrl;
+      }
       // Handle JSON response with base64 PDF (actual API format)
-      if (response && typeof response === "object") {
+      else if (response && typeof response === "object") {
         const responseObj = response as Record<string, unknown>;
 
         // Check if response has base64 PDF data
@@ -169,9 +198,19 @@ export default function ResultPage() {
             requestBody: JSON.parse(resumeData),
           });
 
-          if (response instanceof Blob) {
+          // Check if response matches the new API format: { status: "success", data: { fileUrl: "...", ... } }
+          if (response && typeof response === "object" &&
+              (response as unknown as ApiResponse).status === "success" &&
+              (response as unknown as ApiResponse).data &&
+              (response as unknown as ApiResponse).data.fileUrl) {
+
+            // Use the file URL directly from the API response
+            finalUrl = (response as unknown as ApiResponse).data.fileUrl;
+          }
+          else if (response instanceof Blob) {
             finalUrl = URL.createObjectURL(response);
-          } else if (response && typeof response === "object") {
+          }
+          else if (response && typeof response === "object") {
             const responseObj = response as Record<string, unknown>;
             const pdfData = responseObj.pdf || responseObj.data || responseObj.pdfBase64 || response;
             if (typeof pdfData === "string") {
@@ -369,7 +408,7 @@ export default function ResultPage() {
       </div>
 
       {/* Floating Bottom Navbar */}
-      <motion.div
+      {/* <motion.div
         initial={{ y: 100 }}
         animate={{ y: 0 }}
         className="fixed bottom-0 left-0 md:left-64 right-0 bg-white border-t border-slate-200 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.1)] z-50 p-4"
@@ -400,7 +439,7 @@ export default function ResultPage() {
             Download PDF
           </button>
         </div>
-      </motion.div>
+      </motion.div> */}
     </div>
   );
 }
