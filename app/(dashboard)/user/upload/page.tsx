@@ -1,5 +1,7 @@
-"use client";
+"use client"
 
+import { apiClient, resumeService } from "@/app/api/client";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
@@ -7,90 +9,50 @@ import {
   CheckCircle2,
   FileText,
   Loader2,
-  Sparkles,
   Upload,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import {  getAuthToken } from "@/lib/auth";
+export default function UploadPage() {
+  useAuthGuard("User");
 
-// const API_BASE_URL = getApiBaseUrl();
-
-export default function Home() {
-  const [file] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [tokenLoading, setTokenLoading] = useState(true);
-  const [hasToken, setHasToken] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const router = useRouter();
-
-  // Check for token on component mount
-  useEffect(() => {
-    const checkToken = async () => {
-      setTokenLoading(true);
-      setError(""); // Clear any previous errors
-      const token = await getAuthToken();
-      if (!token) {
-        setError(
-          "Access token required. Unable to fetch authentication token. Please check your connection and try again."
-        );
-        setHasToken(false);
-      } else {
-        setHasToken(true);
-      }
-      setTokenLoading(false);
-    };
-    checkToken();
-  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      // validateAndSetFile(selectedFile);
+      validateAndSetFile(selectedFile);
     }
   };
 
-  //example usage of pdfService
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const selectedFile = e.dataTransfer.files?.[0];
+    if (selectedFile) {
+      validateAndSetFile(selectedFile);
+    }
+  };
 
-  // import { pdfService } from "./api/client";
-  // const handleFileChangjhasdhjvase = async(e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const response = await pdfService.postGeneratePdf({
-  //     file: e.target.files?.[0],
-  //   })
-  // };
-
-  // const handleUpload = async () => {
-  //   if (!file) {
-  //     setError("Please select a file first");
-  //     return;
-  //   }
-  // };
-
-  // const validateAndSetFile = (selectedFile: File) => {
-  //   if (!selectedFile.type.includes("pdf")) {
-  //     setError("Please upload a PDF file");
-  //     return;
-  //   }
-  //   if (selectedFile.size > 10 * 1024 * 1024) {
-  //     setError("File size exceeds 10MB limit");
-  //     return;
-  //   }
-  //   setFile(selectedFile);
-  //   setError("");
-  // };
-
-  const handleUpload = async () => {
-    // Check for token first
-    const token = await getAuthToken();
-    if (!token) {
-      setError(
-        "Access token required. Please refresh the page to get a new token."
-      );
+  const validateAndSetFile = (selectedFile: File) => {
+    if (!selectedFile.type.includes("pdf")) {
+      setError("Please upload a PDF file");
       return;
     }
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      setError("File size exceeds 10MB limit");
+      return;
+    }
+    setFile(selectedFile);
+    setError("");
+  };
 
+  const handleUpload = async () => {
     if (!file) {
       setError("Please select a file first");
       return;
@@ -100,224 +62,219 @@ export default function Home() {
     setError("");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      apiClient.refreshTokenFromCookies();
 
-      const response = await fetch("http://localhost:5000/upload", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
+      const response = await resumeService.postUpload({
+        formData: { file },
       });
 
-      const result = await response.json();
+      console.log("Resume upload successful:", response);
 
-      if (response.ok) {
-        // Validate parsed data before storing
-        if (!result.parsed) {
-          setError("Failed to parse resume data");
-          return;
-        }
-
-        // Store parsed data in sessionStorage for next page
-        sessionStorage.setItem("resumeData", JSON.stringify(result.parsed));
-        router.push("/edit");
-      } else {
-        setError(`Error: ${result.error || "Upload failed"}`);
+      if (!response.parsed) {
+        setError("Failed to parse resume data");
+        return;
       }
-    } catch (err) {
-      setError(
-        `Network Error: ${err instanceof Error ? err.message : "Unknown error"}`
-      );
+
+      sessionStorage.setItem("resumeData", JSON.stringify(response.parsed));
+      router.push("/user/edit");
+    } catch (error: unknown) {
+      console.error("Resume upload failed:", error);
+      setError(error instanceof Error ? error.message : "Upload failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center p-4">
-      <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        {/* Left Column: Hero Text */}
+    <div className="relative min-h-[calc(100vh-100px)] flex items-center justify-center overflow-hidden bg-indigo-50/30">
+      {/* Designer Background Blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-400/30 rounded-full blur-[100px] mix-blend-multiply filter opacity-70 animate-blob" />
+      <div
+        className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-yellow-200/30 rounded-full blur-[100px] mix-blend-multiply filter opacity-70 animate-blob"
+        style={{ animationDelay: "2s" }}
+      />
+      <div
+        className="absolute -bottom-32 left-20 w-[600px] h-[600px] bg-pink-300/30 rounded-full blur-[100px] mix-blend-multiply filter opacity-70 animate-blob"
+        style={{ animationDelay: "4s" }}
+      />
+      <div
+        className="absolute -bottom-40 right-20 w-[600px] h-[600px] bg-blue-300/30 rounded-full blur-[100px] mix-blend-multiply filter opacity-70 animate-blob"
+        style={{ animationDelay: "6s" }}
+      />
+
+      <div className="relative z-10 max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+        {/* Left Column: Creative Typography & visuals */}
         <motion.div
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          className="space-y-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="lg:col-span-7 space-y-10"
         >
-          <div className="inline-flex items-center space-x-2 bg-action/10 border border-action/20 rounded-full px-4 py-1.5 text-action text-sm font-semibold">
-            <Sparkles className="w-4 h-4" />
-            <span>AI-Powered Resume Parser</span>
+          <div className="space-y-4">
+            <h1 className="text-xl lg:text-5xl font-black text-indigo-950 tracking-tight leading-[1.05]">
+              Redefine your <br />
+              <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600">
+                Professional Story
+                <span className="absolute -bottom-2 left-0 w-full h-4 bg-indigo-200/30 -z-10 rounded-full skew-x-12 transform origin-left" />
+              </span>
+            </h1>
+
+            <p className="text-xl text-indigo-900/70 max-w-lg font-medium leading-relaxed">
+              Crafting perfect resumes shouldn&apos;t be hard. Upload, analyze,
+              and generate industry-standard PDFs in seconds.
+            </p>
           </div>
 
-          <h1 className="text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-            Transform your <br />
-            <span className="text-action relative">
-              Resume
-              <svg
-                className="absolute w-full h-3 -bottom-1 left-0 text-action/30 -z-10"
-                viewBox="0 0 100 10"
-                preserveAspectRatio="none"
+          {/* Video Showcase Frame */}
+          <div className="relative rounded-2xl p-2 bg-gradient-to-br from-white/80 to-indigo-50/50 shadow-2xl shadow-indigo-500/10 ring-1 ring-indigo-900/5 transform rotate-2 hover:rotate-0 transition-all duration-500 group max-w-lg mx-auto">
+            <div className="absolute inset-0 bg-white/40 backdrop-blur-sm rounded-2xl z-20 opacity-0 group-hover:opacity-0 transition-opacity" />{" "}
+            {/* Clean hover state */}
+            <div className="relative rounded-xl overflow-hidden h-[260px] bg-indigo-950">
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover opacity-90"
               >
-                <path
-                  d="M0 5 Q 50 10 100 5"
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  fill="none"
-                />
-              </svg>
-            </span>{" "}
-            into a PDF
-          </h1>
-
-          <p className="text-lg text-slate-600 max-w-lg leading-relaxed">
-            Upload your existing resume and let our advanced AI extract, format,
-            and generate a professional, ATS-friendly PDF in seconds.
-          </p>
-
-          <div className="space-y-4">
-            {[
-              "Smart Information Extraction",
-              "Professional Templates",
-              "Instant PDF Generation",
-            ].map((feature, idx) => (
-              <div
-                key={idx}
-                className="flex items-center space-x-3 text-slate-700"
-              >
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
-                <span className="font-medium">{feature}</span>
-              </div>
-            ))}
+                <source src="/dashboard gif.mp4" type="video/mp4" />
+              </video>
+              {/* Decorative Overlay Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-indigo-900/20 to-transparent pointer-events-none" />
+            </div>
           </div>
         </motion.div>
 
-        {/* Right Column: Upload Card */}
+        {/* Right Column: Glassmorphism Upload Zone */}
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 lg:p-10 relative"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="lg:col-span-5"
         >
-          <div className="mb-8 text-center">
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">
-              Upload Resume
-            </h2>
-            <p className="text-slate-500 text-sm">
-              Supported format: PDF (Max 10MB)
-            </p>
-          </div>
+          <div className="relative bg-white/40 backdrop-blur-2xl rounded-[2.5rem] border border-white/60 shadow-[0_30px_60px_-12px_rgba(50,50,93,0.1)] p-6 lg:p-8 overflow-hidden">
+            {/* Subtle Texture/Noise if clearer background */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-indigo-500/10 to-transparent rounded-bl-[100px] -z-10 pointer-events-none" />
 
-          <div
-            className={`
-                      relative group border-2 border-dashed rounded-xl p-8 transition-all duration-300 ease-in-out
-                      flex flex-col items-center justify-center text-center cursor-pointer
-                      ${
-                        isDragOver
-                          ? "border-action bg-action/10 scale-[1.02]"
-                          : "border-slate-300 hover:border-action/40 hover:bg-slate-50/50"
-                      }
-                      ${file ? "bg-action/20 border-action/30" : ""}
-                  `}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragOver(true);
-            }}
-            onDragLeave={() => setIsDragOver(false)}
-            // onDrop={handleDrop}
-          >
-            <input
-              type="file"
-              id="fileInput"
-              accept=".pdf"
-              onChange={handleFileChange}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-            />
-
-            <div className="z-10 transition-transform duration-300 group-hover:scale-110 mb-4">
-              {file ? (
-                <FileText className="w-16 h-16 text-action" />
-              ) : (
-                <div className="bg-action/10 p-4 rounded-full">
-                  <Upload className="w-8 h-8 text-action" />
-                </div>
-              )}
+            <div className="mb-6 text-center space-y-2">
+              <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-600/20 transform -rotate-3">
+                <Upload className="w-6 h-6" />
+              </div>
+              <h2 className="text-2xl font-bold text-indigo-950 tracking-tight">
+                Upload Resume
+              </h2>
+              <p className="text-indigo-600/80 font-medium text-sm">
+                PDF Format • Max 10MB
+              </p>
             </div>
 
-            <div className="z-10">
-              {file ? (
-                <div>
-                  <p className="font-semibold text-action text-lg truncate max-w-[200px] mx-auto">
-                    {file.name}
-                  </p>
-                  <p className="text-sm text-action/80 mt-1">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                  <p className="text-xs text-action/60 mt-2">
-                    Click to change file
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <p className="font-semibold text-slate-700 text-lg mb-1">
-                    Drop your resume here
-                  </p>
-                  <p className="text-sm text-slate-500">or click to browse</p>
-                </div>
-              )}
+            <div
+              className={`
+                    relative group border-[3px] border-dashed rounded-[1.5rem] p-8 transition-all duration-300 ease-out
+                    flex flex-col items-center justify-center text-center cursor-pointer min-h-[220px]
+                    ${
+                      isDragOver
+                        ? "border-violet-600 bg-violet-50/50 scale-[1.02] shadow-xl shadow-violet-500/10"
+                        : "border-indigo-200 hover:border-violet-400 hover:bg-white/50"
+                    }
+                `}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+              }}
+              onDragLeave={() => setIsDragOver(false)}
+              onDrop={handleDrop}
+            >
+              <input
+                type="file"
+                id="fileInput"
+                accept=".pdf"
+                onChange={handleFileChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+              />
+
+              {/* Interactive Icon State */}
+              <div className="relative z-10 transition-transform duration-300 group-hover:scale-110 group-hover:-translate-y-2">
+                {file ? (
+                  <div className="relative">
+                    <FileText className="w-14 h-14 text-violet-600 drop-shadow-lg" />
+                    <div className="absolute -right-2 -top-2 bg-green-500 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center">
+                      <CheckCircle2 className="w-3 h-3 text-white" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center group-hover:bg-violet-100 transition-colors">
+                    <ArrowRight className="w-6 h-6 text-indigo-400 group-hover:text-violet-600 -rotate-45 group-hover:rotate-0 transition-all duration-300" />
+                  </div>
+                )}
+              </div>
+
+              <div className="z-10 mt-4 space-y-1">
+                {file ? (
+                  <>
+                    <p className="font-bold text-lg text-indigo-950 truncate max-w-[200px]">
+                      {file.name}
+                    </p>
+                    <p className="text-sm font-medium text-violet-600">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB • Ready
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-bold text-indigo-900 group-hover:text-violet-700 transition-colors">
+                      Drag & Drop
+                    </p>
+                    <p className="text-sm font-medium text-indigo-500/70 group-hover:text-indigo-600">
+                      or click to browse filesystem
+                    </p>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
 
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-6 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-start space-x-3"
-              >
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <div className="text-sm">{error}</div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                  animate={{ opacity: 1, height: "auto", marginTop: 16 }}
+                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                  className="bg-rose-50 text-rose-600 p-3 rounded-xl flex items-center gap-3 text-sm font-bold border border-rose-100"
+                >
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-          <button
-            onClick={handleUpload}
-            disabled={loading || tokenLoading || !hasToken || !file}
-            className={`
-                      w-full mt-8 py-4 px-6 rounded-xl font-bold text-white shadow-lg shadow-blue-500/30
-                      transition-all duration-300 flex items-center justify-center space-x-2
-                      ${
-                        loading || tokenLoading || !hasToken || !file
-                          ? "bg-slate-300 cursor-not-allowed shadow-none text-slate-500"
-                          : "bg-action hover:bg-action/90 hover:translate-y-[-2px] hover:shadow-action/30 hover:shadow-xl active:translate-y-[0px]"
-                      }
-                  `}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Processing...</span>
-              </>
-            ) : tokenLoading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Connecting...</span>
-              </>
-            ) : (
-              <>
-                <span>Generate PDF</span>
-                <ArrowRight className="w-5 h-5" />
-              </>
-            )}
-          </button>
+            <button
+              onClick={handleUpload}
+              disabled={loading || !file}
+              className={`
+                    w-full mt-6 py-4 rounded-2xl font-bold text-lg tracking-wide shadow-lg 
+                    transform transition-all duration-300 flex items-center justify-center gap-3
+                    ${
+                      loading || !file
+                        ? "bg-indigo-100 text-indigo-300 cursor-not-allowed shadow-none"
+                        : "bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:scale-[1.02] hover:shadow-indigo-600/30"
+                    }
+                `}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span className="font-bold">Analyzing...</span>
+                </>
+              ) : (
+                <>
+                  <span>Generate Magic PDF</span>
+                </>
+              )}
+            </button>
 
-          {!hasToken && !tokenLoading && (
-            <p className="text-xs text-center text-red-400 mt-4">
-              * Authentication failed. Check console or refresh.
+            <p className="mt-4 text-center text-[10px] uppercase tracking-wider text-indigo-400 font-bold">
+              Secure & Confidential Parsing
             </p>
-          )}
+          </div>
         </motion.div>
       </div>
     </div>

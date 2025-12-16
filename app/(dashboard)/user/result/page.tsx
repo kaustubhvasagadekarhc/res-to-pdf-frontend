@@ -2,8 +2,7 @@
 
 import { apiClient, pdfService } from "@/app/api/client";
 import confetti from "canvas-confetti";
-
-import { AlertCircle, Download, Edit3 } from "lucide-react";
+import { AlertCircle, Download, Edit3} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -263,11 +262,11 @@ export default function ResultPage() {
   }, [pdfBlobUrl]);
 
   return (
-    <div className="flex flex-col h-full font-sans text-foreground bg-card">
+    <div className="flex flex-col h-full font-sans">
       {/* PDF View Area */}
-      <div className="flex-grow flex items-center justify-center p-4 pb-24 min-h-[calc(100vh-100px)]">
+      <div className="flex-grow flex items-center justify-center p-4  min-h-[calc(100vh-120px)] ">
         {pdfGenerated && pdfBlobUrl ? (
-          <div className="w-full max-w-5xl h-[80vh] bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-200">
+          <div className="w-full max-w-8xl h-[86vh] rounded-xl shadow-2xl overflow-hidden border border-slate-200">
             {/* PDF Viewer Header */}
             <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
               <h3 className="font-semibold text-slate-700">Resume Preview</h3>
@@ -291,7 +290,7 @@ export default function ResultPage() {
             {/* PDF Viewer */}
             <div className="relative h-[calc(100%-60px)]">
               <iframe
-                src={`${pdfBlobUrl}#toolbar=1&navpanes=1&scrollbar=1&zoom=page-fit`}
+                src={`${pdfBlobUrl}#toolbar=1&scrollbar=1&zoom=page-fit`}
                 className="w-full h-full border-0"
                 title="Generated Resume PDF"
                 onError={() => setPreviewError("Failed to load PDF preview")}

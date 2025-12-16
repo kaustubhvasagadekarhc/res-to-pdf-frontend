@@ -1,7 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { apiClient, pdfService } from "@/app/api/client";
 import {  motion } from "framer-motion";
 import {
@@ -19,6 +17,8 @@ import {
   User,
   X,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface ResumeData {
   personal: {
@@ -92,13 +92,48 @@ export default function EditPage() {
   ];
 
   useEffect(() => {
-    const storedData = sessionStorage.getItem("resumeData");
-    if (storedData) {
-      setResumeData(JSON.parse(storedData));
-    } else {
-      router.push("/");
-    }
-    setLoading(false);
+    const searchParams = new URLSearchParams(window.location.search);
+    const resumeId = searchParams.get("id");
+
+    const loadResumeData = async () => {
+      if (resumeId) {
+        // This is an existing resume being edited
+        try {
+          // TODO: Implement API call to fetch existing resume data by ID
+          // This would require a backend API endpoint to get resume by ID
+          // For now, we'll use a placeholder approach
+          console.log(`Loading existing resume with ID: ${resumeId}`);
+
+          // In a real implementation, you would fetch the resume data:
+          // const resumeData = await apiClient.get(`/api/resumes/${resumeId}`);
+          // setResumeData(resumeData.data);
+
+          // For now, fall back to session storage if available
+          const storedData = sessionStorage.getItem("resumeData");
+          if (storedData) {
+            setResumeData(JSON.parse(storedData));
+          } else {
+            // If no data is found, redirect to upload
+            router.push("/user/upload");
+          }
+        } catch (error) {
+          console.error("Error loading resume data:", error);
+          setError("Failed to load resume data");
+          router.push("/user/upload");
+        }
+      } else {
+        // Load from sessionStorage as before (new resume or from upload)
+        const storedData = sessionStorage.getItem("resumeData");
+        if (storedData) {
+          setResumeData(JSON.parse(storedData));
+        } else {
+          router.push("/user/upload");
+        }
+      }
+      setLoading(false);
+    };
+
+    loadResumeData();
   }, [router]);
 
   useEffect(() => {
