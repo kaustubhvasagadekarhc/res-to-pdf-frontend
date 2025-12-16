@@ -23,9 +23,7 @@ export function Header() {
         <div className="h-10 w-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-600/20">
           <FileCheck className="h-6 w-6" />
         </div>
-        <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-900 to-violet-900 tracking-tight">
-          ResToPDF
-        </span>
+       
       </div>
       
       <div className="flex items-center gap-4">

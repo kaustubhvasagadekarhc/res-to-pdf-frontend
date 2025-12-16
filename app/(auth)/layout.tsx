@@ -10,13 +10,13 @@ export default function AuthLayout({
 }) {
   const pathname = usePathname();
 
-  let imageSrc = "/login.jpg"; // Default
+  let imageSrc = "/login.jpg"; 
   if (pathname === "/login") {
     imageSrc = "/login.jpg";
   } else if (pathname === "/register") {
     imageSrc = "/register.jpg";
   } else if (pathname === "/otp-verification") {
-    imageSrc = "/otp-verify.jpg";
+    imageSrc = '/otp-verify.jpg';
   }
 
   return (
@@ -46,7 +46,7 @@ export default function AuthLayout({
                 className="object-contain mix-blend-multiply opacity-90"
                 priority
               />
-            </div>
+            </div> 
           </div>
         </aside>
       </div>

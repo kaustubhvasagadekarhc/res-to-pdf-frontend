@@ -2,8 +2,8 @@
 
 import { apiClient, pdfService } from "@/app/api/client";
 import confetti from "canvas-confetti";
-import { motion } from "framer-motion";
-import { AlertCircle, Download, Edit3, RotateCcw } from "lucide-react";
+
+import { AlertCircle, Download, Edit3 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -243,15 +243,15 @@ export default function ResultPage() {
     }
   };
 
-  const handleStartOver = () => {
-    sessionStorage.clear();
-    // Revoke the stored PDF blob URL if exists
-    if (pdfBlobUrl) {
-      window.URL.revokeObjectURL(pdfBlobUrl);
-      setPdfBlobUrl(null);
-    }
-    router.push("/");
-  };
+  // const handleStartOver = () => {
+  //   sessionStorage.clear();
+  //   // Revoke the stored PDF blob URL if exists
+  //   if (pdfBlobUrl) {
+  //     window.URL.revokeObjectURL(pdfBlobUrl);
+  //     setPdfBlobUrl(null);
+  //   }
+  //   router.push("/");
+  // };
 
   // Clean up blob URL when component unmounts
   useEffect(() => {
