@@ -1,9 +1,9 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react";
-import { authService, apiClient } from "@/app/api/client";
+import { apiClient, authService } from "@/app/api/client";
 import { authService as tokenService } from "@/services/auth.services";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 
 function OTPVerificationContent() {
   const [otp, setOtp] = useState("");
@@ -12,10 +12,6 @@ function OTPVerificationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
-  // Don't rely on `useUser` here because this page is rendered outside the
-  // `UserProvider`. Instead we'll refresh the API client and persist
-  // dashboard data directly to `localStorage` after successful verification.
-  // const { refreshUser } = useUser();
 
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,12 +20,12 @@ function OTPVerificationContent() {
 
     try {
       const response = await authService.postAuthVerifyOtp({
-        requestBody: { 
-          email: email!, 
-          otp 
+        requestBody: {
+          email: email!,
+          otp,
         },
       });
-      
+
       console.log("OTP verification successful:", response);
       
       // Server sets `auth-token` cookie; refresh API client from cookies
@@ -40,27 +36,29 @@ function OTPVerificationContent() {
       const token = response.token || response.data?.token;
       if (token) {
         tokenService.setToken(token);
-        apiClient.setAuthToken(token);
-      }
-
-      // Extract user data from response and persist a lightweight
-      // `dashboardData` cache used across the app for routing/UI
-      const user = response.user || response.data?.user;
-      try {
-        if (user) {
-          localStorage.setItem('dashboardData', JSON.stringify(user));
-        } else if (response.data?.user) {
-          localStorage.setItem('dashboardData', JSON.stringify(response.data.user));
+        // Ensure API client uses the new cookie/header
+        try {
+          apiClient.refreshTokenFromCookies();
+        } catch (e) {
+          console.warn("Could not refresh API client token from cookies", e);
         }
-      } catch (err) {
-        console.error('Failed to persist dashboardData', err);
-      }
-      const userType = user?.userType || user?.type || "user";
-      
-      if (userType === "admin" || userType === "ADMIN") {
-        router.push("/admin");
+
+        // Attempt to fetch the user, then route
+        try {
+          const user = await authService.getAuthMe();
+          const userData = user as { userType?: string; type?: string };
+          const userType = userData?.userType || userData?.type || "user";
+          if (userType === "admin" || userType === "ADMIN") {
+            router.push("/admin");
+          } else {
+            router.push("/user");
+          }
+        } catch (meErr) {
+          console.warn("Failed to fetch user after OTP verification:", meErr);
+          router.push("/user");
+        }
       } else {
-        router.push("/user");
+        router.push("/user"); // fallback
       }
     } catch (error: unknown) {
       console.error("OTP verification failed:", error);

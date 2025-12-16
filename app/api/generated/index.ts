@@ -8,5 +8,6 @@ export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
 export { AuthService } from './services/AuthService';
+export { DashboardService } from './services/DashboardService';
 export { PdfService } from './services/PdfService';
 export { ResumeService } from './services/ResumeService';

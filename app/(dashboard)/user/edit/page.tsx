@@ -2,8 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-import { pdfService, apiClient } from "@/app/api/client";
+import { apiClient, pdfService } from "@/app/api/client";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
@@ -56,6 +55,16 @@ interface ResumeData {
     description: string;
     technologies: string[];
   }>;
+}
+
+interface ApiResponse {
+  status: string;
+  data: {
+    id: string;
+    fileName: string;
+    fileUrl: string;
+    createdAt: string;
+  };
 }
 
 export default function EditPage() {
@@ -279,18 +288,90 @@ export default function EditPage() {
 
     try {
       apiClient.refreshTokenFromCookies(); // Ensure token is set from cookies
-      
+
       const response = await pdfService.postGeneratePdf({
         requestBody: resumeData!,
       });
 
       console.log("PDF generation successful:", response);
-      
-      // Store generated PDF response and navigate to result page
-      sessionStorage.setItem(
-        "pdfResponse",
-        JSON.stringify({ success: true, data: response })
-      );
+
+      // Check if response matches the new API format: { status: "success", data: { fileUrl: "...", ... } }
+      if (
+        response &&
+        typeof response === "object" &&
+        (response as unknown as ApiResponse).status === "success" &&
+        (response as unknown as ApiResponse).data &&
+        (response as unknown as ApiResponse).data.fileUrl
+      ) {
+        const apiResponse = response as unknown as ApiResponse;
+        // Store the API response with the file URL
+        sessionStorage.setItem(
+          "pdfResponse",
+          JSON.stringify({
+            success: true,
+            data: apiResponse.data,
+            pdfUrl: apiResponse.data.fileUrl,
+            fileName:
+              apiResponse.data.fileName ||
+              `${resumeData!.personal.name || "resume"}.pdf`,
+          })
+        );
+      }
+      // Check if response is a Blob
+      else if (response instanceof Blob) {
+        const pdfUrl = URL.createObjectURL(response);
+        sessionStorage.setItem(
+          "pdfResponse",
+          JSON.stringify({
+            success: true,
+            pdfUrl,
+            fileName: `${resumeData!.personal.name || "resume"}.pdf`,
+          })
+        );
+      }
+      // Fallback for other response formats
+      else {
+        // Handle non-blob response (fallback)
+        // If the API returned a base64-data URL or embedded base64, convert it to a blob URL now
+        try {
+          const maybeData =
+            (response as { pdfBase64?: string }).pdfBase64 ||
+            (response as { data?: string }).data ||
+            response;
+          if (
+            typeof maybeData === "string" &&
+            maybeData.startsWith("data:application/pdf;base64,")
+          ) {
+            const base64 = maybeData.split(",")[1];
+            const byteCharacters = atob(base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: "application/pdf" });
+            const pdfUrl = URL.createObjectURL(blob);
+            sessionStorage.setItem(
+              "pdfResponse",
+              JSON.stringify({
+                success: true,
+                pdfUrl,
+                fileName: `${resumeData!.personal.name || "resume"}.pdf`,
+              })
+            );
+          } else {
+            sessionStorage.setItem(
+              "pdfResponse",
+              JSON.stringify({ success: true, data: response })
+            );
+          }
+        } catch {
+          sessionStorage.setItem(
+            "pdfResponse",
+            JSON.stringify({ success: true, data: response })
+          );
+        }
+      }
       router.push("/user/result");
     } catch (error: unknown) {
       console.error("PDF generation failed:", error);
@@ -399,47 +480,42 @@ export default function EditPage() {
 
   const getInputClassName = (value: string | null | undefined) => {
     const isValid = !isEmpty(value);
-    return `w-full px-4 py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
-      isValid
-        ? "border-slate-200 focus:ring-blue-500/50 focus:border-blue-500"
-        : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
-    }`;
+    return `w-full px-4 py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all ${isValid
+      ? "border-slate-200 focus:ring-blue-500/50 focus:border-blue-500"
+      : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
+      }`;
   };
 
   const getSelectClassName = (value: string | null | undefined) => {
     const isValid = !isEmpty(value);
-    return `w-full appearance-none px-4 py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
-      isValid
-        ? "border-slate-200 focus:ring-blue-500/50 focus:border-blue-500"
-        : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
-    }`;
+    return `w-full appearance-none px-4 py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all ${isValid
+      ? "border-slate-200 focus:ring-blue-500/50 focus:border-blue-500"
+      : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
+      }`;
   };
 
   const getExpInputClassName = (value: string | null | undefined) => {
     const isValid = !isEmpty(value);
-    return `w-full px-3 py-2 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all ${
-      isValid
-        ? "border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
-        : "border-red-300 focus:border-red-500 focus:ring-red-200 bg-red-50"
-    }`;
+    return `w-full px-3 py-2 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all ${isValid
+      ? "border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
+      : "border-red-300 focus:border-red-500 focus:ring-red-200 bg-red-50"
+      }`;
   };
 
   const getExpDateClassName = (value: string | null | undefined) => {
     const isValid = isValidMonth(value) || value === "Present";
-    return `w-full px-3 py-2 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all text-sm ${
-      isValid
-        ? "border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
-        : "border-red-300 focus:border-red-500 focus:ring-red-200 bg-red-50"
-    }`;
+    return `w-full px-3 py-2 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all text-sm ${isValid
+      ? "border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
+      : "border-red-300 focus:border-red-500 focus:ring-red-200 bg-red-50"
+      }`;
   };
 
   const getEduInputClassName = (value: string | null | undefined) => {
     const isValid = !isEmpty(value);
-    return `w-full font-semibold text-slate-800 bg-transparent border-b transition-all ${
-      isValid
-        ? "border-transparent focus:border-pink-500 focus:outline-none"
-        : "border-red-300 focus:border-red-500 bg-red-50/50 px-2 rounded"
-    }`;
+    return `w-full font-semibold text-slate-800 bg-transparent border-b transition-all ${isValid
+      ? "border-transparent focus:border-pink-500 focus:outline-none"
+      : "border-red-300 focus:border-red-500 bg-red-50/50 px-2 rounded"
+      }`;
   };
 
   return (
@@ -674,11 +750,10 @@ export default function EditPage() {
                   <textarea
                     value={resumeData.summary}
                     onChange={(e) => updateSummary(e.target.value)}
-                    className={`w-full h-full min-h-[150px] px-4 py-3 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all resize-none leading-relaxed text-slate-700 ${
-                      !isEmpty(resumeData.summary)
-                        ? "border-slate-200 focus:ring-primary/50 focus:border-primary"
-                        : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
-                    }`}
+                    className={`w-full h-full min-h-[150px] px-4 py-3 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all resize-none leading-relaxed text-slate-700 ${!isEmpty(resumeData.summary)
+                      ? "border-slate-200 focus:ring-primary/50 focus:border-primary"
+                      : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
+                      }`}
                     placeholder="Write a compelling summary about your professional background..."
                   />
                 </div>
@@ -700,11 +775,10 @@ export default function EditPage() {
                   <textarea
                     value={resumeData.skills.join(", ")}
                     onChange={(e) => updateSkills(e.target.value)}
-                    className={`w-full h-full min-h-[150px] px-4 py-3 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all resize-none leading-relaxed text-slate-700 ${
-                      !isEmpty(resumeData.skills.join(", "))
-                        ? "border-slate-200 focus:ring-purple-500/50 focus:border-purple-500"
-                        : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
-                    }`}
+                    className={`w-full h-full min-h-[150px] px-4 py-3 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all resize-none leading-relaxed text-slate-700 ${!isEmpty(resumeData.skills.join(", "))
+                      ? "border-slate-200 focus:ring-purple-500/50 focus:border-purple-500"
+                      : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
+                      }`}
                     placeholder="e.g. JavaScript, React, Node.js, Python (comma separated)"
                   />
                   <p className="text-xs text-slate-400 mt-2 text-right">
@@ -999,11 +1073,10 @@ export default function EditPage() {
                           updateEducation(idx, "degree", e.target.value)
                         }
                         placeholder="Degree (e.g. B.Sc)"
-                        className={`w-full text-sm text-slate-600 bg-transparent border-b transition-all pb-1 ${
-                          !isEmpty(edu.degree)
-                            ? "border-transparent focus:border-pink-500 focus:outline-none"
-                            : "border-red-300 focus:border-red-500 bg-red-50/50 px-2 rounded"
-                        }`}
+                        className={`w-full text-sm text-slate-600 bg-transparent border-b transition-all pb-1 ${!isEmpty(edu.degree)
+                          ? "border-transparent focus:border-pink-500 focus:outline-none"
+                          : "border-red-300 focus:border-red-500 bg-red-50/50 px-2 rounded"
+                          }`}
                       />
                       <div className="flex items-center gap-2 text-slate-400">
                         <Calendar className="w-3 h-3" />
@@ -1017,11 +1090,10 @@ export default function EditPage() {
                               e.target.value
                             )
                           }
-                          className={`bg-transparent text-xs focus:outline-none transition-all ${
-                            isValidMonth(edu.graduation_year)
-                              ? "text-slate-500"
-                              : "text-red-500 font-medium placeholder:text-red-400"
-                          }`}
+                          className={`bg-transparent text-xs focus:outline-none transition-all ${isValidMonth(edu.graduation_year)
+                            ? "text-slate-500"
+                            : "text-red-500 font-medium placeholder:text-red-400"
+                            }`}
                         />
                       </div>
                     </div>
@@ -1090,7 +1162,9 @@ export default function EditPage() {
                       <div className="pt-3">
                         <div className="flex items-center gap-2 mb-2">
                           <Code className="w-3 h-3 " />
-                          <span className="text-xs font-medium ">Technologies</span>
+                          <span className="text-xs font-medium ">
+                            Technologies
+                          </span>
                         </div>
                         <div className="flex flex-wrap gap-2 mb-2">
                           {proj.technologies.map((tech, techIdx) => (
@@ -1101,8 +1175,14 @@ export default function EditPage() {
                               {tech}
                               <button
                                 onClick={() => {
-                                  const newTechs = proj.technologies.filter((_, i) => i !== techIdx);
-                                  updateStandaloneProject(idx, "technologies", newTechs.join(", "));
+                                  const newTechs = proj.technologies.filter(
+                                    (_, i) => i !== techIdx
+                                  );
+                                  updateStandaloneProject(
+                                    idx,
+                                    "technologies",
+                                    newTechs.join(", ")
+                                  );
                                 }}
                                 className="ml-1  hover:text-orange-700"
                               >
@@ -1116,13 +1196,22 @@ export default function EditPage() {
                           placeholder="Add technology (press Enter)"
                           className="w-full text-xs text-slate-600 bg-white border border-orange-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2  focus:border-transparent"
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                            if (
+                              e.key === "Enter" &&
+                              e.currentTarget.value.trim()
+                            ) {
                               const newTech = e.currentTarget.value.trim();
-                              const currentTechs = proj.technologies.filter(t => t.trim());
+                              const currentTechs = proj.technologies.filter(
+                                (t) => t.trim()
+                              );
                               if (!currentTechs.includes(newTech)) {
-                                updateStandaloneProject(idx, "technologies", [...currentTechs, newTech].join(", "));
+                                updateStandaloneProject(
+                                  idx,
+                                  "technologies",
+                                  [...currentTechs, newTech].join(", ")
+                                );
                               }
-                              e.currentTarget.value = '';
+                              e.currentTarget.value = "";
                             }
                           }}
                         />

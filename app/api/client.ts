@@ -5,7 +5,7 @@
 import axiosInstance from "@/lib/axiosInstance";
 import type { AxiosInstance, AxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
-import { AuthService, OpenAPI, PdfService,ResumeService } from "./generated";
+import { AuthService, OpenAPI, PdfService,ResumeService,DashboardService } from "./generated";
 
 // ============================================
 // Core API Client
@@ -128,6 +128,7 @@ export class ApiClientWithServices extends ApiClient {
   public auth = AuthService; // Static service
   public pdf = PdfService;
   public resume = ResumeService;
+  public dashboard = DashboardService;
 
   constructor(
     axios: AxiosInstance,
@@ -157,6 +158,7 @@ export const apiClient = new ApiClientWithServices(axiosInstance);
 export const authService = apiClient.auth;
 export const pdfService = apiClient.pdf;
 export const resumeService = apiClient.resume;
+export const dashboardService = apiClient.dashboard;
 
 // ============================================
 // Final usage example

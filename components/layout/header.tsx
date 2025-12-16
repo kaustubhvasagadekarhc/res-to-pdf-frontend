@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 
 export function Header() {
   const router = useRouter();
-  // const { user: userData } = useUser();
+
 
   const handleLogout = () => {
     legacyAuthService.clearToken();
