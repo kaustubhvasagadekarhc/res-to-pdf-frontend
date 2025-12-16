@@ -1,7 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { apiClient, pdfService } from "@/app/api/client";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -18,6 +16,8 @@ import {
   Trash2,
   User,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface ResumeData {
   personal: {
@@ -75,14 +75,48 @@ export default function EditPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Load data from sessionStorage
-    const storedData = sessionStorage.getItem("resumeData");
-    if (storedData) {
-      setResumeData(JSON.parse(storedData));
-    } else {
-      router.push("/");
-    }
-    setLoading(false);
+    const searchParams = new URLSearchParams(window.location.search);
+    const resumeId = searchParams.get("id");
+
+    const loadResumeData = async () => {
+      if (resumeId) {
+        // This is an existing resume being edited
+        try {
+          // TODO: Implement API call to fetch existing resume data by ID
+          // This would require a backend API endpoint to get resume by ID
+          // For now, we'll use a placeholder approach
+          console.log(`Loading existing resume with ID: ${resumeId}`);
+
+          // In a real implementation, you would fetch the resume data:
+          // const resumeData = await apiClient.get(`/api/resumes/${resumeId}`);
+          // setResumeData(resumeData.data);
+
+          // For now, fall back to session storage if available
+          const storedData = sessionStorage.getItem("resumeData");
+          if (storedData) {
+            setResumeData(JSON.parse(storedData));
+          } else {
+            // If no data is found, redirect to upload
+            router.push("/user/upload");
+          }
+        } catch (error) {
+          console.error("Error loading resume data:", error);
+          setError("Failed to load resume data");
+          router.push("/user/upload");
+        }
+      } else {
+        // Load from sessionStorage as before (new resume or from upload)
+        const storedData = sessionStorage.getItem("resumeData");
+        if (storedData) {
+          setResumeData(JSON.parse(storedData));
+        } else {
+          router.push("/user/upload");
+        }
+      }
+      setLoading(false);
+    };
+
+    loadResumeData();
   }, [router]);
 
   useEffect(() => {
@@ -480,42 +514,47 @@ export default function EditPage() {
 
   const getInputClassName = (value: string | null | undefined) => {
     const isValid = !isEmpty(value);
-    return `w-full px-4 py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all ${isValid
-      ? "border-slate-200 focus:ring-blue-500/50 focus:border-blue-500"
-      : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
-      }`;
+    return `w-full px-4 py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+      isValid
+        ? "border-slate-200 focus:ring-blue-500/50 focus:border-blue-500"
+        : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
+    }`;
   };
 
   const getSelectClassName = (value: string | null | undefined) => {
     const isValid = !isEmpty(value);
-    return `w-full appearance-none px-4 py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all ${isValid
-      ? "border-slate-200 focus:ring-blue-500/50 focus:border-blue-500"
-      : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
-      }`;
+    return `w-full appearance-none px-4 py-2.5 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+      isValid
+        ? "border-slate-200 focus:ring-blue-500/50 focus:border-blue-500"
+        : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
+    }`;
   };
 
   const getExpInputClassName = (value: string | null | undefined) => {
     const isValid = !isEmpty(value);
-    return `w-full px-3 py-2 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all ${isValid
-      ? "border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
-      : "border-red-300 focus:border-red-500 focus:ring-red-200 bg-red-50"
-      }`;
+    return `w-full px-3 py-2 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all ${
+      isValid
+        ? "border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
+        : "border-red-300 focus:border-red-500 focus:ring-red-200 bg-red-50"
+    }`;
   };
 
   const getExpDateClassName = (value: string | null | undefined) => {
     const isValid = isValidMonth(value) || value === "Present";
-    return `w-full px-3 py-2 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all text-sm ${isValid
-      ? "border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
-      : "border-red-300 focus:border-red-500 focus:ring-red-200 bg-red-50"
-      }`;
+    return `w-full px-3 py-2 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all text-sm ${
+      isValid
+        ? "border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
+        : "border-red-300 focus:border-red-500 focus:ring-red-200 bg-red-50"
+    }`;
   };
 
   const getEduInputClassName = (value: string | null | undefined) => {
     const isValid = !isEmpty(value);
-    return `w-full font-semibold text-slate-800 bg-transparent border-b transition-all ${isValid
-      ? "border-transparent focus:border-pink-500 focus:outline-none"
-      : "border-red-300 focus:border-red-500 bg-red-50/50 px-2 rounded"
-      }`;
+    return `w-full font-semibold text-slate-800 bg-transparent border-b transition-all ${
+      isValid
+        ? "border-transparent focus:border-pink-500 focus:outline-none"
+        : "border-red-300 focus:border-red-500 bg-red-50/50 px-2 rounded"
+    }`;
   };
 
   return (
@@ -750,10 +789,11 @@ export default function EditPage() {
                   <textarea
                     value={resumeData.summary}
                     onChange={(e) => updateSummary(e.target.value)}
-                    className={`w-full h-full min-h-[150px] px-4 py-3 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all resize-none leading-relaxed text-slate-700 ${!isEmpty(resumeData.summary)
-                      ? "border-slate-200 focus:ring-primary/50 focus:border-primary"
-                      : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
-                      }`}
+                    className={`w-full h-full min-h-[150px] px-4 py-3 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all resize-none leading-relaxed text-slate-700 ${
+                      !isEmpty(resumeData.summary)
+                        ? "border-slate-200 focus:ring-primary/50 focus:border-primary"
+                        : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
+                    }`}
                     placeholder="Write a compelling summary about your professional background..."
                   />
                 </div>
@@ -775,10 +815,11 @@ export default function EditPage() {
                   <textarea
                     value={resumeData.skills.join(", ")}
                     onChange={(e) => updateSkills(e.target.value)}
-                    className={`w-full h-full min-h-[150px] px-4 py-3 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all resize-none leading-relaxed text-slate-700 ${!isEmpty(resumeData.skills.join(", "))
-                      ? "border-slate-200 focus:ring-purple-500/50 focus:border-purple-500"
-                      : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
-                      }`}
+                    className={`w-full h-full min-h-[150px] px-4 py-3 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 transition-all resize-none leading-relaxed text-slate-700 ${
+                      !isEmpty(resumeData.skills.join(", "))
+                        ? "border-slate-200 focus:ring-purple-500/50 focus:border-purple-500"
+                        : "border-red-300 focus:ring-red-200 focus:border-red-500 bg-red-50"
+                    }`}
                     placeholder="e.g. JavaScript, React, Node.js, Python (comma separated)"
                   />
                   <p className="text-xs text-slate-400 mt-2 text-right">
@@ -1073,10 +1114,11 @@ export default function EditPage() {
                           updateEducation(idx, "degree", e.target.value)
                         }
                         placeholder="Degree (e.g. B.Sc)"
-                        className={`w-full text-sm text-slate-600 bg-transparent border-b transition-all pb-1 ${!isEmpty(edu.degree)
-                          ? "border-transparent focus:border-pink-500 focus:outline-none"
-                          : "border-red-300 focus:border-red-500 bg-red-50/50 px-2 rounded"
-                          }`}
+                        className={`w-full text-sm text-slate-600 bg-transparent border-b transition-all pb-1 ${
+                          !isEmpty(edu.degree)
+                            ? "border-transparent focus:border-pink-500 focus:outline-none"
+                            : "border-red-300 focus:border-red-500 bg-red-50/50 px-2 rounded"
+                        }`}
                       />
                       <div className="flex items-center gap-2 text-slate-400">
                         <Calendar className="w-3 h-3" />
@@ -1090,10 +1132,11 @@ export default function EditPage() {
                               e.target.value
                             )
                           }
-                          className={`bg-transparent text-xs focus:outline-none transition-all ${isValidMonth(edu.graduation_year)
-                            ? "text-slate-500"
-                            : "text-red-500 font-medium placeholder:text-red-400"
-                            }`}
+                          className={`bg-transparent text-xs focus:outline-none transition-all ${
+                            isValidMonth(edu.graduation_year)
+                              ? "text-slate-500"
+                              : "text-red-500 font-medium placeholder:text-red-400"
+                          }`}
                         />
                       </div>
                     </div>

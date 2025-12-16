@@ -32,6 +32,7 @@ const adminItems: SidebarItem[] = [
 // User Sidebar Items
 const userItems: SidebarItem[] = [
   { label: "My Resume", href: "/user", icon: FileText },
+  { label: "My Resumes", href: "/user/resumes", icon: FileText },
   { label: "Edit Resume", href: "/user/edit", icon: Settings },
   { label: "Results", href: "/user/result", icon: BookDown },
   { label: "Profile", href: "/user/profile", icon: User },

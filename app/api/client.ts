@@ -160,6 +160,7 @@ export const pdfService = apiClient.pdf;
 export const resumeService = apiClient.resume;
 export const dashboardService = apiClient.dashboard;
 
+
 // ============================================
 // Final usage example
 // ============================================
