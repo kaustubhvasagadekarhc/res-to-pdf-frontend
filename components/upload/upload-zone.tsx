@@ -208,7 +208,7 @@ export function UploadZone() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="mt-6 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-start space-x-3"
+            className="mt-6 bg-[var(--danger-100)] border border-[#fecaca] text-[var(--danger-800)] p-4 rounded-xl flex items-start space-x-3"
           >
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <div className="text-sm">{error}</div>
@@ -220,12 +220,12 @@ export function UploadZone() {
         onClick={handleUpload}
         disabled={loading || tokenLoading || !hasToken || !file}
         className={`
-                        w-full mt-8 py-4 px-6 rounded-xl font-bold text-white shadow-lg shadow-blue-500/30
+                        w-full mt-8 py-4 px-6 rounded-xl font-bold text-white shadow-lg
                         transition-all duration-300 flex items-center justify-center space-x-2
                         ${
                           loading || tokenLoading || !hasToken || !file
                             ? "bg-slate-300 cursor-not-allowed shadow-none text-slate-500"
-                            : "bg-action hover:bg-action/90 hover:translate-y-[-2px] hover:shadow-action/30 hover:shadow-xl active:translate-y-[0px]"
+                            : "bg-action hover:bg-action/90 hover:translate-y-[-2px] hover:shadow-lg active:translate-y-[0px]"
                         }
                     `}
       >
@@ -248,7 +248,7 @@ export function UploadZone() {
       </button>
 
       {!hasToken && !tokenLoading && (
-        <p className="text-xs text-center text-red-400 mt-4">
+        <p className="text-xs text-center text-[var(--danger-800)] mt-4">
           * Authentication failed. Check console or refresh.
         </p>
       )}

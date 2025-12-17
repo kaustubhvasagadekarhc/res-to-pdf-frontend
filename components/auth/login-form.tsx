@@ -1,6 +1,6 @@
 "use client";
 
-import { authService } from "@/app/api/client";
+import { apiClient, authService } from "@/app/api/client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,12 +13,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authService as tokenService } from "@/services/auth.services";
-import { apiClient } from "@/app/api/client";
+import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 
 /**
  * Props for the LoginForm component.
@@ -192,9 +191,9 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
       transition={{ duration: 0.3 }}
     >
       <Card className="w-full max-w-md mx-auto shadow-2xl border-0 bg-white/80 backdrop-blur-xl rounded-2xl overflow-hidden ring-1 ring-white/50">
-        <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-1.5 w-full" />
+        <div className="bg-gradient-to-r from-[var(--primary)] to-[var(--accent)] h-1.5 w-full" />
         <CardHeader className="text-center pb-2 pt-8">
-          <CardTitle className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-br from-indigo-600 to-violet-700">
+          <CardTitle className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-br from-[var(--primary)] to-[var(--accent)]">
             Welcome Back
           </CardTitle>
           <CardDescription className="text-slate-500 font-medium mt-2">
@@ -204,9 +203,11 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
         <CardContent className="space-y-6 pt-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-700 font-semibold">Email Address</Label>
+              <Label htmlFor="email" className="text-slate-700 font-semibold">
+                Email Address
+              </Label>
               <div className="relative group">
-                <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-400 group-focus-within:text-[var(--primary)] transition-colors" />
                 <Input
                   id="email"
                   name="email"
@@ -215,17 +216,22 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="pl-10 h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-200 rounded-xl transition-all duration-200"
+                  className="pl-10 h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:border-[var(--primary-700)] focus:ring-[var(--primary-700)] rounded-xl transition-all duration-200"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-slate-700 font-semibold">Password</Label>
+                <Label
+                  htmlFor="password"
+                  className="text-slate-700 font-semibold"
+                >
+                  Password
+                </Label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs font-semibold text-indigo-600 hover:text-indigo-500 hover:underline"
+                  className="text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-700)] hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -240,7 +246,7 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="pl-10 h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-200 rounded-xl transition-all duration-200"
+                  className="pl-10 h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:border-[var(--primary-700)] focus:ring-[var(--primary-700)] rounded-xl transition-all duration-200"
                 />
               </div>
             </div>
@@ -251,17 +257,17 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="text-sm text-rose-600 bg-rose-50 p-3 rounded-xl flex items-center gap-2 border border-rose-100 font-medium"
+                  className="text-sm text-[var(--danger-800)] bg-[var(--danger-100)] p-3 rounded-xl flex items-center gap-2 border border-[#fecaca] font-medium"
                 >
-                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-                   {error}
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--danger-800)] shrink-0" />
+                  {error}
                 </motion.div>
               )}
             </AnimatePresence>
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold py-6 rounded-xl shadow-lg shadow-indigo-500/30 transition-all duration-300 hover:shadow-indigo-500/50 hover:-translate-y-0.5"
+              className="w-full bg-gradient-to-r from-[var(--primary)] to-[var(--accent)] hover:from-[var(--primary-700)] hover:to-[var(--accent-700)] text-[var(--primary-foreground)] font-bold py-6 rounded-xl shadow-lg transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
               disabled={loading}
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -276,14 +282,14 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
               <button
                 type="button"
                 onClick={onRegisterClick}
-                className="font-bold text-indigo-600 hover:text-indigo-500 hover:underline transition-colors"
+                className="font-bold text-[var(--primary)] hover:text-[var(--primary-700)] hover:underline transition-colors"
               >
                 Create Account
               </button>
             ) : (
               <Link
                 href="/register"
-                className="font-bold text-indigo-600 hover:text-indigo-500 hover:underline transition-colors"
+                className="font-bold text-[var(--primary)] hover:text-[var(--primary-700)] hover:underline transition-colors"
               >
                 Create Account
               </Link>
