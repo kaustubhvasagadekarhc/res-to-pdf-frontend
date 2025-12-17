@@ -1,4 +1,5 @@
 "use client";
+"use client";
 
 import { apiClient, resumeService } from "@/app/api/client";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
