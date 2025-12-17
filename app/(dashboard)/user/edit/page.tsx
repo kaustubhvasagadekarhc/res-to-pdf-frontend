@@ -16,6 +16,7 @@ import {
   Trash2,
   User,
   X,
+  
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -556,7 +557,17 @@ export default function EditPage() {
           );
         }
       }
-      router.push("/user/result");
+      // router.push("/user/result");
+      // Instead of redirecting, just ensure preview is updated and show success
+      // We can trigger a refresh of the preview Url from the session storage we just set
+      const pdfResponseStr = sessionStorage.getItem("pdfResponse");
+      if (pdfResponseStr) {
+          const parsed = JSON.parse(pdfResponseStr);
+          if (parsed.pdfUrl) {
+             setPreviewUrl(parsed.pdfUrl);
+          }
+      }
+      setCurrentStep(7); // Ensure we are on the last step
     } catch (error: unknown) {
       console.error("PDF generation failed:", error);
       setError(
@@ -612,9 +623,16 @@ export default function EditPage() {
     <div className="flex bg-slate-50 h-[calc(99vh-64px)] overflow-hidden font-sans text-slate-900">
       {/* Sidebar - Left Panel */}
       <aside className="hidden lg:flex flex-col w-1/3 max-w-[280px] bg-white border-r border-slate-200 h-full overflow-y-auto">
-        <div className="p-6">
-          {/* <h1 className="text-xl font-bold text-slate-800 tracking-tight">CVSync</h1>
-          <p className="text-xs text-slate-500 mt-1">Build your resume</p> */}
+        <div className="p-6 cursor-pointer" onClick={() => router.push("/user")}>
+          <div className="flex items-center gap-2">
+            {/* <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+              <FileIcon className="w-5 h-5" />
+            </div> */}
+             <div>
+                {/* <h1 className="text-xl font-bold text-slate-800 tracking-tight leading-none">CVSync</h1>
+                <p className="text-[10px] text-slate-500 font-medium">Dashboard</p> */}
+             </div>
+          </div>
         </div>
 
         <div className="flex-1 px-4 pb-4">
@@ -690,10 +708,10 @@ export default function EditPage() {
         {/* Scrollable Form Area */}
         <div className="flex-1 overflow-y-auto w-full scroll-smooth">
           <div className="max-w-3xl mx-auto w-full p-6 md:p-10 pb-24">
-            <header className="mb-6">
+            {/* <header className="mb-6">
               <h2 className="text-2xl font-bold text-slate-800 mb-1">{currentStepInfo.label}</h2>
               <p className="text-slate-500 text-sm">Please fill in the details below.</p>
-            </header>
+            </header> */}
 
             <motion.div
               key={currentStep}
@@ -923,7 +941,7 @@ export default function EditPage() {
 
               {currentStep === 7 && (
                 <div className="flex flex-col items-center justify-center h-full py-4 text-center">
-                   <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4 text-emerald-600 shadow-emerald-200 shadow-lg"><CheckCircle2 className="w-8 h-8" /></div>
+                   {/* <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4 text-emerald-600 shadow-emerald-200 shadow-lg"><CheckCircle2 className="w-8 h-8" /></div> */}
                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Ready to Generate!</h2>
                    <p className="text-slate-500 max-w-md mx-auto mb-6 text-sm">Review the preview below, then click Generate to finish.</p>
                    
@@ -957,7 +975,7 @@ export default function EditPage() {
                       ) : previewUrl ? (
                         <iframe 
                           src={previewUrl} 
-                          className="w-full h-full"
+                          className="w-full h-full "
                           title="Resume Preview"
                         />
                       ) : (
@@ -981,7 +999,7 @@ export default function EditPage() {
         </div>
 
         {/* Improved Footer */}
-        <div className="bg-white border-t border-slate-200 px-6 py-4 flex items-center justify-between shrink-0 z-50">
+        <div className="bg-white border-t border-slate-200 px-6 py-4 flex  justify-between shrink-0 z-50">
            <div className="flex items-center gap-3">
              <button 
                onClick={handleBack} 
@@ -993,7 +1011,7 @@ export default function EditPage() {
              {currentStep < 7 && (
                <button 
                  onClick={handleNext} 
-                 className="px-8 py-2.5 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-200 hover:shadow-indigo-300 transition-all active:scale-95"
+                 className="px-8 py-2.5 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md  transition-all active:scale-95"
                >
                  Next
                </button>
@@ -1003,10 +1021,15 @@ export default function EditPage() {
            <button 
              onClick={handleGenerate} 
              disabled={generating || !isFormComplete} 
-             className="px-8 py-2.5 rounded-xl font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-200 hover:shadow-emerald-300 transition-all active:scale-95 flex items-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed disabled:shadow-none disabled:bg-none disabled:bg-slate-300 disabled:text-slate-500"
+             className="px-8 py-2.5 rounded-xl font-bold text-white bg-emerald-500  hover:from-emerald-600 hover:to-teal-600 shadow-lg  transition-all active:scale-95 flex items-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed disabled:shadow-none disabled:bg-none disabled:bg-slate-300 disabled:text-slate-500"
            >
-             {generating ? <><Loader2 className="w-5 h-5 animate-spin" /> </ > : <>Generate PDF <ArrowRight className="w-5 h-5" /></>}
+             {generating ? <><Loader2 className="w-5 h-5 animate-spin" /> Generating...</> : previewUrl ? <>Regenerate PDF <RefreshCw className="w-4 h-4" /></> : <>Generate PDF <ArrowRight className="w-5 h-5" /></>}
            </button>
+
+           {previewUrl && (
+            <></>
+              
+           )}
         </div>
       </main>
     </div>

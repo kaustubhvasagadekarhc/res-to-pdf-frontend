@@ -21,7 +21,7 @@ export function Header() {
     <header className="h-20 flex items-center justify-between px-10 bg-white/70 backdrop-blur-xl sticky top-0 z-20 border-b border-indigo-100/50 transition-all duration-300 shadow-sm">
       <div
         className="flex items-center gap-2 cursor-pointer"
-        onClick={() => router.push("/dashboard/user")}
+        onClick={() => router.push("/user")}
       >
         <div className="h-10 w-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-600/20">
           <FileCheck className="h-6 w-6" />

@@ -25,6 +25,7 @@ export class DashboardService {
         data?: Array<{
             id?: string;
             jobTitle?: string;
+            resumeurl?: string;
             section?: string;
             content?: string;
             version?: number;
