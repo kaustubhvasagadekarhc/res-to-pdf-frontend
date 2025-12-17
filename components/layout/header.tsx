@@ -3,8 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/contexts/UserContext";
 import { authService as legacyAuthService } from "@/services/auth.services";
-import { Bell, FileCheck, LogOut, User } from "lucide-react";
+import { Bell,  LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export function Header() {
   const router = useRouter();
@@ -17,13 +18,18 @@ export function Header() {
   };
 
   return (
-    <header className="h-20 flex items-center justify-between px-10 bg-white/70 backdrop-blur-xl sticky top-0 z-20 border-b border-[var(--border)] transition-all duration-300 shadow-sm">
+    <header className="h-15 flex items-center justify-between px-10 bg-white/70 backdrop-blur-xl sticky top-0 z-20 border-b border-[var(--border)] transition-all duration-300 shadow-sm">
       <div
         className="flex items-center gap-2 cursor-pointer"
         onClick={() => router.push("/user")}
       >
-        <div className="h-10 w-10 bg-gradient-to-br from-[var(--primary)] to-[var(--accent)] rounded-xl flex items-center justify-center text-white shadow-lg">
-          <FileCheck className="h-6 w-6" />
+        <div className="h-10 w-10 rounded-xl flex items-center justify-center ">
+          <Image 
+            src="/logo.png"
+            alt="Logo"
+            width={250}
+            height={250}
+          />
         </div>
       </div>
 

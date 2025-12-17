@@ -172,7 +172,7 @@ export default function ResumesPage() {
             <div>
               <h1 className="text-4xl font-bold text-[var(--primary)] mb-1">
                 My Resumes{" "}
-                <span className="text-slate-500">({resumes.length})</span>
+                <span className="text-slate-500 text-xl">({resumes.length})</span>
               </h1>
               <p className="text-slate-600">
                 Manage, edit, and download your generated professional resumes.
@@ -181,6 +181,7 @@ export default function ResumesPage() {
             <Button
               onClick={() => router.push("/user/upload")}
               className="bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] whitespace-nowrap font-medium"
+              
             >
               + Create New Resume
             </Button>
@@ -338,7 +339,7 @@ export default function ResumesPage() {
                       <MoreVertical className="w-4 h-4 text-slate-400" />
                     </Button>
                     {/* Dropdown menu */}
-                    <div className="absolute right-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-10">
+                    <div className=" absolute right-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-10">
                       <button
                         onClick={() => handleViewResume(resume)}
                         className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 border-b border-slate-100"

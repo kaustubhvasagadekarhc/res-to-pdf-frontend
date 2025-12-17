@@ -1,5 +1,4 @@
 "use client";
-"use client";
 
 import { apiClient, resumeService } from "@/app/api/client";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
@@ -95,9 +94,9 @@ export default function UploadPage() {
           className="space-y-8"
         >
           <div className="space-y-2">
-            <h1 className="text-4xl lg:text-6xl font-bold text-slate-900 leading-[1.1] tracking-tight">
+            <h1 className="text-4xl lg:text-6xl font-bold text-slate-600 leading-[1.1] tracking-tight">
               Redefine your <br />
-              <span className="text-indigo-600">
+              <span className="text-[var(--accent)]">
                 Professional Story
               </span>
             </h1>
@@ -111,7 +110,7 @@ export default function UploadPage() {
             {!file ? (
               <button
                 onClick={triggerFileSelect}
-                className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all transform hover:-translate-y-0.5 flex items-center gap-2 justify-center"
+                className="px-8 py-4 bg-[var(--accent)] hover:bg-indigo-600 text-white rounded-xl font-bold text-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 justify-center"
               >
                 <Upload className="w-5 h-5" />
                 Upload Resume
@@ -143,8 +142,8 @@ export default function UploadPage() {
             )}
             
             {!file && (
-              <button className="px-8 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold text-lg transition-colors">
-                How it works
+              <button className="px-8 py-4 text-[var(--accent)] bg-white hover:bg-slate-50  border border-slate-200 rounded-xl font-bold text-lg transition-colors">
+                Make Your Own Resume 
               </button>
             )}
           </div>
@@ -192,11 +191,11 @@ export default function UploadPage() {
             </video>
             
             {/* Minimal Overlay & Play Button */}
-            <div className="absolute inset-0 bg-black/5 flex items-center justify-center group-hover:bg-black/10 transition-colors duration-500">
+            {/* <div className="absolute inset-0 bg-black/5 flex items-center justify-center group-hover:bg-black/10 transition-colors duration-500">
                <div className="w-16 h-16 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-500 text-slate-900 pl-1">
                  <Play className="w-6 h-6 fill-current" />
                </div>
-            </div>
+            </div> */}
           </div>
           
           {/* Decorative Glow */}
