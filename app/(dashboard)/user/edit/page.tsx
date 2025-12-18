@@ -602,17 +602,45 @@ export default function EditPage() {
         return !resumeData.skills || resumeData.skills.length === 0;
       case "education":
          return !resumeData.education || resumeData.education.length === 0 || resumeData.education.some(edu => !edu.institution || !edu.degree);
+      // Experience and Projects are optional, so they are always "valid" for navigation purposes
+      case "experience":
+      case "projects":
       default:
         return false;
     }
   };
+
+  const calculateProgress = () => {
+    if (!resumeData) return 0;
+    let score = 0;
+    const totalPoints = 7; // 4 personal + 1 summary + 1 skills + 1 education
+
+    // Personal (4 points)
+    if (resumeData.personal.name) score += 1;
+    if (resumeData.personal.email) score += 1;
+    if (resumeData.personal.mobile) score += 1;
+    if (resumeData.personal.designation) score += 1;
+
+    // Summary (1 point)
+    if (resumeData.summary && resumeData.summary.trim().length > 0) score += 1;
+
+    // Skills (1 point)
+    if (resumeData.skills && resumeData.skills.length > 0) score += 1;
+    
+    // Education (1 point)
+    if (resumeData.education && resumeData.education.length > 0 && resumeData.education[0].institution) score += 1;
+
+    return Math.min(100, Math.round((score / totalPoints) * 100));
+  };
+  
+  const progress = calculateProgress();
 
   const isFormComplete = STEPS.every((step) => !getMissingFieldsForStep(step.key));
 
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
       </div>
     );
   }
@@ -625,7 +653,7 @@ export default function EditPage() {
       <aside className="hidden lg:flex flex-col w-1/3 max-w-[280px] bg-white border-r border-slate-200 h-full overflow-y-auto">
         <div className="p-6 cursor-pointer" onClick={() => router.push("/user")}>
           <div className="flex items-center gap-2">
-            {/* <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+            {/* <div className="w-8 h-8 bg-[var(--primary)] rounded-lg flex items-center justify-center text-white">
               <FileIcon className="w-5 h-5" />
             </div> */}
              <div>
@@ -658,25 +686,25 @@ export default function EditPage() {
                  <div 
                    onClick={() => setCurrentStep(step.id)}
                    className={`relative z-10 flex items-center gap-4 px-4 py-4 cursor-pointer transition-all duration-200 group rounded-xl ${
-                     isActive ? "bg-indigo-50/50" : "hover:bg-slate-50"
+                     isActive ? "bg-[var(--primary)]/10" : "hover:bg-slate-50"
                    }`}
                  > 
                    {/* Icon/Number Circle */}
                    <div
                      className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border-2 transition-all z-10 ${
                        isActive
-                         ? "bg-indigo-600 border-indigo-600 text-white shadow-md scale-105"
+                         ? "bg-[var(--primary)] border-[var(--primary)] text-white shadow-md scale-105"
                          : hasError 
                          ? "bg-white border-rose-200 text-rose-500"
                          : isCompleted
                          ? "bg-emerald-50 border-emerald-200 text-emerald-600"
-                         : "bg-white border-slate-200 text-slate-400 group-hover:border-indigo-300 group-hover:text-indigo-500"
+                         : "bg-white border-slate-200 text-slate-400 group-hover:border-[var(--primary)]/50 group-hover:text-[var(--primary)]"
                      }`}
                    >
                      {isCompleted && !isActive && !hasError ? <CheckCircle2 className="w-4 h-4" /> : <step.icon className="w-4 h-4" />}
                    </div>
                    
-                   <span className={`text-sm flex-1 ${isActive ? 'font-bold text-indigo-900' : 'font-medium text-slate-500 group-hover:text-slate-700'}`}>
+                   <span className={`text-sm flex-1 ${isActive ? 'font-bold text-[var(--primary)]' : 'font-medium text-slate-500 group-hover:text-slate-700'}`}>
                      {step.label}
                    </span>
 
@@ -696,7 +724,7 @@ export default function EditPage() {
         {/* Mobile Step Indicator */}
         <div className="lg:hidden bg-white border-b px-4 py-3 flex items-center justify-between shrink-0">
              <div className="flex items-center gap-2">
-                <span className="font-bold text-indigo-900 text-sm">Step {currentStep}</span>
+                <span className="font-bold text-[var(--primary)] text-sm">Step {currentStep}</span>
                 <span className="text-slate-300">/</span>
                 <span className="text-sm font-medium text-slate-600 truncate max-w-[150px]">{currentStepInfo.label}</span>
              </div>
@@ -999,37 +1027,47 @@ export default function EditPage() {
         </div>
 
         {/* Improved Footer */}
-        <div className="bg-white border-t border-slate-200 px-6 py-4 flex  justify-between shrink-0 z-50">
-           <div className="flex items-center gap-3">
-             <button 
-               onClick={handleBack} 
-               disabled={currentStep === 1} 
-               className={`px-6 py-2.5 rounded-xl font-semibold border transition-all flex items-center gap-2 ${currentStep === 1 ? 'opacity-0 pointer-events-none' : 'border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'}`}
-             >
-               Back
-             </button>
-             {currentStep < 7 && (
-               <button 
-                 onClick={handleNext} 
-                 className="px-8 py-2.5 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md  transition-all active:scale-95"
-               >
-                 Next
-               </button>
-             )}
+        {/* Improved Footer with Progress Bar */}
+        <div className="bg-white border-t border-slate-200 flex flex-col shrink-0 z-50">
+           {/* Progress Bar Container */}
+           <div className="w-full h-1.5 bg-slate-100">
+              <div 
+                 className="h-full bg-[var(--primary)] transition-all duration-500 ease-out" 
+                 style={{ width: `${progress}%` }} 
+              />
            </div>
 
-           <button 
-             onClick={handleGenerate} 
-             disabled={generating || !isFormComplete} 
-             className="px-8 py-2.5 rounded-xl font-bold text-white bg-emerald-500  hover:from-emerald-600 hover:to-teal-600 shadow-lg  transition-all active:scale-95 flex items-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed disabled:shadow-none disabled:bg-none disabled:bg-slate-300 disabled:text-slate-500"
-           >
-             {generating ? <><Loader2 className="w-5 h-5 animate-spin" /> Generating...</> : previewUrl ? <>Regenerate PDF <RefreshCw className="w-4 h-4" /></> : <>Generate PDF <ArrowRight className="w-5 h-5" /></>}
-           </button>
+           <div className="px-6 py-4 flex justify-between items-center w-full">
+             <div className="flex-1"> {/* Left Side - Back Button */}
+               <button 
+                 onClick={handleBack} 
+                 disabled={currentStep === 1} 
+                 className={`px-6 py-2.5 rounded-xl font-semibold border transition-all flex items-center gap-2 ${currentStep === 1 ? 'opacity-0 pointer-events-none' : 'border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'}`}
+               >
+                 Back
+               </button>
+             </div>
 
-           {previewUrl && (
-            <></>
-              
-           )}
+             <div className="flex-1 flex justify-end"> {/* Right Side - Next/Generate Button */}
+               {currentStep < 7 ? (
+                 <button 
+                   onClick={handleNext} 
+                   disabled={getMissingFieldsForStep(currentStepInfo.key)}
+                   className="px-8 py-2.5 rounded-xl font-bold text-white bg-[var(--primary)] hover:bg-[var(--primary-700)] shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                 >
+                   Next
+                 </button>
+               ) : (
+                 <button 
+                   onClick={handleGenerate} 
+                   disabled={generating || !isFormComplete} 
+                   className="px-8 py-2.5 rounded-xl font-bold text-white bg-[var(--primary)] hover:bg-[var(--primary-700)] shadow-lg transition-all active:scale-95 flex items-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed disabled:shadow-none disabled:bg-slate-300 disabled:text-slate-500"
+                 >
+                   {generating ? <><Loader2 className="w-5 h-5 animate-spin" /> Generating...</> : previewUrl ? <>Regenerate PDF <RefreshCw className="w-4 h-4" /></> : <>Generate PDF <ArrowRight className="w-5 h-5" /></>}
+                 </button>
+               )}
+             </div>
+           </div>
         </div>
       </main>
     </div>

@@ -190,8 +190,8 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="w-full max-w-md mx-auto shadow-2xl border-0 bg-white/80 backdrop-blur-xl rounded-2xl overflow-hidden ring-1 ring-white/50">
-        <div className="bg-gradient-to-r from-[var(--primary)] to-[var(--accent)] h-1.5 w-full" />
+      <Card className="w-full max-w-md mx-auto border-0.1 bg-white/80 backdrop-blur-xl rounded-2xl overflow-hidden ring-1 ring-white/50">
+        {/* <div className="bg-gradient-to-r from-[var(--primary)] to-[var(--accent)] h-1.5 w-full" /> */}
         <CardHeader className="text-center pb-2 pt-8">
           <CardTitle className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-br from-[var(--primary)] to-[var(--accent)]">
             Welcome Back
@@ -229,12 +229,12 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
                 >
                   Password
                 </Label>
-                <Link
+                {/* <Link
                   href="/forgot-password"
                   className="text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-700)] hover:underline"
                 >
                   Forgot password?
-                </Link>
+                </Link> */}
               </div>
               <div className="relative group">
                 <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />

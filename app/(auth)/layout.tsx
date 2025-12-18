@@ -10,45 +10,58 @@ export default function AuthLayout({
 }) {
   const pathname = usePathname();
 
-  let imageSrc = "/login.jpg"; 
+  let imageSrc = "/login.png";
   if (pathname === "/login") {
-    imageSrc = "/login.jpg";
+    imageSrc = "/login.png";
   } else if (pathname === "/register") {
-    imageSrc = "/register.jpg";
+    imageSrc = "/register.png";
   } else if (pathname === "/otp-verification") {
-    imageSrc = '/otp-verify.jpg';
+    imageSrc = "/otp-verify.jpg";
   }
 
   return (
-    <div className="h-screen w-full overflow-hidden">
+    <div className="h-screen w-full overflow-hidden bg-white">
       <div className="grid grid-cols-1 lg:grid-cols-2 h-screen">
-        {/* Left: Content */}
-        <div className="bg-card flex items-center justify-center overflow-y-auto">
-          <div className="w-full max-w-lg mx-auto px-6 py-8">
-            {children}
-          </div>
-        </div>
-        {/* Right: Decorative */}
-        <aside className="hidden lg:flex relative h-full w-full bg-gradient-to-br from-indigo-50 via-white to-cyan-50 items-center justify-center overflow-hidden">
+        {/* Left: Decorative & Motto */}
+        <aside className="hidden lg:flex flex-col relative h-full w-full bg-[var(--primary-50)] items-center justify-center overflow-hidden p-12">
           {/* Decorative Background Elements */}
-          <div className="absolute inset-0 w-full h-full">
-            <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-200/40 rounded-full blur-[100px] mix-blend-multiply animate-pulse" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-200/40 rounded-full blur-[100px] mix-blend-multiply animate-pulse delay-700" />
-            <div className="absolute top-[40%] left-[40%] w-[600px] h-[600px] bg-indigo-100/40 rounded-full blur-[120px] mix-blend-multiply -translate-x-1/2 -translate-y-1/2" />
-          </div>
+          
 
-          <div className="relative w-full max-w-[650px] aspect-square p-8 flex items-center justify-center">
-            <div className="relative w-full h-full p-8">
+          <div className="relative z-10 w-full max-w-xl  flex flex-col items-center text-center">
+            
+              <h1 className="text-4xl lg:text-5xl font-bold text-slate-700 leading-tight tracking-tight">
+                Redefine your <br />
+                <span className="text-[var(--primary)]">
+                  Professional Story
+                </span>
+              </h1>
+              <p className="text-lg text-slate-500 leading-relaxed max-w-md mx-auto">
+                Crafting perfect resumes shouldn&apos;t be hard. Join us to
+                transform your career path with industry-standard tools.
+              </p>
+          
+
+            <div className="relative w-full max-w-[480px] aspect-square">
               <Image
                 src={imageSrc}
                 alt="Authentication Illustration"
                 fill
-                className="object-contain mix-blend-multiply opacity-90"
                 priority
+                className="object-contain mix-blend-multiply"
               />
-            </div> 
+            </div>
           </div>
         </aside>
+
+        {/* Right: Content (Form) */}
+        <div className="bg-white flex items-center justify-center overflow-y-auto relative">
+          {/* Mobile background decor/fallback */}
+          <div className="lg:hidden absolute inset-0 z-0 bg-gradient-to-b from-[var(--primary-50)] to-white opacity-40 pointer-events-none" />
+
+          <div className="w-full max-w-[440px] mx-auto px-8 py-12 relative z-10">
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   );

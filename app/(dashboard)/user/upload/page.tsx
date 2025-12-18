@@ -9,9 +9,9 @@ import {
   CheckCircle2,
   FileText,
   Loader2,
-  Play,
   Upload,
 } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
@@ -142,7 +142,24 @@ export default function UploadPage() {
             )}
             
             {!file && (
-             <button className="
+             <button 
+               onClick={() => {
+                  const emptyResume = {
+                      personal: {
+                          name: "", designation: "", email: "", mobile: "", location: "", gender: "", marital_status: ""
+                      },
+                      summary: "",
+                      skills: [],
+                      education: [],
+                      work_experience: [],
+                      projects: []
+                  };
+                  sessionStorage.setItem("resumeData", JSON.stringify(emptyResume));
+                  sessionStorage.removeItem("resumeId");
+                  sessionStorage.removeItem("resumeFileName");
+                  router.push("/user/edit");
+               }}
+               className="
   group relative inline-flex items-center justify-center
   px-8 py-4 rounded-2xl font-semibold text-lg
   text-[var(--accent)]
@@ -195,34 +212,17 @@ export default function UploadPage() {
 
         {/* Right Column: Video Card */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          
           className="relative group"
         >
-          <div className="relative rounded-[12px] overflow-hidden bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] aspect-video border border-slate-100 group-hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.15)] group-hover:scale-[1.01] transition-all duration-500 ease-out">
-            
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-cover " 
-            >
-              <source src="/dashboard gif.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-            
-            {/* Minimal Overlay & Play Button */}
-            {/* <div className="absolute inset-0 bg-black/5 flex items-center justify-center group-hover:bg-black/10 transition-colors duration-500">
-               <div className="w-16 h-16 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-500 text-slate-900 pl-1">
-                 <Play className="w-6 h-6 fill-current" />
-               </div>
-            </div> */}
-          </div>
           
-          {/* Decorative Glow */}
-          <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-[32px] blur-2xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <Image
+                src='/upload-resume.jpg'
+                alt="upload resume"
+                fill
+                className="object-contain mix-blend-multiply opacity-90"
+                priority
+              />
         </motion.div>
         
       </div>
