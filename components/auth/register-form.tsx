@@ -15,7 +15,8 @@ import { Label } from "@/components/ui/label";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 // import { authService as tokenService } from '@/services/auth.services';
-import { Loader2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Loader2, Lock, Mail, User } from "lucide-react";
 import Link from "next/link";
 
 /**
@@ -39,8 +40,6 @@ export function RegisterForm({ onLoginClick }: RegisterFormProps) {
     password: "",
     confirmPassword: "",
   });
-  //state for response
-  const [, setApiResponse] = useState("");
 
   useEffect(() => {
     const emailParam = searchParams.get("email");
@@ -72,7 +71,7 @@ export function RegisterForm({ onLoginClick }: RegisterFormProps) {
       // Wait, client.ts didn't show the methods, it showed the export.
       // I'll assume postAuthRegister exists.
 
-      const response = await authService.postAuthRegister({
+      await authService.postAuthRegister({
         requestBody: {
           name: formData.name,
           email: formData.email,
@@ -81,7 +80,6 @@ export function RegisterForm({ onLoginClick }: RegisterFormProps) {
         },
       });
 
-      setApiResponse(JSON.stringify(response));
       // Redirect to OTP verification
       router.push(
         `/otp-verification?email=${encodeURIComponent(formData.email)}`
@@ -117,88 +115,150 @@ export function RegisterForm({ onLoginClick }: RegisterFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto shadow-none border-0 sm:border sm:shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-2xl text-center">Register</CardTitle>
-        <CardDescription className="text-center">
-          Create a new account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              name="name"
-              placeholder="John Doe"
-              required
-              value={formData.name}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="m@example.com"
-              required
-              value={formData.email}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              required
-              value={formData.confirmPassword}
-              onChange={handleChange}
-            />
-          </div>
-          {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Register
-          </Button>
-        </form>
-      </CardContent>
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-slate-500">
-          Already have an account?{" "}
-          {onLoginClick ? (
-            <button
-              type="button"
-              onClick={onLoginClick}
-              className="font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card className="w-full max-w-md mx-auto shadow-2xl border-0 bg-white/80 backdrop-blur-xl rounded-2xl overflow-hidden ring-1 ring-white/50">
+        <div className="bg-gradient-to-r from-[var(--primary)] to-[var(--accent)] h-1.5 w-full" />
+        <CardHeader className="text-center pb-2 pt-8">
+          <CardTitle className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-br from-[var(--primary)] to-[var(--accent)]">
+            Create Account
+          </CardTitle>
+          <CardDescription className="text-slate-500 font-medium mt-2">
+            Start building your professional resume
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6 pt-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-slate-700 font-semibold">
+                Full Name
+              </Label>
+              <div className="relative group">
+                <User className="absolute left-3.5 top-3 h-4 w-4 text-slate-400 group-focus-within:text-[var(--primary)] transition-colors" />
+                <Input
+                  id="name"
+                  name="name"
+                  placeholder="John Doe"
+                  required
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="pl-10 h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:border-[var(--primary-700)] focus:ring-[var(--primary-700)] rounded-xl transition-all duration-200"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-slate-700 font-semibold">
+                Email Address
+              </Label>
+              <div className="relative group">
+                <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="name@company.com"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="pl-10 h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:border-[var(--primary-700)] focus:ring-[var(--primary-700)] rounded-xl transition-all duration-200"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="password"
+                className="text-slate-700 font-semibold"
+              >
+                Password
+              </Label>
+              <div className="relative group">
+                <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="••••••••"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="pl-10 h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:border-[var(--primary-700)] focus:ring-[var(--primary-700)] rounded-xl transition-all duration-200"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="confirmPassword"
+                className="text-slate-700 font-semibold"
+              >
+                Confirm Password
+              </Label>
+              <div className="relative group">
+                <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  required
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="pl-10 h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:border-[var(--primary-700)] focus:ring-[var(--primary-700)] rounded-xl transition-all duration-200"
+                />
+              </div>
+            </div>
+
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="text-sm text-[var(--danger-800)] bg-[var(--danger-100)] p-3 rounded-xl flex items-center gap-2 border border-[#fecaca] font-medium"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--danger-800)] shrink-0" />
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-[var(--primary)] to-[var(--accent)] hover:from-[var(--primary-700)] hover:to-[var(--accent-700)] text-[var(--primary-foreground)] font-bold py-6 rounded-xl shadow-lg transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+              disabled={loading}
             >
-              Login
-            </button>
-          ) : (
-            <Link
-              href="/login"
-              className="font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-            >
-              Login
-            </Link>
-          )}
-        </p>
-      </CardFooter>
-    </Card>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create Account
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-center border-t border-slate-100 mt-2 py-6 bg-slate-50/50">
+          <p className="text-sm text-slate-500 font-medium">
+            Already have an account?{" "}
+            {onLoginClick ? (
+              <button
+                type="button"
+                onClick={onLoginClick}
+                className="font-bold text-[var(--primary)] hover:text-[var(--primary-700)] hover:underline transition-colors"
+              >
+                Sign In
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                className="font-bold text-[var(--primary)] hover:text-[var(--primary-700)] hover:underline transition-colors"
+              >
+                Sign In
+              </Link>
+            )}
+          </p>
+        </CardFooter>
+      </Card>
+    </motion.div>
   );
 }

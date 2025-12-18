@@ -1,5 +1,7 @@
 "use client";
 
+import { apiClient, resumeService } from "@/app/api/client";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
@@ -7,90 +9,42 @@ import {
   CheckCircle2,
   FileText,
   Loader2,
-  Sparkles,
+  Play,
   Upload,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 
-import {  getAuthToken } from "@/lib/auth";
+export default function UploadPage() {
+  useAuthGuard("User");
 
-// const API_BASE_URL = getApiBaseUrl();
-
-export default function Home() {
-  const [file] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [tokenLoading, setTokenLoading] = useState(true);
-  const [hasToken, setHasToken] = useState(false);
-  const [isDragOver, setIsDragOver] = useState(false);
   const router = useRouter();
-
-  // Check for token on component mount
-  useEffect(() => {
-    const checkToken = async () => {
-      setTokenLoading(true);
-      setError(""); // Clear any previous errors
-      const token = await getAuthToken();
-      if (!token) {
-        setError(
-          "Access token required. Unable to fetch authentication token. Please check your connection and try again."
-        );
-        setHasToken(false);
-      } else {
-        setHasToken(true);
-      }
-      setTokenLoading(false);
-    };
-    checkToken();
-  }, []);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      // validateAndSetFile(selectedFile);
+      validateAndSetFile(selectedFile);
     }
   };
 
-  //example usage of pdfService
-
-  // import { pdfService } from "./api/client";
-  // const handleFileChangjhasdhjvase = async(e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const response = await pdfService.postGeneratePdf({
-  //     file: e.target.files?.[0],
-  //   })
-  // };
-
-  // const handleUpload = async () => {
-  //   if (!file) {
-  //     setError("Please select a file first");
-  //     return;
-  //   }
-  // };
-
-  // const validateAndSetFile = (selectedFile: File) => {
-  //   if (!selectedFile.type.includes("pdf")) {
-  //     setError("Please upload a PDF file");
-  //     return;
-  //   }
-  //   if (selectedFile.size > 10 * 1024 * 1024) {
-  //     setError("File size exceeds 10MB limit");
-  //     return;
-  //   }
-  //   setFile(selectedFile);
-  //   setError("");
-  // };
-
-  const handleUpload = async () => {
-    // Check for token first
-    const token = await getAuthToken();
-    if (!token) {
-      setError(
-        "Access token required. Please refresh the page to get a new token."
-      );
+  const validateAndSetFile = (selectedFile: File) => {
+    if (!selectedFile.type.includes("pdf")) {
+      setError("Please upload a PDF file");
       return;
     }
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      setError("File size exceeds 10MB limit");
+      return;
+    }
+    setFile(selectedFile);
+    setError("");
+  };
 
+  const handleUpload = async () => {
     if (!file) {
       setError("Please select a file first");
       return;
@@ -100,172 +54,98 @@ export default function Home() {
     setError("");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      apiClient.refreshTokenFromCookies();
 
-      const response = await fetch("http://localhost:5000/upload", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
+      const response = await resumeService.postUpload({
+        formData: { file },
       });
 
-      const result = await response.json();
-
-      if (response.ok) {
-        // Validate parsed data before storing
-        if (!result.parsed) {
-          setError("Failed to parse resume data");
-          return;
-        }
-
-        // Store parsed data in sessionStorage for next page
-        sessionStorage.setItem("resumeData", JSON.stringify(result.parsed));
-        router.push("/edit");
-      } else {
-        setError(`Error: ${result.error || "Upload failed"}`);
+      if (!response.parsed) {
+        setError("Failed to parse resume data");
+        return;
       }
-    } catch (err) {
-      setError(
-        `Network Error: ${err instanceof Error ? err.message : "Unknown error"}`
-      );
+
+      sessionStorage.setItem("resumeData", JSON.stringify(response.parsed));
+      router.push("/user/edit");
+    } catch (error: unknown) {
+      console.error("Resume upload failed:", error);
+      setError(error instanceof Error ? error.message : "Upload failed");
     } finally {
       setLoading(false);
     }
   };
 
+  const triggerFileSelect = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
-    <div className="flex items-center justify-center p-4">
-      <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        {/* Left Column: Hero Text */}
-        <motion.div
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
+    <div className="min-h-[calc(100vh-80px)] bg-[#F8FAFC] flex items-center justify-center p-6 lg:p-12 overflow-hidden relative">
+      {/* Background Decor */}
+      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-50/50 to-transparent pointer-events-none" />
+      
+      <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center relative z-10">
+        
+        {/* Left Column: Text Content & Actions */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="space-y-8"
         >
-          <div className="inline-flex items-center space-x-2 bg-action/10 border border-action/20 rounded-full px-4 py-1.5 text-action text-sm font-semibold">
-            <Sparkles className="w-4 h-4" />
-            <span>AI-Powered Resume Parser</span>
-          </div>
-
-          <h1 className="text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-            Transform your <br />
-            <span className="text-action relative">
-              Resume
-              <svg
-                className="absolute w-full h-3 -bottom-1 left-0 text-action/30 -z-10"
-                viewBox="0 0 100 10"
-                preserveAspectRatio="none"
-              >
-                <path
-                  d="M0 5 Q 50 10 100 5"
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  fill="none"
-                />
-              </svg>
-            </span>{" "}
-            into a PDF
-          </h1>
-
-          <p className="text-lg text-slate-600 max-w-lg leading-relaxed">
-            Upload your existing resume and let our advanced AI extract, format,
-            and generate a professional, ATS-friendly PDF in seconds.
-          </p>
-
-          <div className="space-y-4">
-            {[
-              "Smart Information Extraction",
-              "Professional Templates",
-              "Instant PDF Generation",
-            ].map((feature, idx) => (
-              <div
-                key={idx}
-                className="flex items-center space-x-3 text-slate-700"
-              >
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
-                <span className="font-medium">{feature}</span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Right Column: Upload Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 lg:p-10 relative"
-        >
-          <div className="mb-8 text-center">
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">
-              Upload Resume
-            </h2>
-            <p className="text-slate-500 text-sm">
-              Supported format: PDF (Max 10MB)
+          <div className="space-y-2">
+            <h1 className="text-4xl lg:text-6xl font-bold text-slate-600 leading-[1.1] tracking-tight">
+              Redefine your <br />
+              <span className="text-[var(--accent)]">
+                Professional Story
+              </span>
+            </h1>
+            <p className="text-lg text-slate-500 leading-relaxed max-w-lg pt-4">
+              Crafting perfect resumes shouldn&apos;t be hard. Upload your existing resume, 
+              and we&apos;ll transform it into an industry-standard PDF in seconds.
             </p>
           </div>
 
-          <div
-            className={`
-                      relative group border-2 border-dashed rounded-xl p-8 transition-all duration-300 ease-in-out
-                      flex flex-col items-center justify-center text-center cursor-pointer
-                      ${
-                        isDragOver
-                          ? "border-action bg-action/10 scale-[1.02]"
-                          : "border-slate-300 hover:border-action/40 hover:bg-slate-50/50"
-                      }
-                      ${file ? "bg-action/20 border-action/30" : ""}
-                  `}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragOver(true);
-            }}
-            onDragLeave={() => setIsDragOver(false)}
-            // onDrop={handleDrop}
-          >
-            <input
-              type="file"
-              id="fileInput"
-              accept=".pdf"
-              onChange={handleFileChange}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-            />
-
-            <div className="z-10 transition-transform duration-300 group-hover:scale-110 mb-4">
-              {file ? (
-                <FileText className="w-16 h-16 text-action" />
-              ) : (
-                <div className="bg-action/10 p-4 rounded-full">
-                  <Upload className="w-8 h-8 text-action" />
-                </div>
-              )}
-            </div>
-
-            <div className="z-10">
-              {file ? (
-                <div>
-                  <p className="font-semibold text-action text-lg truncate max-w-[200px] mx-auto">
-                    {file.name}
-                  </p>
-                  <p className="text-sm text-action/80 mt-1">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                  <p className="text-xs text-action/60 mt-2">
-                    Click to change file
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <p className="font-semibold text-slate-700 text-lg mb-1">
-                    Drop your resume here
-                  </p>
-                  <p className="text-sm text-slate-500">or click to browse</p>
-                </div>
-              )}
-            </div>
+          <div className="flex flex-col sm:flex-row gap-4 pt-2">
+            {!file ? (
+              <button
+                onClick={triggerFileSelect}
+                className="px-8 py-4 bg-[var(--accent)] hover:bg-indigo-600 text-white rounded-xl font-bold text-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 justify-center"
+              >
+                <Upload className="w-5 h-5" />
+                Upload Resume
+              </button>
+            ) : (
+              <div className="flex flex-col gap-4 w-full sm:w-auto">
+                 <div className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl shadow-sm">
+                    <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0 pr-4">
+                      <p className="font-semibold text-slate-900 truncate max-w-[200px]">{file.name}</p>
+                      <p className="text-xs text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                    <button onClick={() => setFile(null)} className="text-slate-400 hover:text-rose-500 p-1">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                    </button>
+                 </div>
+                 
+                 <button
+                  onClick={handleUpload}
+                  disabled={loading}
+                  className="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-emerald-200 hover:shadow-emerald-300 transition-all transform hover:-translate-y-0.5 flex items-center gap-2 justify-center disabled:opacity-75 disabled:cursor-not-allowed"
+                >
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
+                  {loading ? "Processing..." : "Generate Magic PDF"}
+                </button>
+              </div>
+            )}
+            
+            {!file && (
+              <button className="px-8 py-4 text-[var(--accent)] bg-white hover:bg-slate-50  border border-slate-200 rounded-xl font-bold text-lg transition-colors">
+                Make Your Own Resume 
+              </button>
+            )}
           </div>
 
           <AnimatePresence>
@@ -274,51 +154,54 @@ export default function Home() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="mt-6 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-start space-x-3"
+                className="flex items-center gap-2 text-rose-600 bg-rose-50 px-4 py-2 rounded-lg text-sm font-medium w-fit"
               >
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <div className="text-sm">{error}</div>
+                <AlertCircle className="w-4 h-4" />
+                {error}
               </motion.div>
             )}
           </AnimatePresence>
 
-          <button
-            onClick={handleUpload}
-            disabled={loading || tokenLoading || !hasToken || !file}
-            className={`
-                      w-full mt-8 py-4 px-6 rounded-xl font-bold text-white shadow-lg shadow-blue-500/30
-                      transition-all duration-300 flex items-center justify-center space-x-2
-                      ${
-                        loading || tokenLoading || !hasToken || !file
-                          ? "bg-slate-300 cursor-not-allowed shadow-none text-slate-500"
-                          : "bg-action hover:bg-action/90 hover:translate-y-[-2px] hover:shadow-action/30 hover:shadow-xl active:translate-y-[0px]"
-                      }
-                  `}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Processing...</span>
-              </>
-            ) : tokenLoading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Connecting...</span>
-              </>
-            ) : (
-              <>
-                <span>Generate PDF</span>
-                <ArrowRight className="w-5 h-5" />
-              </>
-            )}
-          </button>
-
-          {!hasToken && !tokenLoading && (
-            <p className="text-xs text-center text-red-400 mt-4">
-              * Authentication failed. Check console or refresh.
-            </p>
-          )}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".pdf"
+            className="hidden"
+          />
         </motion.div>
+
+        {/* Right Column: Video Card */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="relative group"
+        >
+          <div className="relative rounded-[24px] overflow-hidden bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] aspect-video border border-slate-100 group-hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.15)] group-hover:scale-[1.01] transition-all duration-500 ease-out">
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+            >
+              <source src="/dashboard gif.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            
+            {/* Minimal Overlay & Play Button */}
+            {/* <div className="absolute inset-0 bg-black/5 flex items-center justify-center group-hover:bg-black/10 transition-colors duration-500">
+               <div className="w-16 h-16 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-500 text-slate-900 pl-1">
+                 <Play className="w-6 h-6 fill-current" />
+               </div>
+            </div> */}
+          </div>
+          
+          {/* Decorative Glow */}
+          <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-[32px] blur-2xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+        </motion.div>
+        
       </div>
     </div>
   );

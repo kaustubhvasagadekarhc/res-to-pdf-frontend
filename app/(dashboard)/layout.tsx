@@ -32,6 +32,7 @@ const adminItems: SidebarItem[] = [
 // User Sidebar Items
 const userItems: SidebarItem[] = [
   { label: "My Resume", href: "/user", icon: FileText },
+  { label: "My Resumes", href: "/user/resumes", icon: FileText },
   { label: "Edit Resume", href: "/user/edit", icon: Settings },
   { label: "Results", href: "/user/result", icon: BookDown },
   { label: "Profile", href: "/user/profile", icon: User },
@@ -45,8 +46,7 @@ function DashboardContent({
   const { user, loading } = useUser();
   
   const items = user?.userType === "ADMIN" ? adminItems : userItems;
-  //   const router = useRouter();
-  //   const pathname = usePathname();
+  
 
   if (loading) {
     return null; // Or a loading skeleton
@@ -54,10 +54,10 @@ function DashboardContent({
 
   return (
     <DashboardShell>
-      <Sidebar items={items} />
+     {user?.userType === "ADMIN" && <Sidebar items={items} />}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto p-6  bg-[#ccccff]  ">
+        <main className="flex-1 overflow-y-auto     ">
           {children}
         </main>
       </div>
