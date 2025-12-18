@@ -44,18 +44,12 @@ export function Header() {
 
         <div className="h-6 w-px bg-[var(--border)] mx-2" />
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push("/user/profile")}
-          className="text-[var(--primary-900)] hover:text-[var(--primary-700)] hover:bg-[var(--primary-50)] rounded-xl px-3 py-2 font-medium transition-all group gap-2"
-        >
+        
           <div className="h-8 w-8 rounded-lg bg-[var(--primary-50)] text-[var(--primary)] flex items-center justify-center group-hover:scale-105 transition-transform">
             <User className="h-5 w-5" />
           </div>
           <span className="hidden md:inline-block">{user?.name || "User"}</span>
-        </Button>
-
+        
         <Button
           variant="ghost"
           size="sm"

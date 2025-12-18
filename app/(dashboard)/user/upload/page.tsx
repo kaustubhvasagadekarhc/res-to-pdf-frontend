@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   FileText,
   Loader2,
-  Play,
   Upload,
 } from "lucide-react";
 import { useRouter } from "next/navigation";

@@ -14,18 +14,39 @@ import {
   ArrowUpRight
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { adminService } from "@/app/api/client";
 
 export default function AdminDashboard() {
   useAuthGuard("Admin");
   const router = useRouter();
-  const [stats] = useState({
-    totalUsers: 1247,
-    activeUsers: 892,
-    totalResumes: 3456,
-    todayResumes: 45,
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    totalResumes: 0,
+    todayResumes: 0,
   });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await adminService.getAdminStats();
+        if (response.data) {
+          setStats({
+            totalUsers: response.data.totalUsers || 0,
+            activeUsers: response.data.totalUsers || 0, // Placeholder as API might not return this yet
+            totalResumes: response.data.totalResumes || 0,
+            todayResumes: response.data.totalGenerated || 0, // Mapping generated to today for now
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch admin stats:", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   const cards = [
     {
@@ -35,7 +56,6 @@ export default function AdminDashboard() {
       icon: Users,
       trend: "up",
       gradient: "from-indigo-500 to-blue-600",
-      shadow: "shadow-indigo-500/25",
       ring: "ring-indigo-100"
     },
     {
@@ -45,7 +65,6 @@ export default function AdminDashboard() {
       icon: UserCheck,
       trend: "up",
       gradient: "from-emerald-400 to-teal-500",
-      shadow: "shadow-emerald-500/25",
       ring: "ring-emerald-100"
     },
     {
@@ -55,17 +74,15 @@ export default function AdminDashboard() {
       icon: FileText,
       trend: "up",
       gradient: "from-violet-500 to-purple-600",
-      shadow: "shadow-violet-500/25",
       ring: "ring-violet-100"
     },
     {
-      title: "Today's Resumes",
+      title: "Generated PDFs",
       value: stats.todayResumes.toLocaleString(),
       change: "-2.1%",
       icon: TrendingUp,
       trend: "down",
       gradient: "from-amber-400 to-orange-500",
-      shadow: "shadow-amber-500/25",
       ring: "ring-amber-100"
     },
   ];
@@ -106,7 +123,7 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 p-8">
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-800">
@@ -117,8 +134,8 @@ export default function AdminDashboard() {
           </p>
         </div>
         <div className="flex gap-3">
-             <Button variant="outline" className="hidden sm:flex border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800" onClick={() => {}}>Export Report</Button>
-             <Button className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all hover:-translate-y-0.5" onClick={() => {}}>Create User</Button>
+          <Button variant="outline" className="hidden sm:flex border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800" onClick={() => { }}>Export Report</Button>
+          <Button className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white transition-all hover:-translate-y-0.5" onClick={() => { }}>Create User</Button>
         </div>
       </div>
 
@@ -130,34 +147,34 @@ export default function AdminDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className={`relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-slate-100 group hover:shadow-xl hover:shadow-indigo-100/50 transition-all duration-300 ring-1 ${card.ring}`}
+            className={`relative overflow-hidden rounded-2xl bg-white p-6 border border-slate-100 group transition-all duration-300 ring-1 ${card.ring}`}
           >
             <div className={`absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity`}>
-               <card.icon className="w-32 h-32 transform rotate-12" />
+              <card.icon className="w-32 h-32 transform rotate-12" />
             </div>
-            
-            <div className="relative">
-                <div className="flex items-center justify-between mb-5">
-                    <div className={`p-3 rounded-xl bg-gradient-to-br ${card.gradient} text-white shadow-md ${card.shadow}`}>
-                        <card.icon className="w-6 h-6" />
-                    </div>
-                    {/* Tiny sparkline placeholder or similar could go here */}
-                </div>
-                
-                <div className="space-y-1">
-                     <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider text-[11px]">{card.title}</p>
-                     <h3 className="text-3xl font-bold text-slate-800 tracking-tight">{card.value}</h3>
-                </div>
 
-                <div className="mt-5 flex items-center text-xs font-bold">
-                    <span 
-                      className={`flex items-center gap-1 ${card.trend === 'up' ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50'} px-2.5 py-1 rounded-full`}
-                    >
-                        {card.trend === 'up' ? <ArrowUpRight className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5 rotate-180" />}
-                        {card.change}
-                    </span>
-                    <span className="text-slate-400 ml-2 font-medium">vs last month</span>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-5">
+                <div className={`p-3 rounded-xl bg-gradient-to-br ${card.gradient} text-white`}>
+                  <card.icon className="w-6 h-6" />
                 </div>
+                {/* Tiny sparkline placeholder or similar could go here */}
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider text-[11px]">{card.title}</p>
+                <h3 className="text-3xl font-bold text-slate-800 tracking-tight">{card.value}</h3>
+              </div>
+
+              <div className="mt-5 flex items-center text-xs font-bold">
+                <span
+                  className={`flex items-center gap-1 ${card.trend === 'up' ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50'} px-2.5 py-1 rounded-full`}
+                >
+                  {card.trend === 'up' ? <ArrowUpRight className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5 rotate-180" />}
+                  {card.change}
+                </span>
+                <span className="text-slate-400 ml-2 font-medium">vs last month</span>
+              </div>
             </div>
           </motion.div>
         ))}
@@ -165,7 +182,7 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent Activity */}
-        <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-100 p-8">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl font-bold text-slate-800">Recent Activity</h2>
             <Button variant="ghost" size="sm" className="text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 font-medium">View All</Button>
@@ -175,7 +192,7 @@ export default function AdminDashboard() {
               {
                 user: "John Doe",
                 action: "uploaded a new resume",
-                time: "2 mins ago", 
+                time: "2 mins ago",
                 avatar: "JD",
                 color: "bg-blue-100 text-blue-600"
               },
@@ -183,8 +200,8 @@ export default function AdminDashboard() {
                 user: "Jane Smith",
                 action: "generated PDFs for 3 clients",
                 time: "15 mins ago",
-                 avatar: "JS",
-                 color: "bg-purple-100 text-purple-600"
+                avatar: "JS",
+                color: "bg-purple-100 text-purple-600"
               },
               { user: "Mike Johnson", action: "registered a new account", time: "1 hr ago", avatar: "MJ", color: "bg-orange-100 text-orange-600" },
               {
@@ -196,14 +213,14 @@ export default function AdminDashboard() {
               },
             ].map((activity, index) => (
               <div key={index} className="relative pl-8 group">
-                <span className="absolute -left-[9px] top-1.5 h-4 w-4 rounded-full border-4 border-white bg-indigo-200 group-hover:bg-indigo-500 transition-colors shadow-sm" />
+                <span className="absolute -left-[9px] top-1.5 h-4 w-4 rounded-full border-4 border-white bg-indigo-200 group-hover:bg-indigo-500 transition-colors" />
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 -m-3 rounded-xl hover:bg-slate-50 transition-colors">
-                   <div>
-                       <p className="text-sm text-slate-600 font-medium">
-                          <span className="font-bold text-slate-800">{activity.user}</span> {activity.action}
-                       </p>
-                       <span className="text-xs text-slate-400 font-medium">{activity.time}</span>
-                   </div>
+                  <div>
+                    <p className="text-sm text-slate-600 font-medium">
+                      <span className="font-bold text-slate-800">{activity.user}</span> {activity.action}
+                    </p>
+                    <span className="text-xs text-slate-400 font-medium">{activity.time}</span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -212,34 +229,34 @@ export default function AdminDashboard() {
 
         {/* Quick Actions */}
         <div className="space-y-6">
-             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
-                <h2 className="text-xl font-bold text-slate-800 mb-6">Quick Actions</h2>
-                <div className="space-y-3">
-                  {quickActions.map((action, index) => (
-                    <motion.button
-                      key={action.title}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.4 + index * 0.1 }}
-                      onClick={() => router.push(action.href)}
-                      className="w-full flex items-center p-3 rounded-2xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group active:scale-95"
-                    >
-                      <div className={`${action.bgColor} ${action.iconColor} p-3 rounded-xl mr-4 group-hover:scale-110 transition-transform shadow-sm`}>
-                        <action.icon className="w-5 h-5" />
-                      </div>
-                      <div className="text-left flex-1">
-                        <h3 className="text-sm font-bold text-slate-800 group-hover:text-indigo-700 transition-colors">
-                          {action.title}
-                        </h3>
-                        <p className="text-xs text-slate-500 font-medium">{action.description}</p>
-                      </div>
-                      <div className="bg-slate-50 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0">
-                         <MoreHorizontal className="w-4 h-4 text-slate-400" />
-                      </div>
-                    </motion.button>
-                  ))}
-                </div>
+          <div className="bg-white rounded-3xl border border-slate-100 p-8">
+            <h2 className="text-xl font-bold text-slate-800 mb-6">Quick Actions</h2>
+            <div className="space-y-3">
+              {quickActions.map((action, index) => (
+                <motion.button
+                  key={action.title}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 + index * 0.1 }}
+                  onClick={() => router.push(action.href)}
+                  className="w-full flex items-center p-3 rounded-2xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group active:scale-95"
+                >
+                  <div className={`${action.bgColor} ${action.iconColor} p-3 rounded-xl mr-4 group-hover:scale-110 transition-transform`}>
+                    <action.icon className="w-5 h-5" />
+                  </div>
+                  <div className="text-left flex-1">
+                    <h3 className="text-sm font-bold text-slate-800 group-hover:text-indigo-700 transition-colors">
+                      {action.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium">{action.description}</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0">
+                    <MoreHorizontal className="w-4 h-4 text-slate-400" />
+                  </div>
+                </motion.button>
+              ))}
             </div>
+          </div>
         </div>
       </div>
     </div>
