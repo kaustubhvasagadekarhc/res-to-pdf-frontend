@@ -188,7 +188,7 @@ export default function ResumesPage() {
           </div>
 
           {/* Search Bar */}
-          <div className="relative">
+          <div className="relative ">
             <Search className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
             {/* focus ring uses the primary color token */}
             <input
@@ -211,7 +211,7 @@ export default function ResumesPage() {
         {loading ? (
           <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
             <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50">
-              <div className="col-span-1 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-1 text-xs font-semibold bg- text-slate-600 uppercase">
                 #
               </div>
               <div className="col-span-4 text-xs font-semibold text-slate-600 uppercase">
@@ -303,7 +303,7 @@ export default function ResumesPage() {
             {filteredResumes.map((resume, index) => (
               <div
                 key={resume.id}
-                className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 last:border-b-0 items-center hover:bg-slate-50 transition-colors"
+                className="grid grid-cols-12 gap-4 p-4 bg-slate border-b border-slate-100 last:border-b-0 items-center hover:bg-slate-50 transition-colors"
               >
                 <div className="col-span-1 text-sm text-slate-600 font-medium">
                   {index + 1}

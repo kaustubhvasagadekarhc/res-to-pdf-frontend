@@ -142,9 +142,31 @@ export default function UploadPage() {
             )}
             
             {!file && (
-              <button className="px-8 py-4 text-[var(--accent)] bg-white hover:bg-slate-50  border border-slate-200 rounded-xl font-bold text-lg transition-colors">
-                Make Your Own Resume 
-              </button>
+             <button className="
+  group relative inline-flex items-center justify-center
+  px-8 py-4 rounded-2xl font-semibold text-lg
+  text-[var(--accent)]
+  bg-white
+  border border-slate-200
+  shadow-sm
+  transition-all duration-300
+  hover:shadow-md
+  hover:-translate-y-[1px]
+  hover:bg-slate-100
+  active:translate-y-0
+">
+  <span className="relative z-10">
+    Make Your Own Resume
+  </span>
+
+
+  <span className="
+    pointer-events-none absolute inset-0 rounded-2xl
+    bg-gradient-to-r from-[var(--accent)]/10 to-purple-500/10
+    opacity-0 group-hover:opacity-100
+    transition-opacity duration-300
+  " />
+</button>
             )}
           </div>
 
@@ -178,13 +200,14 @@ export default function UploadPage() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="relative group"
         >
-          <div className="relative rounded-[24px] overflow-hidden bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] aspect-video border border-slate-100 group-hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.15)] group-hover:scale-[1.01] transition-all duration-500 ease-out">
+          <div className="relative rounded-[12px] overflow-hidden bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] aspect-video border border-slate-100 group-hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.15)] group-hover:scale-[1.01] transition-all duration-500 ease-out">
+            
             <video
               autoPlay
               loop
               muted
               playsInline
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover " 
             >
               <source src="/dashboard gif.mp4" type="video/mp4" />
               Your browser does not support the video tag.
