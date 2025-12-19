@@ -920,7 +920,7 @@ export default function EditPage() {
                       {resumeData.work_experience.map((exp, index) => (
                         <div
                           key={index}
-                          className="bg-white p-6 rounded-sm border border-slate-300 shadow-sm relative group hover:shadow-md transition-all"
+                          className="bg-white p-6 rounded-sm border border-slate-300 relative group transition-all"
                         >
                           <button
                             onClick={() => deleteWorkExperience(index)}
@@ -1036,7 +1036,7 @@ export default function EditPage() {
                                       {proj.technologies.map((tech, tIdx) => (
                                         <span
                                           key={tIdx}
-                                          className="bg-white text-slate-700 px-2 py-0.5 rounded-sm text-xs font-medium flex items-center gap-1 border border-slate-200 shadow-sm"
+                                          className="bg-white text-slate-700 px-2 py-0.5 rounded-sm text-xs font-medium flex items-center gap-1 border border-slate-200"
                                         >
                                           {tech}
                                           <button
@@ -1125,7 +1125,7 @@ export default function EditPage() {
                       {resumeData.education.map((edu, index) => (
                         <div
                           key={index}
-                          className="bg-white p-6 rounded-sm border border-slate-300 shadow-sm relative group hover:shadow-md transition-all"
+                          className="bg-white p-6 rounded-sm border border-slate-300 relative group transition-all"
                         >
                           <button
                             onClick={() => deleteEducation(index)}
@@ -1221,7 +1221,7 @@ export default function EditPage() {
                       {resumeData.projects.map((proj, index) => (
                         <div
                           key={index}
-                          className="bg-white p-6 rounded-sm border border-slate-300 shadow-sm relative group hover:shadow-md transition-all"
+                          className="bg-white p-6 rounded-sm border border-slate-300 relative group transition-all"
                         >
                           <button
                             onClick={() => deleteStandaloneProject(index)}
@@ -1257,7 +1257,7 @@ export default function EditPage() {
                                   {proj.technologies.map((tech, tIdx) => (
                                     <span
                                       key={tIdx}
-                                      className="bg-white text-slate-700 px-2.5 py-1 rounded-sm text-xs font-medium flex items-center gap-1 border border-slate-200 shadow-sm"
+                                      className="bg-white text-slate-700 px-2.5 py-1 rounded-sm text-xs font-medium flex items-center gap-1 border border-slate-200"
                                     >
                                       {tech}
                                       <button
@@ -1334,7 +1334,7 @@ export default function EditPage() {
                       )}
 
                       {/* PDF Preview Area */}
-                      <div className="w-full max-w-4xl mx-auto bg-slate-200 rounded-sm overflow-hidden border border-slate-300 shadow-inner h-[500px] flex items-center justify-center relative">
+                      <div className="w-full max-w-4xl mx-auto bg-slate-200 rounded-sm overflow-hidden border border-slate-300 h-[500px] flex items-center justify-center relative">
                         {previewLoading ? (
                           <div className="flex flex-col items-center gap-3">
                             <Loader2 className="w-10 h-10 animate-spin text-[var(--primary)]" />
@@ -1393,7 +1393,7 @@ export default function EditPage() {
 
       {/* Sticky Footer with Progress Bar */}
       {/* Sticky Footer with Progress Bar */}
-      <div className="bg-white border-t border-slate-200 flex flex-col z-50 shadow-[0_-5px_20px_-15px_rgba(0,0,0,0.1)] shrink-0 relative">
+      <div className="bg-white border-t border-slate-200 flex flex-col z-50 shrink-0 relative">
         {/* Progress Bar Container */}
         <div className="w-full h-1.5 bg-slate-100">
           <div
@@ -1425,7 +1425,7 @@ export default function EditPage() {
               <button
                 onClick={handleNext}
                 disabled={getMissingFieldsForStep(currentStepInfo.key)}
-                className="px-8 py-2.5 rounded-sm font-bold text-white bg-[var(--primary)] hover:bg-[var(--primary-700)] shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                className="px-8 py-2.5 rounded-sm font-bold text-white bg-[var(--primary)] hover:bg-[var(--primary-700)] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
@@ -1433,7 +1433,7 @@ export default function EditPage() {
               <button
                 onClick={handleGenerate}
                 disabled={generating || !isFormComplete}
-                className="px-8 py-2.5 rounded-sm font-bold text-white bg-[var(--primary)] hover:bg-[var(--primary-700)] shadow-lg transition-all active:scale-95 flex items-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed disabled:shadow-none disabled:bg-slate-300 disabled:text-slate-500"
+                className="px-8 py-2.5 rounded-sm font-bold text-white bg-[var(--primary)] hover:bg-[var(--primary-700)] transition-all active:scale-95 flex items-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
               >
                 {generating ? (
                   <>

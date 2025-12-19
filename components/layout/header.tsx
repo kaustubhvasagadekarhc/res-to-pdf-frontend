@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/contexts/UserContext";
 import { authService as legacyAuthService } from "@/services/auth.services";
-import { Bell,  LogOut, User } from "lucide-react";
+import { Bell, LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -21,10 +21,16 @@ export function Header() {
     <header className="h-15 flex items-center justify-between px-10 bg-white/70 backdrop-blur-xl sticky top-0 z-20 border-b border-[var(--border)] transition-all duration-300 shadow-sm">
       <div
         className="flex items-center gap-2 cursor-pointer"
-        onClick={() => router.push("/user")}
+        onClick={() => {
+          if (user?.userType === "ADMIN") {
+            router.push("/admin");
+          } else {
+            router.push("/user");
+          }
+        }}
       >
         <div className="h-10 w-10 rounded-xl flex items-center justify-center ">
-          <Image 
+          <Image
             src="/logo.png"
             alt="Logo"
             width={250}

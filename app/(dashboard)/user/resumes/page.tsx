@@ -9,7 +9,6 @@ import {
   Download,
   Edit3,
   Eye,
-  FileIcon,
   FileText,
   MoreVertical,
   Search,
@@ -25,7 +24,7 @@ interface ResumeCard {
   updatedAt: string;
   version: number;
   jobTitle?: string;
-  status: "completed" | "processing" | "failed";
+  status: "Generated" | "Draft" | "Failed";
 }
 
 export default function ResumesPage() {
@@ -36,6 +35,7 @@ export default function ResumesPage() {
   const [loading, setLoading] = useState(true);
   const [, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     fetchResumes();
@@ -69,7 +69,9 @@ export default function ResumesPage() {
           updatedAt: item.updatedAt || new Date().toISOString(),
           version: item.version || 1,
           jobTitle: item.jobTitle || "",
-          status: "completed" as const,
+          status: (
+            // item.status || 
+            "Generated") as "Generated" | "Draft" | "Failed",
         }));
         setResumes(mappedResumes);
       } else {
@@ -84,9 +86,12 @@ export default function ResumesPage() {
   };
 
   const filteredResumes = resumes.filter(
-    (resume) =>
-      resume.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      resume.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase())
+    (resume) => {
+      const matchesSearch = resume.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        resume.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === "all" || resume.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    }
   );
 
   const handleEditResume = async (resume: ResumeCard) => {
@@ -174,11 +179,11 @@ export default function ResumesPage() {
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case "completed":
+      case "Generated":
         return "bg-[var(--success-100)] text-[var(--success-800)] px-3 py-1 rounded-full text-xs font-medium";
-      case "processing":
+      case "Draft":
         return "bg-[var(--warning-100)] text-[var(--warning-800)] px-3 py-1 rounded-full text-xs font-medium";
-      case "failed":
+      case "Failed":
         return "bg-[var(--danger-100)] text-[var(--danger-800)] px-3 py-1 rounded-full text-xs font-medium";
       default:
         return "bg-[var(--muted)] text-[var(--muted-foreground)] px-3 py-1 rounded-full text-xs font-medium";
@@ -265,7 +270,7 @@ export default function ResumesPage() {
   }, [openMenuId]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-white">
       <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="mb-8">
@@ -279,34 +284,60 @@ export default function ResumesPage() {
                 Manage, edit, and download your generated professional resumes.
               </p>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center"> <Button
+              onClick={() => router.push("/user/timesheet")}
+              className="bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50 whitespace-nowrap font-bold rounded-sm py-6 px-6"
+            >
+              Timesheet
+            </Button>
               <Button
                 onClick={() => router.push("/user/upload")}
-                className="bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] whitespace-nowrap font-medium"
+                className="ml-3 bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] whitespace-nowrap font-bold rounded-sm py-6 px-6"
               >
-                + Create New Resume
+                Create New Resume
               </Button>
 
-              <Button
-                onClick={() => router.push("/user/timesheet")}
-                className="ml-3 bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50 whitespace-nowrap font-medium"
-              >
-                Timesheet
-              </Button>
+
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="relative ">
-            <Search className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-            {/* focus ring uses the primary color token */}
-            <input
-              type="text"
-              placeholder="Search resumes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-700)] focus:border-transparent"
-            />
+          {/* Search and Filters Bar */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-8">
+            <div className="relative w-full md:max-w-md">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search resumes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-sm bg-white text-slate-700 placeholder-slate-300 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] focus-visible:ring-0 focus-visible:ring-offset-0 transition-all"
+              />
+            </div>
+
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="relative flex-1 md:flex-initial">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full md:w-48 appearance-none bg-white border border-slate-200 rounded-sm px-4 py-3 pr-10 text-slate-600 font-semibold focus:outline-none focus:border-b-2 focus:border-[var(--primary)] transition-all"
+                >
+                  <option value="all">All Status</option>
+                  <option value="completed">Published</option>
+                  <option value="processing">Processing</option>
+                  <option value="failed">Draft</option>
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <MoreVertical className="w-4 h-4 text-slate-400 rotate-90" />
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                className="p-3 rounded-sm border-slate-200 text-slate-500 hover:bg-slate-50"
+              >
+                <Calendar className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -318,51 +349,57 @@ export default function ResumesPage() {
         )} */}
 
         {loading ? (
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-            <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50">
-              <div className="col-span-1 text-xs font-semibold bg- text-slate-600 uppercase">
-               Sr. No.
+          <div className="bg-white rounded-sm border border-slate-200 overflow-hidden">
+            <div className="grid grid-cols-12 gap-0 border-b border-slate-200 bg-slate-50">
+              <div className="col-span-1 p-4 text-xs font-semibold text-slate-600 uppercase">
+                Sr. No.
               </div>
-              <div className="col-span-4 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-4 p-4 bg-slate-200 text-xs font-semibold text-slate-600 uppercase">
                 File Name
               </div>
-              <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-2 p-4 text-xs font-semibold text-slate-600 uppercase">
                 Job Title
               </div>
-              <div className="col-span-1 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-1 p-4 bg-slate-200 text-xs font-semibold text-slate-600 uppercase">
                 Version
               </div>
-              <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-2 p-4 text-xs font-semibold text-slate-600 uppercase">
                 Created
               </div>
-              <div className="col-span-2 text-right text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-1 p-4 bg-slate-200 text-xs font-semibold text-slate-600 uppercase">
                 Status
+              </div>
+              <div className="col-span-1 p-4 text-center text-xs font-semibold text-slate-600 uppercase">
+                Action
               </div>
             </div>
             {[...Array(6)].map((_, index) => (
               <div
                 key={index}
-                className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 last:border-b-0 items-center"
+                className="grid grid-cols-12 gap-0 border-b border-slate-100 last:border-b-0 items-center bg-white"
               >
-                <div className="col-span-1">
+                <div className="col-span-1 p-4">
                   <div className="h-4 w-6 bg-slate-200 rounded animate-pulse"></div>
                 </div>
-                <div className="col-span-4 flex items-center gap-3">
+                <div className="col-span-4 p-4 bg-slate-50/50 flex items-center gap-3">
                   <div className="h-8 w-8 bg-slate-200 rounded animate-pulse" />
                   <div className="flex-1">
                     <div className="h-4 w-3/4 bg-slate-200 rounded animate-pulse"></div>
                   </div>
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-2 p-4">
                   <div className="h-4 w-full bg-slate-200 rounded animate-pulse"></div>
                 </div>
-                <div className="col-span-1">
+                <div className="col-span-1 p-4 bg-slate-50/50">
                   <div className="h-4 w-3/4 bg-slate-200 rounded animate-pulse"></div>
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-2 p-4">
                   <div className="h-4 w-full bg-slate-200 rounded animate-pulse"></div>
                 </div>
-                <div className="col-span-2 flex justify-end gap-2">
+                <div className="col-span-1 p-4 bg-slate-50/50">
+                  <div className="h-6 w-16 bg-slate-200 rounded animate-pulse"></div>
+                </div>
+                <div className="col-span-1 p-4 flex justify-center">
                   <div className="h-6 w-6 bg-slate-200 rounded animate-pulse"></div>
                 </div>
               </div>
@@ -382,63 +419,65 @@ export default function ResumesPage() {
             </p>
             <Button
               onClick={() => router.push("/user/upload")}
-              className="bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] font-medium"
+              className="bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] font-bold rounded-sm py-6 px-6"
             >
               + Create New Resume
             </Button>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-            <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50">
-              <div className="col-span-1 text-xs font-semibold text-slate-600 uppercase">
+          <div className="bg-white rounded-sm border border-slate-200 overflow-hidden">
+            <div className="grid grid-cols-12 gap-0 border-b border-slate-200 bg-slate-50">
+              <div className="col-span-1 p-4 text-xs font-semibold text-slate-600 uppercase">
                 #
               </div>
-              <div className="col-span-4 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-4 p-4 bg-slate-200 text-xs font-semibold text-slate-600 uppercase">
                 File Name
               </div>
-              <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-2 p-4 text-xs font-semibold text-slate-600 uppercase">
                 Job Title
               </div>
-              <div className="col-span-1 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-1 p-4 bg-slate-200 text-xs font-semibold text-slate-600 uppercase">
                 Version
               </div>
-              <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-2 p-4 text-xs font-semibold text-slate-600 uppercase">
                 Created
               </div>
-              <div className="col-span-2 text-right text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-1 p-4 bg-slate-200 text-xs font-semibold text-slate-600 uppercase">
                 Status
+              </div>
+              <div className="col-span-1 p-4 text-center text-xs font-semibold text-slate-600 uppercase">
+                Action
               </div>
             </div>
             {filteredResumes.map((resume, index) => (
               <div
                 key={resume.id}
-                className="grid grid-cols-12 gap-4 p-4 bg-slate border-b border-slate-100 last:border-b-0 items-center hover:bg-slate-50 transition-colors"
+                className="grid grid-cols-12 gap-0 border-b border-slate-100 last:border-b-0 items-center hover:bg-slate-50 transition-colors bg-white font-serif"
               >
-                <div className="col-span-1 text-sm text-slate-600 font-medium">
+                <div className="col-span-1 p-4 text-sm text-slate-600 font-medium font-sans">
                   {index + 1}
                 </div>
-                <div className="col-span-4 flex items-center gap-3">
-                  <div className="p-2 bg-[var(--primary-50)] rounded-lg text-[var(--primary)]">
-                    <FileIcon className="w-4 h-4" />
-                  </div>
-                  <span className="truncate font-medium text-slate-900">
+                <div className="col-span-4 p-4 bg-slate-50/50 flex items-center gap-3">
+                  <span className="truncate font-medium text-slate-900 font-sans">
                     {resume.fileName.replace(".pdf", "")}
                   </span>
                 </div>
-                <div className="col-span-2 text-slate-600 text-sm">
+                <div className="col-span-2 p-4 text-slate-600 text-sm font-sans">
                   {resume.jobTitle || "-"}
                 </div>
-                <div className="col-span-1 text-slate-600 text-sm font-medium">
+                <div className="col-span-1 p-4 bg-slate-50/50 text-slate-600 text-sm font-medium font-sans">
                   v{resume.version}
                 </div>
-                <div className="col-span-2 text-slate-600 text-sm flex items-center gap-1">
+                <div className="col-span-2 p-4 text-slate-600 text-sm flex items-center gap-1 font-sans">
                   <Calendar className="w-4 h-4 text-slate-400" />
                   <span>{formatDate(resume.createdAt)}</span>
                 </div>
-                <div className="col-span-2 flex items-center justify-between">
+                <div className="col-span-1 p-4 bg-slate-50/50 font-sans">
                   <div className={getStatusBadgeClass(resume.status)}>
                     {getStatusLabel(resume.status)}
                   </div>
+                </div>
+                <div className="col-span-1 p-4 font-sans flex justify-end items-center">
                   <div className="relative">
                     <Button
                       variant="ghost"
@@ -455,8 +494,7 @@ export default function ResumesPage() {
                     {openMenuId === resume.id && (
                       <div
                         id={`resume-menu-${resume.id}`}
-                        className={`absolute right-0 ${menuAbove[resume.id] ? "bottom-full mb-1" : "top-full mt-1"} w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50`
-                        }
+                        className={`absolute right-0 ${menuAbove[resume.id] ? "bottom-full mb-1" : "top-full mt-1"} w-40 bg-white border border-slate-200 rounded-sm z-50`}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
@@ -502,10 +540,10 @@ export default function ResumesPage() {
         {confirmResume && (
           <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title">
             <div className="absolute inset-0 bg-black opacity-40" onClick={cancelDelete} />
-            <div className="relative bg-white rounded-lg shadow-lg w-full max-w-sm p-6 z-10">
+            <div className="relative bg-white rounded-sm w-full max-w-sm p-6 z-10 border border-slate-200">
               <h3 id="delete-dialog-title" className="text-lg font-semibold mb-2">Delete Resume</h3>
 
-              <p className="text-sm text-slate-600 mb-4">Are you sure you want to permanently delete &quot;{confirmResume.fileName.replace('.pdf','')}&quot;? This action cannot be undone.</p>
+              <p className="text-sm text-slate-600 mb-4">Are you sure you want to permanently delete &quot;{confirmResume.fileName.replace('.pdf', '')}&quot;? This action cannot be undone.</p>
               <div className="flex justify-end gap-3">
                 <Button variant="ghost" onClick={cancelDelete} className="bg-slate-50 hover:bg-slate-100">Cancel</Button>
                 <Button onClick={performDelete} className="bg-red-600 text-white hover:bg-red-700">{deletingId === confirmResume.id ? 'Deleting...' : 'Delete'}</Button>

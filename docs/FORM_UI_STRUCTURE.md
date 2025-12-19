@@ -47,21 +47,19 @@ Each input field should follow this nested structure:
 - **Base Style**: `w-full bg-white border rounded-sm border-slate-300 px-4 py-3`
 - **Bottom Border**: `border-b border-gray-300`
 - **Transitions**: `transition-all duration-200`
-- **Focus State**: `focus:outline-none focus:border-b-2 focus:border-[var(--primary)]`
+- **Focus State**: `focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-b-2 focus:border-[var(--primary)]`
 - **Placeholder**: `placeholder:text-slate-300`
 
 ### Select Fields
 - Inherit the same base styling as Inputs.
-- **Class**: `w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] text-slate-700`
+- **Class**: `w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-b-2 focus:border-[var(--primary)] text-slate-700`
 
 ### Textareas
 - Should follow the same premium pattern but with adjustable height.
-- **Class**: `w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 min-h-[150px] resize-none`
+- **Class**: `w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 min-h-[150px] resize-none`
 
-## 5. Interaction Patterns
-- **Hover**: Subtle transition already included in `transition-all`.
-- **Focus**: Clear visual feedback via bottom border thickness increase and color change to `--primary`.
-- **Empty States**: Placeholders should be light (`text-slate-300`).
+## 6. Visual Effects
+- **Shadows**: Do NOT use shadows on components (cards, inputs, buttons) unless specifically requested. Maintain a clean, flat aesthetic with borders instead.
 
 ---
-*Note: This structure is currently implemented in Step 1 (lines 768-852) and should be propagated to Steps 2, 3, 4, 5, and 6.*
+*Note: This structure is currently implemented across all steps and auth forms.*

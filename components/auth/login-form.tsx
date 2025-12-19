@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authService as tokenService } from "@/services/auth.services";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2, Lock, Mail } from "lucide-react";
+import { AlertCircle, Loader2, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -190,10 +190,9 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="w-full max-w-md mx-auto border-0.1 bg-white/80 backdrop-blur-xl rounded-2xl overflow-hidden ring-1 ring-white/50">
-        {/* <div className="bg-gradient-to-r from-[var(--primary)] to-[var(--accent)] h-1.5 w-full" /> */}
+      <Card className="w-full max-w-md mx-auto border border-slate-50 bg-white rounded-sm overflow-hidden">
         <CardHeader className="text-center pb-2 pt-8">
-          <CardTitle className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-br from-[var(--primary)] to-[var(--accent)]">
+          <CardTitle className="text-3xl font-extrabold text-slate-800">
             Welcome Back
           </CardTitle>
           <CardDescription className="text-slate-500 font-medium mt-2">
@@ -201,13 +200,13 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-700 font-semibold">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-1">
+              <Label htmlFor="email" className="text-md px-2 font-semibold text-slate-700">
                 Email Address
               </Label>
               <div className="relative group">
-                <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-400 group-focus-within:text-[var(--primary)] transition-colors" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-[var(--primary)] transition-colors" />
                 <Input
                   id="email"
                   name="email"
@@ -216,28 +215,22 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="pl-10 h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:border-[var(--primary-700)] focus:ring-[var(--primary-700)] rounded-xl transition-all duration-200"
+                  className="w-full bg-white border rounded-sm border-slate-50 pl-11 pr-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 h-12"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <Label
                   htmlFor="password"
-                  className="text-slate-700 font-semibold"
+                  className="text-md px-2 font-semibold text-slate-700"
                 >
                   Password
                 </Label>
-                {/* <Link
-                  href="/forgot-password"
-                  className="text-xs font-semibold text-[var(--primary)] hover:text-[var(--primary-700)] hover:underline"
-                >
-                  Forgot password?
-                </Link> */}
               </div>
               <div className="relative group">
-                <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-[var(--primary)] transition-colors" />
                 <Input
                   id="password"
                   name="password"
@@ -246,7 +239,7 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="pl-10 h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:border-[var(--primary-700)] focus:ring-[var(--primary-700)] rounded-xl transition-all duration-200"
+                  className="w-full bg-white border rounded-sm border-slate-50 pl-11 pr-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 h-12"
                 />
               </div>
             </div>
@@ -257,9 +250,9 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="text-sm text-[var(--danger-800)] bg-[var(--danger-100)] p-3 rounded-xl flex items-center gap-2 border border-[#fecaca] font-medium"
+                  className="text-sm text-[var(--danger-800)] bg-[var(--danger-100)] p-4 rounded-sm flex items-center gap-2 border border-rose-200 font-bold"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--danger-800)] shrink-0" />
+                  <AlertCircle className="w-5 h-5 shrink-0" />
                   {error}
                 </motion.div>
               )}
@@ -267,29 +260,32 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-[var(--primary)] to-[var(--accent)] hover:from-[var(--primary-700)] hover:to-[var(--accent-700)] text-[var(--primary-foreground)] font-bold py-6 rounded-xl shadow-lg transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+              className="w-full bg-[var(--primary)] hover:bg-[var(--primary-700)] text-white font-bold py-6 rounded-sm transition-all active:scale-95 flex items-center justify-center"
               disabled={loading}
             >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign In
+              {loading ? (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              ) : (
+                "Sign In"
+              )}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex justify-center border-t border-slate-100 mt-2 py-6 bg-slate-50/50">
+        <CardFooter className="flex justify-center border-t border-slate-100 py-6 bg-slate-50">
           <p className="text-sm text-slate-500 font-medium">
             Don&apos;t have an account?{" "}
             {onRegisterClick ? (
               <button
                 type="button"
                 onClick={onRegisterClick}
-                className="font-bold text-[var(--primary)] hover:text-[var(--primary-700)] hover:underline transition-colors"
+                className="font-bold text-[var(--primary)] hover:text-[var(--primary-700)] transition-colors"
               >
                 Create Account
               </button>
             ) : (
               <Link
                 href="/register"
-                className="font-bold text-[var(--primary)] hover:text-[var(--primary-700)] hover:underline transition-colors"
+                className="font-bold text-[var(--primary)] hover:text-[var(--primary-700)] transition-colors"
               >
                 Create Account
               </Link>
