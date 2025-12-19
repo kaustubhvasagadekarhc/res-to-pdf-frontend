@@ -2,11 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { authService } from "@/services/auth.services";
+// import { authService } from "@/services/auth.services";
 import { motion } from "framer-motion";
-import { LogOut, LucideIcon } from "lucide-react";
+import { LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 export interface SidebarItem {
   label: string;
@@ -21,12 +21,6 @@ interface SidebarProps {
 
 export function Sidebar({ items, className }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
-
-  const handleLogout = () => {
-    authService.clearToken();
-    router.push("/login");
-  };
 
   return (
     <aside
@@ -35,16 +29,11 @@ export function Sidebar({ items, className }: SidebarProps) {
         className
       )}
     >
-      <div className="p-2  flex items-center space-x-3">
-        {/* <div className="h-9 w-9 bg-gradient-to-br from-[var(--primary)] to-[var(--accent)] rounded-xl flex items-center justify-center text-white font-bold shadow-lg ring-4 ring-[var(--primary-50)]">
-          R
-        </div>
-        <h2 className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary-900)] to-[var(--accent-700)] tracking-tight">
-          ResToPDF
-        </h2> */}
-      </div>
+      {/* <div className="p-2  flex items-center space-x-3">
+       
+      </div> */}
 
-      <div className="px-4 py-6 space-y-2 flex-1">
+      <div className="px-4 py-10 space-y-2 flex-1">
         {items.map((item) => {
           // Exact match for root paths (/admin, /user) to prevent them from staying active on sub-routes
           const isRootPath = item.href === "/admin" || item.href === "/user";
@@ -57,7 +46,7 @@ export function Sidebar({ items, className }: SidebarProps) {
                 {isActive && (
                   <motion.div
                     layoutId="activeTab"
-                    className="absolute inset-0 bg-blue-50 rounded-xl"
+                    className="absolute inset-0 bg-blue-50 rounded-md"
                     initial={false}
                     transition={{
                       type: "spring",
@@ -69,7 +58,7 @@ export function Sidebar({ items, className }: SidebarProps) {
                 <Button
                   variant="ghost"
                   className={cn(
-                    "w-full justify-start gap-3 relative z-10 h-11 transition-all duration-200 rounded-xl overflow-hidden",
+                    "w-full justify-start gap-3 relative z-10 h-11 transition-all duration-200 rounded-md overflow-hidden",
                     isActive
                       ? "text-blue-600 font-semibold hover:bg-transparent"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
@@ -94,16 +83,16 @@ export function Sidebar({ items, className }: SidebarProps) {
         })}
       </div>
 
-      <div className="p-4 border-t border-[var(--border)]">
+      {/* <div className="p-4 border-t border-[var(--border)]">
         <Button
           variant="ghost"
           onClick={handleLogout}
-          className="w-full justify-start gap-3.5 text-slate-500 hover:text-[var(--danger-800)] hover:bg-[var(--danger-100)] h-12 rounded-xl transition-all duration-200 group"
+          className="w-full justify-start gap-3.5 text-slate-500 hover:text-[var(--danger-800)] hover:bg-[var(--danger-100)] h-12 rounded-md transition-all duration-200 group"
         >
           <LogOut className="w-[1.35rem] h-[1.35rem] group-hover:scale-110 transition-transform" />
           <span className="text-[15px] font-medium">Logout</span>
         </Button>
-      </div>
+      </div> */}
     </aside>
   );
 }

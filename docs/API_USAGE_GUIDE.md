@@ -238,6 +238,57 @@ const parseAndInvite = async (file: File) => {
 };
 ```
 
+#### Admin Activities
+```typescript
+import { adminService } from "@/app/api/client";
+
+const getActivities = async () => {
+  try {
+    // Get recent activities
+    const recent = await adminService.getAdminActivitiesRecent({ limit: 5 });
+
+    // Get paginated activities
+    const all = await adminService.getAdminActivities({ 
+      page: 1, 
+      limit: 10,
+      type: 'USER_LOGIN' 
+    });
+
+    return { recent, all };
+  } catch (error) {
+    console.error("Failed to fetch activities:", error);
+    throw error;
+  }
+};
+```
+
+#### System Settings
+```typescript
+import { adminService } from "@/app/api/client";
+
+const manageSettings = async () => {
+  try {
+    // Get settings
+    const settings = await adminService.getAdminSettings();
+
+    // Update settings
+    const updated = await adminService.putAdminSettings({
+      requestBody: {
+        allowRegistration: true,
+        maintenanceMode: false,
+        supportEmail: "support@example.com",
+        maxUploadSize: 10485760 
+      }
+    });
+
+    return updated;
+  } catch (error) {
+    console.error("Failed to manage settings:", error);
+    throw error;
+  }
+};
+```
+
 ### Dashboard Service Example
 
 ```typescript

@@ -22,7 +22,7 @@ export class ApiClient {
     headers?: Record<string, string>
   ) {
     this.axios = axios;
-    this.baseURL = baseURL || "/api/proxy";
+    this.baseURL = baseURL || "http://localhost:5000";
 
     this.defaultHeaders = {
       "Content-Type": "application/json",

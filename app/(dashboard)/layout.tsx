@@ -5,7 +5,6 @@ import { Header } from "@/components/layout/header";
 import { Sidebar, SidebarItem } from "@/components/layout/sidebar";
 import {
   Activity,
-  BarChart3,
   BookDown,
   FileText,
   Home,
@@ -20,6 +19,8 @@ import { UserProvider, useUser } from "@/contexts/UserContext";
 const adminItems: SidebarItem[] = [
   { label: "Overview", href: "/admin", icon: Home },
   { label: "User Management", href: "/admin/users", icon: Users },
+  { label: "Activity Logs", href: "/admin/activities", icon: Activity },
+  { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 // User Sidebar Items

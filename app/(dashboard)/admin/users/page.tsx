@@ -6,16 +6,16 @@ import { Button } from "@/components/ui/button";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import {
     Check,
-    MoreVertical,
+
     Search,
     Shield,
     ShieldAlert,
     Trash2,
-    User,
+
     X,
     UserPlus
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
     Dialog,
@@ -40,12 +40,12 @@ interface AdminUser {
 
 export default function UserManagementPage() {
     useAuthGuard("Admin");
-    const router = useRouter();
+ 
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [showInviteDialog, setShowInviteDialog] = useState(false);
-    const [inviteFile, setInviteFile] = useState<File | null>(null);
+    const [, setInviteFile] = useState<File | null>(null);
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteName, setInviteName] = useState("");
     const [isParsing, setIsParsing] = useState(false);

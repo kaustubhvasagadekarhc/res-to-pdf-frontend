@@ -192,4 +192,94 @@ export class AdminService {
             },
         });
     }
+    /**
+     * Get recent activities (for dashboard widget)
+     * @returns any Recent activities retrieved
+     * @throws ApiError
+     */
+    public static getAdminActivitiesRecent({
+        limit,
+    }: {
+        /**
+         * Number of activities to fetch (default 5)
+         */
+        limit?: number,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/admin/activities/recent',
+            query: {
+                'limit': limit,
+            },
+            errors: {
+                500: `Server error`,
+            },
+        });
+    }
+    /**
+     * Get all activities with pagination
+     * @returns any List of activities retrieved
+     * @throws ApiError
+     */
+    public static getAdminActivities({
+        page,
+        limit,
+        type,
+    }: {
+        page?: number,
+        limit?: number,
+        type?: string,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/admin/activities',
+            query: {
+                'page': page,
+                'limit': limit,
+                'type': type,
+            },
+            errors: {
+                500: `Server error`,
+            },
+        });
+    }
+    /**
+     * Get system settings
+     * @returns any Settings retrieved
+     * @throws ApiError
+     */
+    public static getAdminSettings(): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/admin/settings',
+            errors: {
+                500: `Server error`,
+            },
+        });
+    }
+    /**
+     * Update system settings
+     * @returns any Settings updated
+     * @throws ApiError
+     */
+    public static putAdminSettings({
+        requestBody,
+    }: {
+        requestBody: {
+            allowRegistration?: boolean;
+            maintenanceMode?: boolean;
+            supportEmail?: string;
+            maxUploadSize?: number;
+        },
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/admin/settings',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                500: `Server error`,
+            },
+        });
+    }
 }
