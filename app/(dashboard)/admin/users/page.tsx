@@ -11,7 +11,6 @@ import {
     Shield,
     ShieldAlert,
     Trash2,
-
     X,
     UserPlus
 } from "lucide-react";
@@ -247,7 +246,7 @@ export default function UserManagementPage() {
                             placeholder="Search users..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-700)] focus:border-transparent"
+                            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-sm bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-700)] focus:border-transparent"
                         />
                     </div>
                 </div>
@@ -255,7 +254,7 @@ export default function UserManagementPage() {
                 {loading ? (
                     <div className="text-center py-10">Loading users...</div>
                 ) : (
-                    <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
                         <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50">
                             <div className="col-span-4 text-xs font-semibold text-slate-600 uppercase">
                                 User

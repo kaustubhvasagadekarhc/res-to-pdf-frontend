@@ -9,7 +9,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -20,7 +19,7 @@ function OTPVerificationContent() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [timer, setTimer] = useState(599);
+  const [timer, setTimer] = useState(299);
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
@@ -108,6 +107,27 @@ function OTPVerificationContent() {
     setOtp(pastedData);
   };
 
+  const handleResendOTP = async () => {
+    if (timer > 0) return;
+    setLoading(true);
+    setError("");
+
+    try {
+      await authService.postAuthResendOtp({
+        requestBody: {
+          email: email!,
+        },
+      });
+      setTimer(299);
+    } catch (error: unknown) {
+      console.error("Resend OTP failed:", error);
+      const apiError = error as { body?: { message?: string }; message?: string };
+      setError(apiError?.body?.message || apiError?.message || "Failed to resend OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -115,10 +135,10 @@ function OTPVerificationContent() {
       transition={{ duration: 0.4 }}
       className="flex h-full items-center justify-center p-4 bg-slate-50/30"
     >
-      <Card className="w-full max-w-md border border-slate-100 bg-white rounded-xl overflow-hidden text-center p-2 pb-6">
+      <Card className="w-full max-w-md border border-slate-100 bg-white rounded-sm overflow-hidden text-center p-2 pb-6">
         <CardHeader className="flex flex-col items-center pt-8 pb-4">
-          <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6 relative">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-50 relative z-10">
+          <div className="w-24 h-24 bg-slate-0 rounded-md flex items-center justify-center mb-6 relative">
+            <div className="bg-white p-4 rounded-md shadow-sm border border-slate-200 relative z-10">
               <Mail className="w-10 h-10 text-[var(--primary)]" />
             </div>
             <div className="absolute top-1 right-1 bg-emerald-400 rounded-full p-1 border-4 border-white z-20">
@@ -161,7 +181,7 @@ function OTPVerificationContent() {
                   onChange={(e) => handleInputChange(e, index)}
                   onKeyDown={(e) => handleKeyDown(e, index)}
                   onPaste={handlePaste}
-                  className="w-full aspect-square text-center text-xl font-bold border border-slate-200 rounded-lg focus:border-[var(--primary)] focus:ring-4 focus:ring-[var(--primary-50)] outline-none transition-all duration-200 bg-slate-50/30 focus:bg-white"
+                  className="w-full aspect-square text-center text-xl font-bold border border-slate-200 rounded-md focus:border-[var(--primary)] focus:ring-4 focus:ring-[var(--primary-50)] outline-none transition-all duration-200 bg-slate-50/30 focus:bg-white"
                   disabled={loading}
                   autoFocus={index === 0}
                 />
@@ -175,13 +195,13 @@ function OTPVerificationContent() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-1 h-1 rounded-full bg-slate-300" />
-                <span>Didn&apos;t receive the code? <button type="button" className="text-[var(--primary)] hover:underline">Resend</button> or <button type="button" className="text-[var(--primary)] hover:underline">Send to Mobile</button></span>
+                <span>Didn&apos;t receive the code? <button type="button" onClick={handleResendOTP} disabled={timer > 0 || loading} className={`text-[var(--primary)] hover:underline ${timer > 0 ? "opacity-50 cursor-not-allowed" : ""}`}>Resend</button></span>
               </div>
             </div>
 
             <Button
               type="submit"
-              className="w-full bg-[var(--primary)] hover:bg-[var(--primary-700)] text-white font-bold py-7 rounded-lg transition-all active:scale-95 text-lg"
+              className="w-full bg-[var(--primary)] hover:bg-[var(--primary-700)] text-white font-bold py-7 rounded-sm transition-all active:scale-95 text-lg"
               disabled={loading || otp.length !== 6}
             >
               {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Verify"}
@@ -189,12 +209,12 @@ function OTPVerificationContent() {
           </form>
         </CardContent>
 
-        <CardFooter className="flex flex-col items-center px-8 pb-4">
+        {/* <CardFooter className="flex flex-col items-center px-8 pb-4">
           <div className="flex items-center gap-3 w-full justify-start text-sm text-slate-500 font-medium mt-4">
-            <input type="checkbox" className="w-5 h-5 rounded border-slate-300 text-[var(--primary)] focus:ring-[var(--primary)]" />
+            <input type="checkbox" className="w-5 h-5 rounded-sm border-slate-300 text-[var(--primary)] focus:ring-[var(--primary)]" />
             <span>Remember this device. <button className="text-[var(--primary)] hover:underline font-bold">Learn More</button></span>
           </div>
-        </CardFooter>
+        </CardFooter> */}
       </Card>
     </motion.div>
   );

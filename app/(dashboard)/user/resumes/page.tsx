@@ -26,6 +26,7 @@ interface ResumeCard {
   version: number;
   jobTitle?: string;
   status: "completed" | "processing" | "failed";
+  content?: string;
 }
 
 export default function ResumesPage() {
@@ -36,6 +37,8 @@ export default function ResumesPage() {
   const [loading, setLoading] = useState(true);
   const [, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("");
 
   useEffect(() => {
     fetchResumes();
@@ -69,6 +72,7 @@ export default function ResumesPage() {
           updatedAt: item.updatedAt || new Date().toISOString(),
           version: item.version || 1,
           jobTitle: item.jobTitle || "",
+          content: item.content,
           status: "completed" as const,
         }));
         setResumes(mappedResumes);
@@ -84,9 +88,20 @@ export default function ResumesPage() {
   };
 
   const filteredResumes = resumes.filter(
-    (resume) =>
-      resume.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      resume.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase())
+    (resume) => {
+      const matchesSearch = resume.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        resume.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === "all" || resume.status === statusFilter;
+
+      let matchesDate = true;
+      if (dateFilter) {
+        const resumeDate = new Date(resume.createdAt).toLocaleDateString();
+        const filterDate = new Date(dateFilter).toLocaleDateString();
+        matchesDate = resumeDate === filterDate;
+      }
+
+      return matchesSearch && matchesStatus && matchesDate;
+    }
   );
 
   const handleEditResume = async (resume: ResumeCard) => {
@@ -96,8 +111,10 @@ export default function ResumesPage() {
       sessionStorage.setItem("resumeId", resume.id);
       sessionStorage.setItem("resumeFileName", resume.fileName);
 
-      // You might also want to fetch the resume data here and store it
-      // This would depend on your backend API structure
+      if (resume.content) {
+        sessionStorage.setItem("resumeData", resume.content);
+      }
+
       router.push(`/user/edit?id=${resume.id}`);
     } catch (error) {
       console.error("Error preparing resume for editing:", error);
@@ -280,33 +297,62 @@ export default function ResumesPage() {
               </p>
             </div>
             <div className="flex items-center">
-              <Button
-                onClick={() => router.push("/user/upload")}
-                className="bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] whitespace-nowrap font-medium"
-              >
-                + Create New Resume
-              </Button>
+
 
               <Button
                 onClick={() => router.push("/user/timesheet")}
-                className="ml-3 bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50 whitespace-nowrap font-medium"
+                className=" bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50 whitespace-nowrap font-medium"
               >
                 Timesheet
+              </Button>
+              <Button
+                onClick={() => router.push("/user/upload")}
+                className="ml-3 bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] whitespace-nowrap font-medium"
+              >
+                Create New Resume
               </Button>
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="relative ">
-            <Search className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-            {/* focus ring uses the primary color token */}
-            <input
-              type="text"
-              placeholder="Search resumes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-700)] focus:border-transparent"
-            />
+          {/* Search and Filters Bar */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="relative w-full md:w-1/3">
+              <Search className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search resumes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-sm bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-700)] focus:border-transparent"
+              />
+            </div>
+
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="relative flex-1 md:flex-initial">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full md:w-48 appearance-none bg-white border border-slate-200 rounded-sm px-4 py-2.5 pr-10 text-slate-600 font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary-700)] focus:border-transparent"
+                >
+                  <option value="all">All Status</option>
+                  <option value="completed">Published</option>
+                  <option value="processing">Processing</option>
+                  <option value="failed">Draft</option>
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <MoreVertical className="w-4 h-4 text-slate-400 rotate-90" />
+                </div>
+              </div>
+
+              <div className="relative">
+                <input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="appearance-none bg-white border border-slate-200 rounded-sm px-4 py-2.5 text-slate-600 font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary-700)] focus:border-transparent h-[42px] cursor-pointer"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -318,8 +364,8 @@ export default function ResumesPage() {
         )} */}
 
         {loading ? (
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-visible">
-            <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 rounded-t-lg">
+          <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-visible">
+            <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 rounded-t-sm">
               <div className="col-span-1 text-xs font-semibold bg- text-slate-600 uppercase">
                 Sr. No.
               </div>
@@ -384,7 +430,7 @@ export default function ResumesPage() {
               onClick={() => router.push("/user/upload")}
               className="bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] font-medium"
             >
-              + Create New Resume
+              Create New Resume
             </Button>
           </div>
         ) : (
