@@ -754,7 +754,7 @@ export default function EditPage() {
           <div className="lg:col-span-7 h-full flex flex-col overflow-hidden">
             <div className="flex flex-col h-full overflow-hidden">
               <div className="px-4 md:px-4 pt-6 md:pt-8 pb-4 shrink-0">
-               
+
               </div>
 
               <div className="pt-4 overflow-y-auto flex-1 pr-2">
@@ -853,18 +853,19 @@ export default function EditPage() {
                   )}
 
                   {currentStep === 2 && resumeData && (
-                    <div className="space-y-4">
-                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                        Professional Summary{" "}
-                        <span className="text-rose-500">*</span>
-                      </label>
-                      <textarea
-                        value={resumeData?.summary}
-                        onChange={(e) => updateSummary(e.target.value)}
-                        className="w-full h-64 bg-white border border-slate-300 rounded-lg p-4 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none leading-relaxed shadow-sm transition-all"
-                        placeholder="Write a brief summary of your career highlights..."
-                      />
-                      <div className="flex justify-end">
+                    <div className="space-y-4 pl-4">
+                      <div className="space-y-1">
+                        <label className="text-md px-2 font-semibold text-slate-700">
+                          Professional Summary <span className="text-rose-500">*</span>
+                        </label>
+                        <textarea
+                          value={resumeData?.summary}
+                          onChange={(e) => updateSummary(e.target.value)}
+                          className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 min-h-[250px] resize-none"
+                          placeholder="Write a brief summary of your career highlights..."
+                        />
+                      </div>
+                      <div className="flex justify-end pr-2">
                         <span className="text-xs text-slate-400">
                           {resumeData.summary.length} characters
                         </span>
@@ -873,48 +874,53 @@ export default function EditPage() {
                   )}
 
                   {currentStep === 3 && resumeData && (
-                    <div className="space-y-4">
-                      <label className="text-sm font-semibold text-slate-700">
-                        Key Skills
-                      </label>
-                      <div className="p-3 border border-slate-200 rounded-xl bg-white focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-500 transition-all min-h-[120px]">
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {resumeData.skills.map((skill, idx) => (
-                            <span
-                              key={idx}
-                              className="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1 border border-indigo-100"
-                            >
-                              {skill}
-                              <button
-                                onClick={() => removeSkill(skill)}
-                                className="hover:text-rose-500 transition-colors p-0.5 rounded-full hover:bg-indigo-100"
+                    <div className="space-y-4 pl-4">
+                      <div className="space-y-1">
+                        <label className="text-md px-2 font-semibold text-slate-700">
+                          Key Skills
+                        </label>
+                        <div className="p-4 border border-slate-200 rounded-sm bg-white min-h-[120px] mb-3">
+                          <div className="flex flex-wrap gap-2">
+                            {resumeData.skills.length === 0 && (
+                              <p className="text-slate-400 text-sm italic">No skills added yet...</p>
+                            )}
+                            {resumeData.skills.map((skill, idx) => (
+                              <span
+                                key={idx}
+                                className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-sm text-sm font-medium flex items-center gap-1 border border-slate-200"
                               >
-                                <X className="w-3 h-3" />
-                              </button>
-                            </span>
-                          ))}
+                                {skill}
+                                <button
+                                  onClick={() => removeSkill(skill)}
+                                  className="hover:text-rose-500 transition-colors p-0.5 rounded-full hover:bg-slate-200"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
                         </div>
                         <input
                           type="text"
                           value={skillInput}
                           onChange={(e) => setSkillInput(e.target.value)}
                           onKeyDown={addSkill}
-                          className="w-full p-2 outline-none text-slate-700 placeholder:text-slate-400 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-100 transition-all"
+                          className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
                           placeholder="Type a skill and press Enter..."
                         />
                       </div>
-                      <p className="text-xs text-slate-500">
-                        Press Enter to add a skill.
+                      <p className="text-xs text-slate-500 px-2">
+                        Press Enter to add a skill. Keywords help ATS systems find you.
                       </p>
                     </div>
                   )}
 
                   {currentStep === 4 && resumeData && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 pl-4">
                       {resumeData.work_experience.map((exp, index) => (
                         <div
                           key={index}
-                          className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative group hover:shadow-md transition-shadow"
+                          className="bg-white p-6 rounded-sm border border-slate-300 shadow-sm relative group hover:shadow-md transition-all"
                         >
                           <button
                             onClick={() => deleteWorkExperience(index)}
@@ -922,9 +928,9 @@ export default function EditPage() {
                           >
                             <Trash2 className="w-5 h-5" />
                           </button>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <div className="space-y-1">
-                              <label className="text-xs font-semibold text-slate-500 uppercase">
+                              <label className="text-md px-2 font-semibold text-slate-700">
                                 Company
                               </label>
                               <input
@@ -936,12 +942,12 @@ export default function EditPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 font-bold text-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none placeholder:text-slate-300 transition-all"
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
                                 placeholder="Company Name"
                               />
                             </div>
                             <div className="space-y-1">
-                              <label className="text-xs font-semibold text-slate-500 uppercase">
+                              <label className="text-md px-2 font-semibold text-slate-700">
                                 Position
                               </label>
                               <input
@@ -953,12 +959,12 @@ export default function EditPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 font-semibold text-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none placeholder:text-slate-300 transition-all"
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
                                 placeholder="Job Title"
                               />
                             </div>
                             <div className="space-y-1">
-                              <label className="text-xs font-semibold text-slate-500 uppercase">
+                              <label className="text-md px-2 font-semibold text-slate-700">
                                 Start Date
                               </label>
                               <input
@@ -971,11 +977,11 @@ export default function EditPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-slate-600 transition-all"
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] text-slate-700"
                               />
                             </div>
                             <div className="space-y-1">
-                              <label className="text-xs font-semibold text-slate-500 uppercase">
+                              <label className="text-md px-2 font-semibold text-slate-700">
                                 End Date
                               </label>
                               <input
@@ -988,7 +994,7 @@ export default function EditPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-slate-600 transition-all"
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] text-slate-700"
                               />
                             </div>
                           </div>
@@ -1001,29 +1007,36 @@ export default function EditPage() {
                               {exp.projects.map((proj, pIdx) => (
                                 <div
                                   key={pIdx}
-                                  className="bg-slate-50 p-4 rounded-xl border border-slate-200 relative group/proj"
+                                  className="bg-slate-50 p-6 rounded-sm border border-slate-200 relative group/proj space-y-4"
                                 >
-                                  <input
-                                    value={proj.name}
-                                    onChange={(e) =>
-                                      updateProjectField(
-                                        index,
-                                        pIdx,
-                                        "name",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Project Highlight Name"
-                                    className="bg-white border border-slate-300 rounded-lg px-3 py-2 font-bold w-full outline-none mb-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                  />
+                                  <div className="space-y-1">
+                                    <label className="text-sm px-2 font-semibold text-slate-700">
+                                      Highlight Name
+                                    </label>
+                                    <input
+                                      value={proj.name}
+                                      onChange={(e) =>
+                                        updateProjectField(
+                                          index,
+                                          pIdx,
+                                          "name",
+                                          e.target.value
+                                        )
+                                      }
+                                      placeholder="e.g. Lead Frontend Development"
+                                      className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-sm"
+                                    />
+                                  </div>
 
-                                  {/* Technologies Tag Input */}
-                                  <div className="mb-2">
+                                  <div className="space-y-1">
+                                    <label className="text-sm px-2 font-semibold text-slate-700">
+                                      Technologies
+                                    </label>
                                     <div className="flex flex-wrap gap-1 mb-2">
                                       {proj.technologies.map((tech, tIdx) => (
                                         <span
                                           key={tIdx}
-                                          className="bg-white text-indigo-600 px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 border border-indigo-100 shadow-sm"
+                                          className="bg-white text-slate-700 px-2 py-0.5 rounded-sm text-xs font-medium flex items-center gap-1 border border-slate-200 shadow-sm"
                                         >
                                           {tech}
                                           <button
@@ -1034,7 +1047,7 @@ export default function EditPage() {
                                                 tech
                                               )
                                             }
-                                            className="hover:text-rose-500 transition-colors p-0.5 rounded-full hover:bg-slate-50"
+                                            className="hover:text-rose-500 transition-colors p-0.5"
                                           >
                                             <X className="w-2.5 h-2.5" />
                                           </button>
@@ -1055,45 +1068,51 @@ export default function EditPage() {
                                       onKeyDown={(e) =>
                                         addWorkExpTech(e, index, pIdx)
                                       }
-                                      placeholder="Add technology (Press Enter)"
-                                      className="bg-white border border-slate-300 rounded-lg px-3 py-2 w-full text-xs text-slate-500 outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 transition-all"
+                                      placeholder="Add tech (Press Enter)"
+                                      className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-xs"
                                     />
                                   </div>
 
-                                  <textarea
-                                    value={proj.description}
-                                    onChange={(e) =>
-                                      updateProjectField(
-                                        index,
-                                        pIdx,
-                                        "description",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Brief description..."
-                                    className="bg-white border border-slate-300 rounded-lg px-3 py-2 w-full text-sm text-slate-600 resize-none outline-none min-h-[60px] focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                  />
+                                  <div className="space-y-1">
+                                    <label className="text-sm px-2 font-semibold text-slate-700">
+                                      Description / Responsibilities
+                                    </label>
+                                    <textarea
+                                      value={proj.description}
+                                      onChange={(e) =>
+                                        updateProjectField(
+                                          index,
+                                          pIdx,
+                                          "description",
+                                          e.target.value
+                                        )
+                                      }
+                                      placeholder="What did you achieve? Use bullet points if needed..."
+                                      className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-sm min-h-[80px] resize-none"
+                                    />
+                                  </div>
+
                                   <button
                                     onClick={() => deleteProject(index, pIdx)}
-                                    className="absolute top-2 right-2 text-slate-300 hover:text-rose-500 "
+                                    className="absolute top-2 right-2 text-slate-300 hover:text-rose-500 transition-colors"
                                   >
-                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <Trash2 className="w-4 h-4" />
                                   </button>
                                 </div>
                               ))}
                             </div>
                             <button
                               onClick={() => addProject(index)}
-                              className="mt-3 text-xs font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg transition-colors"
+                              className="mt-4 text-sm font-bold text-[var(--primary)] flex items-center gap-2 hover:bg-slate-50 border border-transparent hover:border-slate-200 px-4 py-2 rounded-sm transition-all"
                             >
-                              <Plus className="w-3.5 h-3.5" /> Add Highlight
+                              <Plus className="w-4 h-4" /> Add Highlight
                             </button>
                           </div>
                         </div>
                       ))}
                       <button
                         onClick={addWorkExperience}
-                        className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-semibold hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2 group"
+                        className="w-full py-4 border border-dashed border-slate-300 rounded-sm text-slate-500 font-semibold hover:border-[var(--primary)] hover:text-[var(--primary)] hover:bg-white transition-all flex items-center justify-center gap-2 group"
                       >
                         <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />{" "}
                         Add New Experience
@@ -1102,11 +1121,11 @@ export default function EditPage() {
                   )}
 
                   {currentStep === 5 && resumeData && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 pl-4">
                       {resumeData.education.map((edu, index) => (
                         <div
                           key={index}
-                          className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative group hover:shadow-md transition-shadow"
+                          className="bg-white p-6 rounded-sm border border-slate-300 shadow-sm relative group hover:shadow-md transition-all"
                         >
                           <button
                             onClick={() => deleteEducation(index)}
@@ -1116,7 +1135,7 @@ export default function EditPage() {
                           </button>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-1">
-                              <label className="text-xs font-semibold text-slate-500 uppercase">
+                              <label className="text-md px-2 font-semibold text-slate-700">
                                 Institution
                               </label>
                               <input
@@ -1128,12 +1147,12 @@ export default function EditPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 font-bold text-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none placeholder:text-slate-300 transition-all"
-                                placeholder="University"
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
+                                placeholder="University Name"
                               />
                             </div>
                             <div className="space-y-1">
-                              <label className="text-xs font-semibold text-slate-500 uppercase">
+                              <label className="text-md px-2 font-semibold text-slate-700">
                                 Degree
                               </label>
                               <input
@@ -1145,12 +1164,12 @@ export default function EditPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 font-semibold text-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none placeholder:text-slate-300 transition-all"
-                                placeholder="Degree"
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
+                                placeholder="e.g. Bachelor's in CS"
                               />
                             </div>
                             <div className="space-y-1">
-                              <label className="text-xs font-semibold text-slate-500 uppercase">
+                              <label className="text-md px-2 font-semibold text-slate-700">
                                 Field of Study
                               </label>
                               <input
@@ -1162,12 +1181,12 @@ export default function EditPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-slate-600 transition-all"
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
                                 placeholder="Major"
                               />
                             </div>
                             <div className="space-y-1">
-                              <label className="text-xs font-semibold text-slate-500 uppercase">
+                              <label className="text-md px-2 font-semibold text-slate-700">
                                 Graduation Year
                               </label>
                               <input
@@ -1180,7 +1199,7 @@ export default function EditPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-slate-600 transition-all"
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
                                 placeholder="YYYY"
                               />
                             </div>
@@ -1189,7 +1208,7 @@ export default function EditPage() {
                       ))}
                       <button
                         onClick={addEducation}
-                        className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-semibold hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2 group"
+                        className="w-full py-4 border border-dashed border-slate-300 rounded-sm text-slate-500 font-semibold hover:border-[var(--primary)] hover:text-[var(--primary)] hover:bg-white transition-all flex items-center justify-center gap-2 group"
                       >
                         <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />{" "}
                         Add Education
@@ -1198,11 +1217,11 @@ export default function EditPage() {
                   )}
 
                   {currentStep === 6 && resumeData && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 pl-4">
                       {resumeData.projects.map((proj, index) => (
                         <div
                           key={index}
-                          className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative group hover:shadow-md transition-shadow"
+                          className="bg-white p-6 rounded-sm border border-slate-300 shadow-sm relative group hover:shadow-md transition-all"
                         >
                           <button
                             onClick={() => deleteStandaloneProject(index)}
@@ -1210,9 +1229,9 @@ export default function EditPage() {
                           >
                             <Trash2 className="w-5 h-5" />
                           </button>
-                          <div className="space-y-4">
-                            <div>
-                              <label className="text-xs font-semibold text-slate-500 uppercase">
+                          <div className="space-y-6">
+                            <div className="space-y-1">
+                              <label className="text-md px-2 font-semibold text-slate-700">
                                 Project Name
                               </label>
                               <input
@@ -1224,32 +1243,34 @@ export default function EditPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 font-bold text-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none placeholder:text-slate-300 transition-all"
-                                placeholder="Name"
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
+                                placeholder="Project Name"
                               />
                             </div>
 
-                            <div>
-                              <label className="text-xs font-semibold text-slate-500 uppercase">
+                            <div className="space-y-1">
+                              <label className="text-md px-2 font-semibold text-slate-700">
                                 Technologies
                               </label>
-                              <div className="flex flex-wrap gap-2 my-2">
-                                {proj.technologies.map((tech, tIdx) => (
-                                  <span
-                                    key={tIdx}
-                                    className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 border border-indigo-100"
-                                  >
-                                    {tech}
-                                    <button
-                                      onClick={() =>
-                                        removeProjectTech(index, tech)
-                                      }
-                                      className="hover:text-rose-500 transition-colors p-0.5 rounded-full hover:bg-indigo-100"
+                              <div className="p-3 border border-slate-200 rounded-sm bg-slate-50 mb-3">
+                                <div className="flex flex-wrap gap-1">
+                                  {proj.technologies.map((tech, tIdx) => (
+                                    <span
+                                      key={tIdx}
+                                      className="bg-white text-slate-700 px-2.5 py-1 rounded-sm text-xs font-medium flex items-center gap-1 border border-slate-200 shadow-sm"
                                     >
-                                      <X className="w-3 h-3" />
-                                    </button>
-                                  </span>
-                                ))}
+                                      {tech}
+                                      <button
+                                        onClick={() =>
+                                          removeProjectTech(index, tech)
+                                        }
+                                        className="hover:text-rose-500 transition-colors p-0.5"
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    </span>
+                                  ))}
+                                </div>
                               </div>
                               <input
                                 value={projectTechInputs[index] || ""}
@@ -1260,12 +1281,15 @@ export default function EditPage() {
                                   })
                                 }
                                 onKeyDown={(e) => addProjectTech(e, index)}
-                                className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-300"
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
                                 placeholder="Add technology (Press Enter)"
                               />
                             </div>
 
-                            <div>
+                            <div className="space-y-1">
+                              <label className="text-md px-2 font-semibold text-slate-700">
+                                Description
+                              </label>
                               <textarea
                                 value={proj.description}
                                 onChange={(e) =>
@@ -1275,8 +1299,8 @@ export default function EditPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full h-24 p-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 outline-none resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                placeholder="Description..."
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 min-h-[100px] resize-none"
+                                placeholder="Briefly describe what you built..."
                               />
                             </div>
                           </div>
@@ -1284,7 +1308,7 @@ export default function EditPage() {
                       ))}
                       <button
                         onClick={addStandaloneProject}
-                        className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-semibold hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2 group"
+                        className="w-full py-4 border border-dashed border-slate-300 rounded-sm text-slate-500 font-semibold hover:border-[var(--primary)] hover:text-[var(--primary)] hover:bg-white transition-all flex items-center justify-center gap-2 group"
                       >
                         <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />{" "}
                         Add Project
@@ -1303,17 +1327,17 @@ export default function EditPage() {
                       </p>
 
                       {!isFormComplete && (
-                        <div className="bg-rose-50 text-rose-600 px-4 py-3 rounded-xl border border-rose-100 text-sm font-medium flex items-center gap-2 mb-4">
+                        <div className="bg-rose-50 text-rose-600 px-4 py-3 rounded-sm border border-rose-100 text-sm font-bold flex items-center gap-2 mb-4">
                           <AlertCircle className="w-4 h-4" /> Some required
                           fields are missing. Please check the sidebar.
                         </div>
                       )}
 
                       {/* PDF Preview Area */}
-                      <div className="w-full max-w-4xl mx-auto bg-slate-200 rounded-xl overflow-hidden border border-slate-300 shadow-inner h-[500px] flex items-center justify-center relative">
+                      <div className="w-full max-w-4xl mx-auto bg-slate-200 rounded-sm overflow-hidden border border-slate-300 shadow-inner h-[500px] flex items-center justify-center relative">
                         {previewLoading ? (
                           <div className="flex flex-col items-center gap-3">
-                            <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
+                            <Loader2 className="w-10 h-10 animate-spin text-[var(--primary)]" />
                             <p className="text-slate-500 font-medium">
                               Generating Preview...
                             </p>
@@ -1331,7 +1355,7 @@ export default function EditPage() {
                             </p>
                             <button
                               onClick={generatePreview}
-                              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2"
+                              className="px-4 py-2 bg-[var(--primary)] text-white rounded-sm text-sm font-bold hover:bg-[var(--primary-700)] transition-colors flex items-center gap-2"
                             >
                               <RefreshCw className="w-4 h-4" /> Retry Preview
                             </button>
@@ -1351,7 +1375,7 @@ export default function EditPage() {
                             </p>
                             <button
                               onClick={generatePreview}
-                              className="mt-2 px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 text-slate-600 transition-colors flex items-center gap-2"
+                              className="mt-2 px-4 py-2 bg-white border border-slate-300 rounded-sm text-sm font-bold hover:bg-slate-50 text-slate-600 transition-colors flex items-center gap-2"
                             >
                               <RefreshCw className="w-4 h-4" /> Load Preview
                             </button>
@@ -1371,9 +1395,9 @@ export default function EditPage() {
       {/* Sticky Footer with Progress Bar */}
       <div className="bg-white border-t border-slate-200 flex flex-col z-50 shadow-[0_-5px_20px_-15px_rgba(0,0,0,0.1)] shrink-0 relative">
         {/* Progress Bar Container */}
-        <div className="w-full h-1 bg-slate-100">
+        <div className="w-full h-1.5 bg-slate-100">
           <div
-            className="h-full bg-[var(--primary)] transition-all duration-500 ease-out"
+            className="h-full bg-[var(--primary)] transition-all duration-700 ease-in-out"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -1385,11 +1409,10 @@ export default function EditPage() {
             <button
               onClick={handleBack}
               disabled={currentStep === 1}
-              className={`px-6 py-2.5 rounded-xl font-semibold border transition-all flex items-center gap-2 ${
-                currentStep === 1
-                  ? "opacity-0 pointer-events-none"
-                  : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
-              }`}
+              className={`px-8 py-2.5 rounded-sm font-bold border transition-all flex items-center gap-2 ${currentStep === 1
+                ? "opacity-0 pointer-events-none"
+                : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400"
+                }`}
             >
               Back
             </button>
