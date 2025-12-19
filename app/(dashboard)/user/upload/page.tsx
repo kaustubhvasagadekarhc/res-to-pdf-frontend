@@ -227,7 +227,7 @@ export default function UploadPage() {
             src='/upload-resume-page.webp'
             alt="upload resume"
             fill
-            className="object-contain mix-blend-multiply opacity-90"
+            className="object-contain mix-blend-multiply opacity-90 contrast-180 brightness-80"
             priority
           />
         </motion.div>

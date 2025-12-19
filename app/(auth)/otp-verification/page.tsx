@@ -20,7 +20,7 @@ function OTPVerificationContent() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [timer, setTimer] = useState(599); // 9:59 in seconds
+  const [timer, setTimer] = useState(599);
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
