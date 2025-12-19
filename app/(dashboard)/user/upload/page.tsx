@@ -220,11 +220,11 @@ export default function UploadPage() {
         {/* Right Column: Video Card */}
         <motion.div
 
-          className="relative group"
+          className="relative group h-[500px] lg:h-[530px] w-full"
         >
 
           <Image
-            src='/upload-resume.jpg'
+            src='/upload-resume-page.webp'
             alt="upload resume"
             fill
             className="object-contain mix-blend-multiply opacity-90"

@@ -25,6 +25,7 @@ interface ResumeCard {
   version: number;
   jobTitle?: string;
   status: "Generated" | "Draft" | "Failed";
+  content?: string;
 }
 
 export default function ResumesPage() {
@@ -36,6 +37,7 @@ export default function ResumesPage() {
   const [, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("");
 
   useEffect(() => {
     fetchResumes();
@@ -69,6 +71,7 @@ export default function ResumesPage() {
           updatedAt: item.updatedAt || new Date().toISOString(),
           version: item.version || 1,
           jobTitle: item.jobTitle || "",
+          content: item.content,
           status: (
             // item.status || 
             "Generated") as "Generated" | "Draft" | "Failed",
@@ -90,19 +93,27 @@ export default function ResumesPage() {
       const matchesSearch = resume.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         resume.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === "all" || resume.status === statusFilter;
-      return matchesSearch && matchesStatus;
+
+      let matchesDate = true;
+      if (dateFilter) {
+        const resumeDate = new Date(resume.createdAt).toLocaleDateString();
+        const filterDate = new Date(dateFilter).toLocaleDateString();
+        matchesDate = resumeDate === filterDate;
+      }
+
+      return matchesSearch && matchesStatus && matchesDate;
     }
   );
 
   const handleEditResume = async (resume: ResumeCard) => {
     try {
-      // In a real implementation, you'd fetch the specific resume data
-      // For now, we'll just pass the ID to the edit page
       sessionStorage.setItem("resumeId", resume.id);
       sessionStorage.setItem("resumeFileName", resume.fileName);
 
-      // You might also want to fetch the resume data here and store it
-      // This would depend on your backend API structure
+      if (resume.content) {
+        sessionStorage.setItem("resumeData", resume.content);
+      }
+
       router.push(`/user/edit?id=${resume.id}`);
     } catch (error) {
       console.error("Error preparing resume for editing:", error);
@@ -180,24 +191,24 @@ export default function ResumesPage() {
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "Generated":
-        return "bg-[var(--success-100)] text-[var(--success-800)] px-3 py-1 rounded-full text-xs font-medium";
+        return "bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold";
       case "Draft":
-        return "bg-[var(--warning-100)] text-[var(--warning-800)] px-3 py-1 rounded-full text-xs font-medium";
+        return "bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-semibold";
       case "Failed":
-        return "bg-[var(--danger-100)] text-[var(--danger-800)] px-3 py-1 rounded-full text-xs font-medium";
+        return "bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-semibold";
       default:
-        return "bg-[var(--muted)] text-[var(--muted-foreground)] px-3 py-1 rounded-full text-xs font-medium";
+        return "bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-semibold";
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case "completed":
+      case "Generated":
         return "Published";
-      case "processing":
-        return "Processing";
-      case "failed":
+      case "Draft":
         return "Draft";
+      case "Failed":
+        return "Failed";
       default:
         return status;
     }
@@ -285,7 +296,7 @@ export default function ResumesPage() {
               </p>
             </div>
             <div className="flex items-center"> <Button
-              onClick={() => router.push("/user/timesheet")}
+              // onClick={() => router.push("/user/timesheet")}
               className="bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50 whitespace-nowrap font-bold rounded-sm py-6 px-6"
             >
               Timesheet
@@ -331,12 +342,14 @@ export default function ResumesPage() {
                 </div>
               </div>
 
-              <Button
-                variant="outline"
-                className="p-3 rounded-sm border-slate-200 text-slate-500 hover:bg-slate-50"
-              >
-                <Calendar className="w-5 h-5" />
-              </Button>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="appearance-none bg-white border border-slate-200 rounded-sm px-4 py-3 text-slate-600 font-semibold focus:outline-none focus:border-b-2 focus:border-[var(--primary)] transition-all h-[46px] cursor-pointer"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -349,28 +362,25 @@ export default function ResumesPage() {
         )} */}
 
         {loading ? (
-          <div className="bg-white rounded-sm border border-slate-200 overflow-hidden">
-            <div className="grid grid-cols-12 gap-0 border-b border-slate-200 bg-slate-50">
-              <div className="col-span-1 p-4 text-xs font-semibold text-slate-600 uppercase">
-                Sr. No.
+          <div className="bg-white rounded-sm border border-slate-200 overflow-visible">
+            <div className="grid grid-cols-12 gap-0 border-b border-slate-200 bg-white">
+              <div className="col-span-1 px-4 py-1 bg-[#F8FAFC] text-xs font-bold text-slate-400 uppercase tracking-wider">
+                #
               </div>
-              <div className="col-span-4 p-4 bg-slate-200 text-xs font-semibold text-slate-600 uppercase">
-                File Name
-              </div>
-              <div className="col-span-2 p-4 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-3 px-4 py-1 text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Job Title
               </div>
-              <div className="col-span-1 p-4 bg-slate-200 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-2 px-4 py-1 bg-[#F8FAFC] text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Version
               </div>
-              <div className="col-span-2 p-4 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-3 px-4 py-1 text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Created
               </div>
-              <div className="col-span-1 p-4 bg-slate-200 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-2 px-4 py-1 bg-[#F8FAFC] text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Status
               </div>
-              <div className="col-span-1 p-4 text-center text-xs font-semibold text-slate-600 uppercase">
-                Action
+              <div className="col-span-1 px-4 py-1 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Actions
               </div>
             </div>
             {[...Array(6)].map((_, index) => (
@@ -378,29 +388,23 @@ export default function ResumesPage() {
                 key={index}
                 className="grid grid-cols-12 gap-0 border-b border-slate-100 last:border-b-0 items-center bg-white"
               >
-                <div className="col-span-1 p-4">
-                  <div className="h-4 w-6 bg-slate-200 rounded animate-pulse"></div>
+                <div className="col-span-1 px-4 py-1 bg-[#F8FAFC]">
+                  <div className="h-4 w-4 bg-slate-200 rounded animate-pulse"></div>
                 </div>
-                <div className="col-span-4 p-4 bg-slate-50/50 flex items-center gap-3">
-                  <div className="h-8 w-8 bg-slate-200 rounded animate-pulse" />
-                  <div className="flex-1">
-                    <div className="h-4 w-3/4 bg-slate-200 rounded animate-pulse"></div>
-                  </div>
+                <div className="col-span-3 px-4 py-1 flex items-center gap-3">
+                  <div className="h-4 w-3/4 bg-slate-100 rounded animate-pulse"></div>
                 </div>
-                <div className="col-span-2 p-4">
-                  <div className="h-4 w-full bg-slate-200 rounded animate-pulse"></div>
+                <div className="col-span-2 px-4 py-1 bg-[#F8FAFC]">
+                  <div className="h-6 w-12 bg-slate-200 rounded animate-pulse"></div>
                 </div>
-                <div className="col-span-1 p-4 bg-slate-50/50">
-                  <div className="h-4 w-3/4 bg-slate-200 rounded animate-pulse"></div>
+                <div className="col-span-3 px-4 py-1">
+                  <div className="h-4 w-1/2 bg-slate-100 rounded animate-pulse"></div>
                 </div>
-                <div className="col-span-2 p-4">
-                  <div className="h-4 w-full bg-slate-200 rounded animate-pulse"></div>
+                <div className="col-span-2 px-4 py-1 bg-[#F8FAFC]">
+                  <div className="h-6 w-20 bg-slate-200 rounded animate-pulse"></div>
                 </div>
-                <div className="col-span-1 p-4 bg-slate-50/50">
-                  <div className="h-6 w-16 bg-slate-200 rounded animate-pulse"></div>
-                </div>
-                <div className="col-span-1 p-4 flex justify-center">
-                  <div className="h-6 w-6 bg-slate-200 rounded animate-pulse"></div>
+                <div className="col-span-1 px-4 py-1 flex justify-end">
+                  <div className="h-6 w-6 bg-slate-100 rounded animate-pulse"></div>
                 </div>
               </div>
             ))}
@@ -425,59 +429,53 @@ export default function ResumesPage() {
             </Button>
           </div>
         ) : (
-          <div className="bg-white rounded-sm border border-slate-200 overflow-hidden">
-            <div className="grid grid-cols-12 gap-0 border-b border-slate-200 bg-slate-50">
-              <div className="col-span-1 p-4 text-xs font-semibold text-slate-600 uppercase">
+          <div className="bg-white rounded-sm border border-slate-200 overflow-visible">
+            <div className="grid grid-cols-12 gap-0 border-b border-slate-200 bg-white">
+              <div className="col-span-1 px-4 py-2 bg-[#F8FAFC] text-xs font-bold text-slate-400 uppercase tracking-wider">
                 #
               </div>
-              <div className="col-span-4 p-4 bg-slate-200 text-xs font-semibold text-slate-600 uppercase">
-                File Name
-              </div>
-              <div className="col-span-2 p-4 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-4 px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Job Title
               </div>
-              <div className="col-span-1 p-4 bg-slate-200 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-1 px-4 py-2 bg-[#F8FAFC] text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Version
               </div>
-              <div className="col-span-2 p-4 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-3 px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Created
               </div>
-              <div className="col-span-1 p-4 bg-slate-200 text-xs font-semibold text-slate-600 uppercase">
+              <div className="col-span-2 px-4 py-2 bg-[#F8FAFC] text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Status
               </div>
-              <div className="col-span-1 p-4 text-center text-xs font-semibold text-slate-600 uppercase">
-                Action
+              <div className="col-span-1 px-4 py-2 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Actions
               </div>
             </div>
             {filteredResumes.map((resume, index) => (
               <div
                 key={resume.id}
-                className="grid grid-cols-12 gap-0 border-b border-slate-100 last:border-b-0 items-center hover:bg-slate-50 transition-colors bg-white font-serif"
+                className="grid grid-cols-12 gap-0 border-b border-slate-100 last:border-b-0 items-center hover:bg-slate-50 transition-colors bg-white group"
               >
-                <div className="col-span-1 p-4 text-sm text-slate-600 font-medium font-sans">
+                <div className="col-span-1 px-4 py-3 bg-[#F8FAFC] group-hover:bg-slate-100/50 transition-colors text-slate-500 font-medium">
                   {index + 1}
                 </div>
-                <div className="col-span-4 p-4 bg-slate-50/50 flex items-center gap-3">
-                  <span className="truncate font-medium text-slate-900 font-sans">
-                    {resume.fileName.replace(".pdf", "")}
+                <div className="col-span-4 px-4 py-2 text-slate-900 font-medium">
+                  {resume.jobTitle || resume.fileName.replace(".pdf", "")}
+                </div>
+                <div className="col-span-1 px-4 py-2 bg-[#F8FAFC] group-hover:bg-slate-100/50 transition-colors">
+                  <span className="inline-flex items-center px-2.5 py-2 rounded bg-slate-200/60 text-slate-700 text-xs font-bold">
+                    v{resume.version.toFixed(1)}
                   </span>
                 </div>
-                <div className="col-span-2 p-4 text-slate-600 text-sm font-sans">
-                  {resume.jobTitle || "-"}
-                </div>
-                <div className="col-span-1 p-4 bg-slate-50/50 text-slate-600 text-sm font-medium font-sans">
-                  v{resume.version}
-                </div>
-                <div className="col-span-2 p-4 text-slate-600 text-sm flex items-center gap-1 font-sans">
+                <div className="col-span-3 px-4 py-2 text-slate-500 text-sm flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-slate-400" />
                   <span>{formatDate(resume.createdAt)}</span>
                 </div>
-                <div className="col-span-1 p-4 bg-slate-50/50 font-sans">
-                  <div className={getStatusBadgeClass(resume.status)}>
+                <div className="col-span-2 px-4 py-3 bg-[#F8FAFC] group-hover:bg-slate-100/50 transition-colors">
+                  <div className={`inline-block ${getStatusBadgeClass(resume.status)}`}>
                     {getStatusLabel(resume.status)}
                   </div>
                 </div>
-                <div className="col-span-1 p-4 font-sans flex justify-end items-center">
+                <div className="col-span-1 px-4 py-2 flex justify-end items-center">
                   <div className="relative">
                     <Button
                       variant="ghost"
@@ -485,7 +483,7 @@ export default function ResumesPage() {
                       ref={(el) => { if (el) { menuButtonRefs.current.set(resume.id, el); } else { menuButtonRefs.current.delete(resume.id); } }}
                       onClick={(e) => toggleMenu(e, resume.id)}
                       aria-expanded={openMenuId === resume.id}
-                      className="p-0 h-8 w-8 hover:bg-slate-100"
+                      className="p-0 h-8 w-8 hover:bg-slate-200 rounded-full"
                     >
                       <MoreVertical className="w-4 h-4 text-slate-400" />
                     </Button>
