@@ -7,6 +7,7 @@ export { CancelablePromise, CancelError } from './core/CancelablePromise';
 export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
+export { AdminService } from './services/AdminService';
 export { AuthService } from './services/AuthService';
 export { DashboardService } from './services/DashboardService';
 export { PdfService } from './services/PdfService';

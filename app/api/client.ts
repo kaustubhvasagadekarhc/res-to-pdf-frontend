@@ -5,7 +5,7 @@
 import axiosInstance from "@/lib/axiosInstance";
 import type { AxiosInstance, AxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
-import { AuthService, OpenAPI, PdfService,ResumeService,DashboardService } from "./generated";
+import { AuthService, OpenAPI, PdfService, ResumeService, DashboardService, AdminService } from "./generated";
 
 // ============================================
 // Core API Client
@@ -22,8 +22,7 @@ export class ApiClient {
     headers?: Record<string, string>
   ) {
     this.axios = axios;
-    this.baseURL =
-      baseURL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    this.baseURL = baseURL || "http://localhost:5000";
 
     this.defaultHeaders = {
       "Content-Type": "application/json",
@@ -129,6 +128,7 @@ export class ApiClientWithServices extends ApiClient {
   public pdf = PdfService;
   public resume = ResumeService;
   public dashboard = DashboardService;
+  public admin = AdminService;
 
   constructor(
     axios: AxiosInstance,
@@ -159,6 +159,7 @@ export const authService = apiClient.auth;
 export const pdfService = apiClient.pdf;
 export const resumeService = apiClient.resume;
 export const dashboardService = apiClient.dashboard;
+export const adminService = apiClient.admin;
 
 
 // ============================================

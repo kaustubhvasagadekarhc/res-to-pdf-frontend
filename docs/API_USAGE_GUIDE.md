@@ -18,7 +18,9 @@ app/api/generated/
 │   ├── OpenAPI.ts
 │   └── request.ts
 ├── services/       # API service classes based on OpenAPI paths
+│   ├── AdminService.ts
 │   ├── AuthService.ts
+│   ├── DashboardService.ts
 │   ├── PdfService.ts
 │   └── ResumeService.ts
 ├── index.ts        # Main exports for easy import
@@ -31,7 +33,9 @@ app/api/generated/
 - **request.ts**: Low-level request handling with axios
 
 ### Service Modules
+- **AdminService.ts**: Admin-only operations (user management, system stats, invitations)
 - **AuthService.ts**: Authentication-related endpoints (login, register, OTP verification)
+- **DashboardService.ts**: Dashboard data aggregation endpoints
 - **PdfService.ts**: PDF generation endpoints
 - **ResumeService.ts**: Resume upload and parsing endpoints
 
@@ -171,6 +175,133 @@ const uploadResume = async (file: File) => {
     return response;
   } catch (error) {
     console.error("Resume upload failed:", error);
+    throw error;
+  }
+};
+```
+
+### Admin Service Examples
+
+#### User Management
+```typescript
+import { adminService } from "@/app/api/client";
+
+const manageUser = async (userId: string) => {
+  try {
+    // Get specific user
+    const user = await adminService.getAdminUsers1({ id: userId });
+    
+    // Update role
+    await adminService.patchAdminUsersRole({
+      id: userId,
+      requestBody: { userType: 'ADMIN' },
+    });
+    
+    // Toggle verification
+    await adminService.patchAdminUsersVerify({
+      id: userId,
+      requestBody: { isVerified: true },
+    });
+    
+    return user;
+  } catch (error) {
+    console.error("Admin operation failed:", error);
+    throw error;
+  }
+};
+```
+
+#### Admin Resume Parsing & Invite
+```typescript
+import { adminService } from "@/app/api/client";
+
+// Parse resume to extract user info before inviting
+const parseAndInvite = async (file: File) => {
+  try {
+    // 1. Parse Resume
+    const parseResult = await adminService.postAdminResumeParse({
+      formData: { resume: file }
+    });
+    
+    const { email, name } = parseResult.data;
+    
+    // 2. Invite User
+    const inviteResult = await adminService.postAdminUsersInvite({
+      requestBody: { email, name }
+    });
+    
+    return inviteResult;
+  } catch (error) {
+    console.error("Invite pipeline failed:", error);
+    throw error;
+  }
+};
+```
+
+#### Admin Activities
+```typescript
+import { adminService } from "@/app/api/client";
+
+const getActivities = async () => {
+  try {
+    // Get recent activities
+    const recent = await adminService.getAdminActivitiesRecent({ limit: 5 });
+
+    // Get paginated activities
+    const all = await adminService.getAdminActivities({ 
+      page: 1, 
+      limit: 10,
+      type: 'USER_LOGIN' 
+    });
+
+    return { recent, all };
+  } catch (error) {
+    console.error("Failed to fetch activities:", error);
+    throw error;
+  }
+};
+```
+
+#### System Settings
+```typescript
+import { adminService } from "@/app/api/client";
+
+const manageSettings = async () => {
+  try {
+    // Get settings
+    const settings = await adminService.getAdminSettings();
+
+    // Update settings
+    const updated = await adminService.putAdminSettings({
+      requestBody: {
+        allowRegistration: true,
+        maintenanceMode: false,
+        supportEmail: "support@example.com",
+        maxUploadSize: 10485760 
+      }
+    });
+
+    return updated;
+  } catch (error) {
+    console.error("Failed to manage settings:", error);
+    throw error;
+  }
+};
+```
+
+### Dashboard Service Example
+
+```typescript
+import { dashboardService } from "@/app/api/client";
+
+const loadUserResumes = async (userId: string) => {
+  try {
+    const response = await dashboardService.postDashboardResumes({
+      requestBody: { userId }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Failed to load dashboard:", error);
     throw error;
   }
 };

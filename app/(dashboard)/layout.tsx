@@ -5,7 +5,6 @@ import { Header } from "@/components/layout/header";
 import { Sidebar, SidebarItem } from "@/components/layout/sidebar";
 import {
   Activity,
-  BarChart3,
   BookDown,
   FileText,
   Home,
@@ -20,13 +19,8 @@ import { UserProvider, useUser } from "@/contexts/UserContext";
 const adminItems: SidebarItem[] = [
   { label: "Overview", href: "/admin", icon: Home },
   { label: "User Management", href: "/admin/users", icon: Users },
-  { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-  {
-    label: "System Settings",
-    href: "/admin/settings",
-    icon: Settings,
-  },
-  { label: "Activity Logs", href: "/admin/logs", icon: Activity },
+  { label: "Activity Logs", href: "/admin/activities", icon: Activity },
+  { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 // User Sidebar Items
@@ -44,20 +38,20 @@ function DashboardContent({
   children: React.ReactNode;
 }) {
   const { user, loading } = useUser();
-  
+
   const items = user?.userType === "ADMIN" ? adminItems : userItems;
-  
+
 
   if (loading) {
     return null; // Or a loading skeleton
   }
 
   return (
-    <DashboardShell>
-     {user?.userType === "ADMIN" && <Sidebar items={items} />}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-y-auto ">
+    <DashboardShell className="flex-col">
+      <Header />
+      <div className="flex-1 flex overflow-hidden">
+        {user?.userType === "ADMIN" && <Sidebar items={items} />}
+        <main className="flex-1 overflow-y-auto">
           {children}
         </main>
       </div>
