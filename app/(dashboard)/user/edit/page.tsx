@@ -17,7 +17,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import Link from "next/link";
+// import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -768,7 +768,7 @@ export default function EditPage() {
                   {currentStep === 1 && resumeData && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-4">
                       <div className="space-y-1 ">
-                        <label className="text-md font-semibold text-slate-700 ">
+                        <label className="text-md px-2 font-semibold text-slate-700 ">
                           Full Name
                         </label>
                         <input
@@ -781,7 +781,7 @@ export default function EditPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-md font-semibold text-slate-700">
+                        <label className="text-md px-2 font-semibold text-slate-700">
                           Job Title
                         </label>
                         <input
@@ -794,7 +794,7 @@ export default function EditPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-md font-semibold text-slate-700 ">
+                        <label className="text-md px-2 font-semibold text-slate-700 ">
                           Email
                         </label>
                         <input
@@ -807,7 +807,7 @@ export default function EditPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-md font-semibold text-slate-700 ">
+                        <label className="text-md px-2 font-semibold text-slate-700 ">
                           Mobile
                         </label>
                         <input
@@ -820,7 +820,7 @@ export default function EditPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-md font-semibold text-slate-700">
+                        <label className="text-md px-2 font-semibold text-slate-700">
                           Location
                         </label>
                         <input
@@ -833,7 +833,7 @@ export default function EditPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-md  font-semibold text-slate-700 ">
+                        <label className="text-md px-2  font-semibold text-slate-700 ">
                           Gender
                         </label>
                         <select
