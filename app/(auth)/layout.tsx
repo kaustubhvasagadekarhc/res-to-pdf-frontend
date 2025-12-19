@@ -27,7 +27,7 @@ export default function AuthLayout({
           {/* Decorative Background Elements */}
           
 
-          <div className="relative z-10 w-full max-w-xl  flex flex-col items-center text-center">
+          <div className="relative z-10 w-full max-w-xl flex flex-col items-center text-center">
             
               <h1 className="text-4xl lg:text-5xl font-bold text-slate-700 leading-tight tracking-tight">
                 Redefine your <br />
@@ -41,7 +41,7 @@ export default function AuthLayout({
               </p>
           
 
-            <div className="relative w-full max-w-[480px] aspect-square">
+            <div className=" h-[300px] relative w-full max-w-[480px] aspect-square">
               <Image
                 src={imageSrc}
                 alt="Authentication Illustration"

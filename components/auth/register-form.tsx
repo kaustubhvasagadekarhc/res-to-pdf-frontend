@@ -129,8 +129,8 @@ export function RegisterForm({ onLoginClick }: RegisterFormProps) {
             Start building your professional resume
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6 pt-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <CardContent className="space-y-6 pt-4">
+          <form onSubmit={handleSubmit} className="space-y-2">
             <div className="space-y-1">
               <Label htmlFor="name" className="text-md px-2 font-semibold text-slate-700">
                 Full Name

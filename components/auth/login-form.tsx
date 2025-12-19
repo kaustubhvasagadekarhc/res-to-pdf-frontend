@@ -200,7 +200,7 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="email" className="text-md px-2 font-semibold text-slate-700">
                 Email Address

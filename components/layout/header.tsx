@@ -29,12 +29,12 @@ export function Header() {
           }
         }}
       >
-        <div className="h-10 w-10 rounded-xl flex items-center justify-center ">
+        <div className=" w-50 flex items-center justify-center ">
           <Image
-            src="/logo.png"
+            src="/logo.webp"
             alt="Logo"
-            width={250}
-            height={250}
+            width={550}
+            height={550}
           />
         </div>
       </div>

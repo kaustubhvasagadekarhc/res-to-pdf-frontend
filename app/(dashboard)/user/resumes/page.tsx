@@ -9,6 +9,7 @@ import {
   Download,
   Edit3,
   Eye,
+  FileIcon,
   FileText,
   MoreVertical,
   Search,
@@ -24,8 +25,7 @@ interface ResumeCard {
   updatedAt: string;
   version: number;
   jobTitle?: string;
-  status: "Generated" | "Draft" | "Failed";
-  content?: string;
+  status: "completed" | "processing" | "failed";
 }
 
 export default function ResumesPage() {
@@ -36,8 +36,6 @@ export default function ResumesPage() {
   const [loading, setLoading] = useState(true);
   const [, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState("");
 
   useEffect(() => {
     fetchResumes();
@@ -71,10 +69,7 @@ export default function ResumesPage() {
           updatedAt: item.updatedAt || new Date().toISOString(),
           version: item.version || 1,
           jobTitle: item.jobTitle || "",
-          content: item.content,
-          status: (
-            // item.status || 
-            "Generated") as "Generated" | "Draft" | "Failed",
+          status: "completed" as const,
         }));
         setResumes(mappedResumes);
       } else {
@@ -89,31 +84,20 @@ export default function ResumesPage() {
   };
 
   const filteredResumes = resumes.filter(
-    (resume) => {
-      const matchesSearch = resume.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        resume.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === "all" || resume.status === statusFilter;
-
-      let matchesDate = true;
-      if (dateFilter) {
-        const resumeDate = new Date(resume.createdAt).toLocaleDateString();
-        const filterDate = new Date(dateFilter).toLocaleDateString();
-        matchesDate = resumeDate === filterDate;
-      }
-
-      return matchesSearch && matchesStatus && matchesDate;
-    }
+    (resume) =>
+      resume.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      resume.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleEditResume = async (resume: ResumeCard) => {
     try {
+      // In a real implementation, you'd fetch the specific resume data
+      // For now, we'll just pass the ID to the edit page
       sessionStorage.setItem("resumeId", resume.id);
       sessionStorage.setItem("resumeFileName", resume.fileName);
 
-      if (resume.content) {
-        sessionStorage.setItem("resumeData", resume.content);
-      }
-
+      // You might also want to fetch the resume data here and store it
+      // This would depend on your backend API structure
       router.push(`/user/edit?id=${resume.id}`);
     } catch (error) {
       console.error("Error preparing resume for editing:", error);
@@ -190,25 +174,25 @@ export default function ResumesPage() {
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case "Generated":
-        return "bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold";
-      case "Draft":
-        return "bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-semibold";
-      case "Failed":
-        return "bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-semibold";
+      case "completed":
+        return "bg-[var(--success-100)] text-[var(--success-800)] px-3 py-1 rounded-full text-xs font-medium";
+      case "processing":
+        return "bg-[var(--warning-100)] text-[var(--warning-800)] px-3 py-1 rounded-full text-xs font-medium";
+      case "failed":
+        return "bg-[var(--danger-100)] text-[var(--danger-800)] px-3 py-1 rounded-full text-xs font-medium";
       default:
-        return "bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-semibold";
+        return "bg-[var(--muted)] text-[var(--muted-foreground)] px-3 py-1 rounded-full text-xs font-medium";
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case "Generated":
+      case "completed":
         return "Published";
-      case "Draft":
+      case "processing":
+        return "Processing";
+      case "failed":
         return "Draft";
-      case "Failed":
-        return "Failed";
       default:
         return status;
     }
@@ -281,7 +265,7 @@ export default function ResumesPage() {
   }, [openMenuId]);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slate-50">
       <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="mb-8">
@@ -295,62 +279,34 @@ export default function ResumesPage() {
                 Manage, edit, and download your generated professional resumes.
               </p>
             </div>
-            <div className="flex items-center"> <Button
-              // onClick={() => router.push("/user/timesheet")}
-              className="bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50 whitespace-nowrap font-bold rounded-sm py-6 px-6"
-            >
-              Timesheet
-            </Button>
+            <div className="flex items-center">
               <Button
                 onClick={() => router.push("/user/upload")}
-                className="ml-3 bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] whitespace-nowrap font-bold rounded-sm py-6 px-6"
+                className="bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] whitespace-nowrap font-medium"
               >
-                Create New Resume
+                + Create New Resume
               </Button>
 
-
+              <Button
+                onClick={() => router.push("/user/timesheet")}
+                className="ml-3 bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50 whitespace-nowrap font-medium"
+              >
+                Timesheet
+              </Button>
             </div>
           </div>
 
-          {/* Search and Filters Bar */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-8">
-            <div className="relative w-full md:max-w-md">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search resumes..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-sm bg-white text-slate-700 placeholder-slate-300 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] focus-visible:ring-0 focus-visible:ring-offset-0 transition-all"
-              />
-            </div>
-
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <div className="relative flex-1 md:flex-initial">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full md:w-48 appearance-none bg-white border border-slate-200 rounded-sm px-4 py-3 pr-10 text-slate-600 font-semibold focus:outline-none focus:border-b-2 focus:border-[var(--primary)] transition-all"
-                >
-                  <option value="all">All Status</option>
-                  <option value="completed">Published</option>
-                  <option value="processing">Processing</option>
-                  <option value="failed">Draft</option>
-                </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <MoreVertical className="w-4 h-4 text-slate-400 rotate-90" />
-                </div>
-              </div>
-
-              <div className="relative">
-                <input
-                  type="date"
-                  value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
-                  className="appearance-none bg-white border border-slate-200 rounded-sm px-4 py-3 text-slate-600 font-semibold focus:outline-none focus:border-b-2 focus:border-[var(--primary)] transition-all h-[46px] cursor-pointer"
-                />
-              </div>
-            </div>
+          {/* Search Bar */}
+          <div className="relative ">
+            <Search className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+            {/* focus ring uses the primary color token */}
+            <input
+              type="text"
+              placeholder="Search resumes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-700)] focus:border-transparent"
+            />
           </div>
         </div>
 
@@ -362,49 +318,52 @@ export default function ResumesPage() {
         )} */}
 
         {loading ? (
-          <div className="bg-white rounded-sm border border-slate-200 overflow-visible">
-            <div className="grid grid-cols-12 gap-0 border-b border-slate-200 bg-white">
-              <div className="col-span-1 px-4 py-1 bg-[#F8FAFC] text-xs font-bold text-slate-400 uppercase tracking-wider">
-                #
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-visible">
+            <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 rounded-t-lg">
+              <div className="col-span-1 text-xs font-semibold bg- text-slate-600 uppercase">
+                Sr. No.
               </div>
-              <div className="col-span-3 px-4 py-1 text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <div className="col-span-4 text-xs font-semibold text-slate-600 uppercase">
+                File Name
+              </div>
+              <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase">
                 Job Title
               </div>
-              <div className="col-span-2 px-4 py-1 bg-[#F8FAFC] text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <div className="col-span-1 text-xs font-semibold text-slate-600 uppercase">
                 Version
               </div>
-              <div className="col-span-3 px-4 py-1 text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase">
                 Created
               </div>
-              <div className="col-span-2 px-4 py-1 bg-[#F8FAFC] text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <div className="col-span-2 text-right text-xs font-semibold text-slate-600 uppercase">
                 Status
-              </div>
-              <div className="col-span-1 px-4 py-1 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Actions
               </div>
             </div>
             {[...Array(6)].map((_, index) => (
               <div
                 key={index}
-                className="grid grid-cols-12 gap-0 border-b border-slate-100 last:border-b-0 items-center bg-white"
+                className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 last:border-b-0 items-center"
               >
-                <div className="col-span-1 px-4 py-1 bg-[#F8FAFC]">
-                  <div className="h-4 w-4 bg-slate-200 rounded animate-pulse"></div>
+                <div className="col-span-1">
+                  <div className="h-4 w-6 bg-slate-200 rounded animate-pulse"></div>
                 </div>
-                <div className="col-span-3 px-4 py-1 flex items-center gap-3">
-                  <div className="h-4 w-3/4 bg-slate-100 rounded animate-pulse"></div>
+                <div className="col-span-4 flex items-center gap-3">
+                  <div className="h-8 w-8 bg-slate-200 rounded animate-pulse" />
+                  <div className="flex-1">
+                    <div className="h-4 w-3/4 bg-slate-200 rounded animate-pulse"></div>
+                  </div>
                 </div>
-                <div className="col-span-2 px-4 py-1 bg-[#F8FAFC]">
-                  <div className="h-6 w-12 bg-slate-200 rounded animate-pulse"></div>
+                <div className="col-span-2">
+                  <div className="h-4 w-full bg-slate-200 rounded animate-pulse"></div>
                 </div>
-                <div className="col-span-3 px-4 py-1">
-                  <div className="h-4 w-1/2 bg-slate-100 rounded animate-pulse"></div>
+                <div className="col-span-1">
+                  <div className="h-4 w-3/4 bg-slate-200 rounded animate-pulse"></div>
                 </div>
-                <div className="col-span-2 px-4 py-1 bg-[#F8FAFC]">
-                  <div className="h-6 w-20 bg-slate-200 rounded animate-pulse"></div>
+                <div className="col-span-2">
+                  <div className="h-4 w-full bg-slate-200 rounded animate-pulse"></div>
                 </div>
-                <div className="col-span-1 px-4 py-1 flex justify-end">
-                  <div className="h-6 w-6 bg-slate-100 rounded animate-pulse"></div>
+                <div className="col-span-2 flex justify-end gap-2">
+                  <div className="h-6 w-6 bg-slate-200 rounded animate-pulse"></div>
                 </div>
               </div>
             ))}
@@ -423,59 +382,64 @@ export default function ResumesPage() {
             </p>
             <Button
               onClick={() => router.push("/user/upload")}
-              className="bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] font-bold rounded-sm py-6 px-6"
+              className="bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] font-medium"
             >
               + Create New Resume
             </Button>
           </div>
         ) : (
-          <div className="bg-white rounded-sm border border-slate-200 overflow-visible">
-            <div className="grid grid-cols-12 gap-0 border-b border-slate-200 bg-white">
-              <div className="col-span-1 px-4 py-2 bg-[#F8FAFC] text-xs font-bold text-slate-400 uppercase tracking-wider">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-visible">
+            <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 rounded-t-lg">
+              <div className="col-span-1 text-xs font-semibold text-slate-600 uppercase">
                 #
               </div>
-              <div className="col-span-4 px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <div className="col-span-4 text-xs font-semibold text-slate-600 uppercase">
+                File Name
+              </div>
+              <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase">
                 Job Title
               </div>
-              <div className="col-span-1 px-4 py-2 bg-[#F8FAFC] text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <div className="col-span-1 text-xs font-semibold text-slate-600 uppercase">
                 Version
               </div>
-              <div className="col-span-3 px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase">
                 Created
               </div>
-              <div className="col-span-2 px-4 py-2 bg-[#F8FAFC] text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Status
-              </div>
-              <div className="col-span-1 px-4 py-2 text-right text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Actions
+              <div className="col-span-2 flex justify-between text-xs font-semibold text-slate-600 uppercase">
+                <span>Status</span>
+                <span>Actions</span>
               </div>
             </div>
             {filteredResumes.map((resume, index) => (
               <div
                 key={resume.id}
-                className="grid grid-cols-12 gap-0 border-b border-slate-100 last:border-b-0 items-center hover:bg-slate-50 transition-colors bg-white group"
+                className="grid grid-cols-12 gap-4 p-4 bg-slate border-b border-slate-100 last:border-b-0 items-center hover:bg-slate-50 transition-colors"
               >
-                <div className="col-span-1 px-4 py-3 bg-[#F8FAFC] group-hover:bg-slate-100/50 transition-colors text-slate-500 font-medium">
+                <div className="col-span-1 text-sm text-slate-600 font-medium">
                   {index + 1}
                 </div>
-                <div className="col-span-4 px-4 py-2 text-slate-900 font-medium">
-                  {resume.jobTitle || resume.fileName.replace(".pdf", "")}
-                </div>
-                <div className="col-span-1 px-4 py-2 bg-[#F8FAFC] group-hover:bg-slate-100/50 transition-colors">
-                  <span className="inline-flex items-center px-2.5 py-2 rounded bg-slate-200/60 text-slate-700 text-xs font-bold">
-                    v{resume.version.toFixed(1)}
+                <div className="col-span-4 flex items-center gap-3">
+                  <div className="p-2 bg-[var(--primary-50)] rounded-lg text-[var(--primary)]">
+                    <FileIcon className="w-4 h-4" />
+                  </div>
+                  <span className="truncate font-medium text-slate-900">
+                    {resume.fileName.replace(".pdf", "")}
                   </span>
                 </div>
-                <div className="col-span-3 px-4 py-2 text-slate-500 text-sm flex items-center gap-2">
+                <div className="col-span-2 text-slate-600 text-sm">
+                  {resume.jobTitle || "-"}
+                </div>
+                <div className="col-span-1 text-slate-600 text-sm font-medium">
+                  v{resume.version}
+                </div>
+                <div className="col-span-2 text-slate-600 text-sm flex items-center gap-1">
                   <Calendar className="w-4 h-4 text-slate-400" />
                   <span>{formatDate(resume.createdAt)}</span>
                 </div>
-                <div className="col-span-2 px-4 py-3 bg-[#F8FAFC] group-hover:bg-slate-100/50 transition-colors">
-                  <div className={`inline-block ${getStatusBadgeClass(resume.status)}`}>
+                <div className="col-span-2 flex items-center justify-between">
+                  <div className={getStatusBadgeClass(resume.status)}>
                     {getStatusLabel(resume.status)}
                   </div>
-                </div>
-                <div className="col-span-1 px-4 py-2 flex justify-end items-center">
                   <div className="relative">
                     <Button
                       variant="ghost"
@@ -483,7 +447,7 @@ export default function ResumesPage() {
                       ref={(el) => { if (el) { menuButtonRefs.current.set(resume.id, el); } else { menuButtonRefs.current.delete(resume.id); } }}
                       onClick={(e) => toggleMenu(e, resume.id)}
                       aria-expanded={openMenuId === resume.id}
-                      className="p-0 h-8 w-8 hover:bg-slate-200 rounded-full"
+                      className="p-0 h-8 w-8 hover:bg-slate-100"
                     >
                       <MoreVertical className="w-4 h-4 text-slate-400" />
                     </Button>
@@ -492,7 +456,8 @@ export default function ResumesPage() {
                     {openMenuId === resume.id && (
                       <div
                         id={`resume-menu-${resume.id}`}
-                        className={`absolute right-0 ${menuAbove[resume.id] ? "bottom-full mb-1" : "top-full mt-1"} w-40 bg-white border border-slate-200 rounded-sm z-50`}
+                        className={`absolute right-0 ${menuAbove[resume.id] ? "bottom-full mb-1" : "top-full mt-1"} w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50`
+                        }
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
@@ -538,7 +503,7 @@ export default function ResumesPage() {
         {confirmResume && (
           <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title">
             <div className="absolute inset-0 bg-black opacity-40" onClick={cancelDelete} />
-            <div className="relative bg-white rounded-sm w-full max-w-sm p-6 z-10 border border-slate-200">
+            <div className="relative bg-white rounded-lg shadow-lg w-full max-w-sm p-6 z-10">
               <h3 id="delete-dialog-title" className="text-lg font-semibold mb-2">Delete Resume</h3>
 
               <p className="text-sm text-slate-600 mb-4">Are you sure you want to permanently delete &quot;{confirmResume.fileName.replace('.pdf', '')}&quot;? This action cannot be undone.</p>
