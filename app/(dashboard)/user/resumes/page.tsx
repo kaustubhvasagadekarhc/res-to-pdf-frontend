@@ -300,7 +300,6 @@ export default function ResumesPage() {
 
 
               <Button
-                onClick={() => router.push("/user/timesheet")}
                 className=" bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50 whitespace-nowrap font-medium"
               >
                 Timesheet

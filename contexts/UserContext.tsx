@@ -1,7 +1,9 @@
 "use client";
 
 import { authService, apiClient } from "@/app/api/client";
+import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
+import Cookies from 'js-cookie';
 
 interface User {
   id: string;
@@ -17,9 +19,13 @@ interface UserContextType {
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
-
+const logoutUtil = () => {
+  Cookies.remove("auth_token");
+}
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
+  
   const [loading, setLoading] = useState(true);
 
   const refreshUser = async () => {
@@ -34,6 +40,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           setUser(responseData.data.user);
         } else {
           setUser(null);
+          logoutUtil();
+          router.push("/login");
         }
       } else if (response && typeof response === 'object' && 'user' in response) {
         // Fallback for alternative structure { status, user }
