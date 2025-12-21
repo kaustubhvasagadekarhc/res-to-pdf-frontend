@@ -25,7 +25,6 @@ const logoutUtil = () => {
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
-  
   const [loading, setLoading] = useState(true);
 
   const refreshUser = async () => {

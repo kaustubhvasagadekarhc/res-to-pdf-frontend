@@ -5,15 +5,14 @@ import { Header } from "@/components/layout/header";
 import { Sidebar, SidebarItem } from "@/components/layout/sidebar";
 import {
   Activity,
-  BookDown,
-  FileText,
   Home,
   Settings,
-  User,
   Users,
 } from "lucide-react";
 // import { useState } from "react";
 import { UserProvider, useUser } from "@/contexts/UserContext";
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 // Admin Sidebar Items
 const adminItems: SidebarItem[] = [
@@ -23,17 +22,29 @@ const adminItems: SidebarItem[] = [
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
-// User Sidebar Items
-
-
 function DashboardContent({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const { user, loading } = useUser();
+  const pathname = usePathname();
+  const router = useRouter();
 
+  console.log("user", user?.userType);
 
+  useEffect(() => {
+    if (user?.userType === "ADMIN") {
+      if (pathname === "/user") {
+        router.push("/admin");
+      }
+    }
+    else if (user?.userType === "USER") {
+      if (pathname === "/admin") {
+        router.push("/user");
+      }
+    }
+  }, [user?.userType, pathname, router]);
 
   if (loading) {
     return null; // Or a loading skeleton
