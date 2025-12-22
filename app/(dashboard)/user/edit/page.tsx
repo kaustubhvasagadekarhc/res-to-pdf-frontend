@@ -152,6 +152,69 @@ export default function EditPage() {
   }, [resumeData]);
 
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<{
+    [key: string]: string;
+  }>({});
+
+  const validatePersonalDetails = (): boolean => {
+    if (!resumeData) return false;
+    const errors: { [key: string]: string } = {};
+    const { name, email, mobile, designation } = resumeData.personal;
+
+    // Full Name Validation
+    const nameTrimmed = name.trim();
+    if (!nameTrimmed) {
+      errors.name = "Full Name is required";
+    } else {
+      if (nameTrimmed.length < 4) {
+        errors.name = "Full name must have at least 4 characters";
+      } else {
+        const nameParts = nameTrimmed.split(/\s+/);
+        if (nameParts.length < 2) {
+          errors.name = "Please enter at least two names (First and Last name)";
+        } else {
+          const namePartRegex = /^[A-Z][a-z]*$/;
+          const allPartsValid = nameParts.every((part) =>
+            namePartRegex.test(part)
+          );
+          if (!allPartsValid) {
+            errors.name =
+              "Each name must start with a capital letter and contain only letters";
+          }
+        }
+      }
+    }
+
+    // Email Validation
+    // "proper email format" is required.
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      errors.email = "Email is required";
+    } else if (!emailRegex.test(email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    // Mobile Validation
+    // "keep by default +91 as default and after valid 10 digit only"
+    const mobileClean = mobile.replace(/\s+/g, "");
+    const phoneRegex = /^\+91\d{10}$/;
+    if (!mobile || mobile === "+91") {
+      errors.mobile = "Mobile number is required";
+    } else if (!phoneRegex.test(mobileClean)) {
+      errors.mobile = "Must be +91 followed by exactly 10 digits";
+    }
+
+    // Job Title Validation
+    // "First letter capital"
+    if (!designation) {
+      errors.designation = "Job Title is required";
+    } else if (designation.charAt(0) !== designation.charAt(0).toUpperCase()) {
+      errors.designation = "First letter must be capital";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const generatePreview = async () => {
     if (!resumeData) return;
@@ -238,6 +301,13 @@ export default function EditPage() {
       ...resumeData,
       personal: { ...resumeData.personal, [field]: value },
     });
+    if (validationErrors[field]) {
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const updateSummary = (value: string) => {
@@ -246,7 +316,7 @@ export default function EditPage() {
   };
 
   const addSkill = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && skillInput.trim()) {
+    if (e.key === "Enter" && skillInput.trim()) {  
       e.preventDefault();
       if (!resumeData) return;
       const newSkill = skillInput.trim();
@@ -601,6 +671,9 @@ export default function EditPage() {
 
   const handleNext = () => {
     if (currentStep < STEPS.length) {
+      if (currentStep === 1) {
+        if (!validatePersonalDetails()) return;
+      }
       setCurrentStep((prev) => prev + 1);
       // Removed window.scrollTo because we want internal scroll
     }
@@ -634,6 +707,16 @@ export default function EditPage() {
         );
       // Experience and Projects are optional, so they are always "valid" for navigation purposes
       case "experience":
+        if (
+          !resumeData.work_experience ||
+          resumeData.work_experience.length === 0
+        ) {
+          return false;
+        }
+        return resumeData.work_experience.some(
+          (exp) =>
+            !exp.company || !exp.position || !exp.period_from || !exp.period_to
+        );
       case "projects":
       default:
         return false;
@@ -665,10 +748,10 @@ export default function EditPage() {
       title: "Tell us about yourself",
       subtitle: "Personal Details",
       context:
-        "Start with your basic contact information so employers can reach you. A professional photo is optional but recommended for some regions.",
+        "Start with your basic contact information so employers can reach you.",
     },
     summary: {
-      title: "Summarize your professional story",
+      title: "Your professional Summary",
       subtitle: "Professional Summary",
       context:
         "Write a short, compelling summary of your career. scalable, and efficient software solutions.",
@@ -753,9 +836,7 @@ export default function EditPage() {
           {/* Right Column: Form Inputs */}
           <div className="lg:col-span-7 h-full flex flex-col overflow-hidden">
             <div className="flex flex-col h-full overflow-hidden">
-              <div className="px-4 md:px-4 pt-6 md:pt-8 pb-4 shrink-0">
-
-              </div>
+              <div className="px-4 md:px-4 pt-6 md:pt-8 pb-4 shrink-0"></div>
 
               <div className="pt-4 overflow-y-auto flex-1 pr-2">
                 <motion.div
@@ -767,18 +848,43 @@ export default function EditPage() {
                 >
                   {currentStep === 1 && resumeData && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-4">
-                      <div className="space-y-1 ">
-                        <label className="text-md px-2 font-semibold text-slate-700 ">
+                      <div className="space-y-1">
+                        <label className="text-md px-2 font-semibold text-slate-700">
                           Full Name
                         </label>
                         <input
                           value={resumeData?.personal.name || ""}
-                          onChange={(e) =>
-                            updatePersonal("name", e.target.value)
-                          }
-                          className="w-full bg-white border rounded-sm border-slate-300  px-4 py-3 border-b border-gray-300 transition-colors transition-[border-width] duration-200  focus:outline-none  focus:border-b-2  focus:border-[var(--primary)]  placeholder:text-slate-300 transition-all"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            // 1. Allow only letters and spaces, replace multiple spaces with single space
+                            const filtered = val
+                              .replace(/[^a-zA-Z\s]/g, "")
+                              .replace(/\s{2,}/g, " ");
+
+                            // 2. Title Case: Capitalize first letter of each word, rest lowercase
+                            const parts = filtered.split(" ");
+                            const formatted = parts
+                              .map(
+                                (p) =>
+                                  p.charAt(0).toUpperCase() +
+                                  p.slice(1).toLowerCase()
+                              )
+                              .join(" ");
+
+                            updatePersonal("name", formatted);
+                          }}
+                          className={`w-full bg-white border rounded-sm ${
+                            validationErrors.name
+                              ? "border-rose-500"
+                              : "border-slate-300"
+                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="John Doe"
                         />
+                        {validationErrors.name && (
+                          <p className="text-xs text-rose-500 px-2 mt-1">
+                            {validationErrors.name}
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-1">
                         <label className="text-md px-2 font-semibold text-slate-700">
@@ -786,15 +892,40 @@ export default function EditPage() {
                         </label>
                         <input
                           value={resumeData?.personal.designation || ""}
-                          onChange={(e) =>
-                            updatePersonal("designation", e.target.value)
-                          }
-                          className="w-full bg-white border rounded-sm border-slate-300  px-4 py-3 border-b border-gray-300 transition-colors transition-[border-width] duration-200  focus:outline-none  focus:border-b-2  focus:border-[var(--primary)]  placeholder:text-slate-300 transition-all"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            // 1. Allow only letters and spaces, replace multiple spaces with single space
+                            const filtered = val
+                              .replace(/[^a-zA-Z\s]/g, "")
+                              .replace(/\s{2,}/g, " ");
+
+                            // 2. Title Case: Capitalize first letter of each word, rest lowercase
+                            const parts = filtered.split(" ");
+                            const formatted = parts
+                              .map(
+                                (p) =>
+                                  p.charAt(0).toUpperCase() +
+                                  p.slice(1).toLowerCase()
+                              )
+                              .join(" ");
+
+                            updatePersonal("designation", formatted);
+                          }}
+                          className={`w-full bg-white border rounded-sm ${
+                            validationErrors.designation
+                              ? "border-rose-500"
+                              : "border-slate-300"
+                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="Software Engineer"
                         />
+                        {validationErrors.designation && (
+                          <p className="text-xs text-rose-500 px-2 mt-1">
+                            {validationErrors.designation}
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-1">
-                        <label className="text-md px-2 font-semibold text-slate-700 ">
+                        <label className="text-md px-2 font-semibold text-slate-700">
                           Email
                         </label>
                         <input
@@ -802,22 +933,64 @@ export default function EditPage() {
                           onChange={(e) =>
                             updatePersonal("email", e.target.value)
                           }
-                          className="w-full bg-white border rounded-sm border-slate-300  px-4 py-3 border-b border-gray-300 transition-colors transition-[border-width] duration-200  focus:outline-none  focus:border-b-2  focus:border-[var(--primary)]  placeholder:text-slate-300 transition-all"
+                          className={`w-full bg-white border rounded-sm ${
+                            validationErrors.email
+                              ? "border-rose-500"
+                              : "border-slate-300"
+                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="john@example.com"
                         />
+                        {validationErrors.email && (
+                          <p className="text-xs text-rose-500 px-2 mt-1">
+                            {validationErrors.email}
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-1">
-                        <label className="text-md px-2 font-semibold text-slate-700 ">
+                        <label className="text-md px-2 font-semibold text-slate-700">
                           Mobile
                         </label>
                         <input
-                          value={resumeData?.personal.mobile || ""}
-                          onChange={(e) =>
-                            updatePersonal("mobile", e.target.value)
-                          }
-                          className="w-full bg-white border rounded-sm border-slate-300  px-4 py-3 border-b border-gray-300 transition-colors transition-[border-width] duration-200  focus:outline-none  focus:border-b-2  focus:border-[var(--primary)]  placeholder:text-slate-300 transition-all"
-                          placeholder="+1 234 567 890"
+                          value={resumeData?.personal.mobile || "+91"}
+                          onChange={(e) => {
+                            let val = e.target.value;
+
+                            // 1. Ensure it always starts with +91
+                            if (!val.startsWith("+91")) {
+                              // If user tries to delete the prefix or change it, enforce it
+                              // But allow them to type if they are adding digits
+                              const digitsOnly = val.replace(/\D/g, "");
+                              // If they cleared it, keep +91
+                              if (digitsOnly.length === 0) {
+                                val = "+91";
+                              } else {
+                                // If they pasted something without +91
+                                val = "+91" + digitsOnly.slice(-10);
+                              }
+                            } else {
+                              // 2. Allow only digits after +91 and limit to 10 digits
+                              const prefix = "+91";
+                              const rest = val
+                                .slice(prefix.length)
+                                .replace(/[^0-9]/g, "")
+                                .slice(0, 10);
+                              val = prefix + rest;
+                            }
+
+                            updatePersonal("mobile", val);
+                          }}
+                          className={`w-full bg-white border rounded-sm ${
+                            validationErrors.mobile
+                              ? "border-rose-500"
+                              : "border-slate-300"
+                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          placeholder="+91 00000 00000"
                         />
+                        {validationErrors.mobile && (
+                          <p className="text-xs text-rose-500 px-2 mt-1">
+                            {validationErrors.mobile}
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-1">
                         <label className="text-md px-2 font-semibold text-slate-700">
@@ -825,12 +998,27 @@ export default function EditPage() {
                         </label>
                         <input
                           value={resumeData?.personal.location || ""}
-                          onChange={(e) =>
-                            updatePersonal("location", e.target.value)
-                          }
-                          className="w-full bg-white border rounded-sm border-slate-300  px-4 py-3 border-b border-gray-300 transition-colors transition-[border-width] duration-200  focus:outline-none  focus:border-b-2  focus:border-[var(--primary)]  placeholder:text-slate-300 transition-all"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            // Allow only letters, numbers, spaces, commas, ', . , ", and :
+                            const filtered = val.replace(
+                              /[^a-zA-Z0-9,\s'.":]/g,
+                              ""
+                            );
+                            updatePersonal("location", filtered);
+                          }}
+                          className={`w-full bg-white border rounded-sm ${
+                            validationErrors.location
+                              ? "border-rose-500"
+                              : "border-slate-300"
+                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="New York, USA"
                         />
+                        {validationErrors.location && (
+                          <p className="text-xs text-rose-500 px-2 mt-1">
+                            {validationErrors.location}
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-1">
                         <label className="text-md px-2  font-semibold text-slate-700 ">
@@ -856,7 +1044,8 @@ export default function EditPage() {
                     <div className="space-y-4 pl-4">
                       <div className="space-y-1">
                         <label className="text-md px-2 font-semibold text-slate-700">
-                          Professional Summary <span className="text-rose-500">*</span>
+                          Professional Summary{" "}
+                          <span className="text-rose-500">*</span>
                         </label>
                         <textarea
                           value={resumeData?.summary}
@@ -879,15 +1068,25 @@ export default function EditPage() {
                         <label className="text-md px-2 font-semibold text-slate-700">
                           Key Skills
                         </label>
+                            <input
+                              type="text"
+                              value={skillInput}
+                              onChange={(e) => setSkillInput(e.target.value)}
+                              onKeyDown={addSkill}
+                              className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
+                              placeholder="Type a skill and press Enter..."
+                            />
                         <div className="p-4 border border-slate-200 rounded-sm bg-white min-h-[120px] mb-3">
                           <div className="flex flex-wrap gap-2">
                             {resumeData.skills.length === 0 && (
-                              <p className="text-slate-400 text-sm italic">No skills added yet...</p>
+                              <p className="text-slate-400 text-sm italic">
+                                No skills added yet...
+                              </p>
                             )}
                             {resumeData.skills.map((skill, idx) => (
                               <span
                                 key={idx}
-                                className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-sm text-sm font-medium flex items-center gap-1 border border-slate-200"
+                                className="bg-slate-100 text-blue-600 px-3 py-1.5 rounded-sm text-sm font-medium flex items-center gap-1 border border-slate-200"
                               >
                                 {skill}
                                 <button
@@ -900,17 +1099,10 @@ export default function EditPage() {
                             ))}
                           </div>
                         </div>
-                        <input
-                          type="text"
-                          value={skillInput}
-                          onChange={(e) => setSkillInput(e.target.value)}
-                          onKeyDown={addSkill}
-                          className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
-                          placeholder="Type a skill and press Enter..."
-                        />
                       </div>
                       <p className="text-xs text-slate-500 px-2">
-                        Press Enter to add a skill. Keywords help ATS systems find you.
+                        Press Enter to add a skill. Keywords help ATS systems
+                        find you.
                       </p>
                     </div>
                   )}
@@ -1027,11 +1219,45 @@ export default function EditPage() {
                                       className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-sm"
                                     />
                                   </div>
-
+                                  <div className="space-y-1">
+                                    <label className="text-sm px-2 font-semibold text-slate-700">
+                                      Description / Responsibilities
+                                    </label>
+                                    <textarea
+                                      value={proj.description}
+                                      onChange={(e) =>
+                                        updateProjectField(
+                                          index,
+                                          pIdx,
+                                          "description",
+                                          e.target.value
+                                        )
+                                      }
+                                      placeholder="What did you achieve? Use bullet points if needed..."
+                                      className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-sm min-h-[80px] resize-none"
+                                    />
+                                  </div>
                                   <div className="space-y-1">
                                     <label className="text-sm px-2 font-semibold text-slate-700">
                                       Technologies
                                     </label>
+                                    <input
+                                      value={
+                                        workExpTechInputs[`${index}-${pIdx}`] ||
+                                        ""
+                                      }
+                                      onChange={(e) =>
+                                        setWorkExpTechInputs({
+                                          ...workExpTechInputs,
+                                          [`${index}-${pIdx}`]: e.target.value,
+                                        })
+                                      }
+                                      onKeyDown={(e) =>
+                                        addWorkExpTech(e, index, pIdx)
+                                      }
+                                      placeholder="Add tech (Press Enter)"
+                                      className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-xs"
+                                    />
                                     <div className="flex flex-wrap gap-1 mb-2">
                                       {proj.technologies.map((tech, tIdx) => (
                                         <span
@@ -1054,42 +1280,6 @@ export default function EditPage() {
                                         </span>
                                       ))}
                                     </div>
-                                    <input
-                                      value={
-                                        workExpTechInputs[`${index}-${pIdx}`] ||
-                                        ""
-                                      }
-                                      onChange={(e) =>
-                                        setWorkExpTechInputs({
-                                          ...workExpTechInputs,
-                                          [`${index}-${pIdx}`]: e.target.value,
-                                        })
-                                      }
-                                      onKeyDown={(e) =>
-                                        addWorkExpTech(e, index, pIdx)
-                                      }
-                                      placeholder="Add tech (Press Enter)"
-                                      className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-xs"
-                                    />
-                                  </div>
-
-                                  <div className="space-y-1">
-                                    <label className="text-sm px-2 font-semibold text-slate-700">
-                                      Description / Responsibilities
-                                    </label>
-                                    <textarea
-                                      value={proj.description}
-                                      onChange={(e) =>
-                                        updateProjectField(
-                                          index,
-                                          pIdx,
-                                          "description",
-                                          e.target.value
-                                        )
-                                      }
-                                      placeholder="What did you achieve? Use bullet points if needed..."
-                                      className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-sm min-h-[80px] resize-none"
-                                    />
                                   </div>
 
                                   <button
@@ -1250,44 +1440,6 @@ export default function EditPage() {
 
                             <div className="space-y-1">
                               <label className="text-md px-2 font-semibold text-slate-700">
-                                Technologies
-                              </label>
-                              <div className="p-3 border border-slate-200 rounded-sm bg-slate-50 mb-3">
-                                <div className="flex flex-wrap gap-1">
-                                  {proj.technologies.map((tech, tIdx) => (
-                                    <span
-                                      key={tIdx}
-                                      className="bg-white text-slate-700 px-2.5 py-1 rounded-sm text-xs font-medium flex items-center gap-1 border border-slate-200"
-                                    >
-                                      {tech}
-                                      <button
-                                        onClick={() =>
-                                          removeProjectTech(index, tech)
-                                        }
-                                        className="hover:text-rose-500 transition-colors p-0.5"
-                                      >
-                                        <X className="w-3 h-3" />
-                                      </button>
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                              <input
-                                value={projectTechInputs[index] || ""}
-                                onChange={(e) =>
-                                  setProjectTechInputs({
-                                    ...projectTechInputs,
-                                    [index]: e.target.value,
-                                  })
-                                }
-                                onKeyDown={(e) => addProjectTech(e, index)}
-                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
-                                placeholder="Add technology (Press Enter)"
-                              />
-                            </div>
-
-                            <div className="space-y-1">
-                              <label className="text-md px-2 font-semibold text-slate-700">
                                 Description
                               </label>
                               <textarea
@@ -1302,6 +1454,42 @@ export default function EditPage() {
                                 className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 min-h-[100px] resize-none"
                                 placeholder="Briefly describe what you built..."
                               />
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="text-md px-2 font-semibold text-slate-700">
+                                Technologies
+                              </label>
+                              <input
+                                value={projectTechInputs[index] || ""}
+                                onChange={(e) =>
+                                  setProjectTechInputs({
+                                    ...projectTechInputs,
+                                    [index]: e.target.value,
+                                  })
+                                }
+                                onKeyDown={(e) => addProjectTech(e, index)}
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
+                                placeholder="Add technology (Press Enter)"
+                              />
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {proj.technologies.map((tech, tIdx) => (
+                                  <span
+                                    key={tIdx}
+                                    className="bg-white text-blue-600 px-2.5 py-1 rounded-sm text-xs font-medium flex items-center gap-1 border border-slate-200 shadow-sm"
+                                  >
+                                    {tech}
+                                    <button
+                                      onClick={() =>
+                                        removeProjectTech(index, tech)
+                                      }
+                                      className="hover:text-rose-500 transition-colors p-0.5"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1409,10 +1597,11 @@ export default function EditPage() {
             <button
               onClick={handleBack}
               disabled={currentStep === 1}
-              className={`px-8 py-2.5 rounded-sm font-bold border transition-all flex items-center gap-2 ${currentStep === 1
-                ? "opacity-0 pointer-events-none"
-                : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400"
-                }`}
+              className={`px-8 py-2.5 rounded-sm font-bold border transition-all flex items-center gap-2 ${
+                currentStep === 1
+                  ? "opacity-0 pointer-events-none"
+                  : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400"
+              }`}
             >
               Back
             </button>
