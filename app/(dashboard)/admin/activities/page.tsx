@@ -35,8 +35,14 @@ interface ActivityLog {
 }
 
 interface ApiResponse {
-    items: ActivityLog[];
-    total: number;
+    status: string;
+    data: ActivityLog[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    };
 }
 
 export default function ActivitiesPage() {
@@ -56,9 +62,9 @@ export default function ActivitiesPage() {
                 type: filterType,
             })) as ApiResponse;
 
-            if (res && res.items) {
-                setActivities(res.items);
-                setTotal(res.total || 0);
+            if (res && res.data) {
+                setActivities(res.data);
+                setTotal(res.pagination?.total || 0);
             } else {
                 setActivities([]);
             }
