@@ -20,7 +20,7 @@ import {
 // import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface ResumeData {
   personal: {
@@ -70,6 +70,40 @@ interface ApiResponse {
   };
 }
 
+const AutoHeightTextarea = ({
+  value,
+  onChange,
+  className,
+  placeholder,
+}: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  className?: string;
+  placeholder?: string;
+}) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${Math.min(
+        textareaRef.current.scrollHeight,
+              )}px`;
+    }
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      onChange={onChange}
+      className={`${className} overflow-y-auto`}
+      placeholder={placeholder}
+      style={{ maxHeight: "700px" }}
+    />
+  );
+};
+
 export default function EditPage() {
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -109,7 +143,7 @@ export default function EditPage() {
           // This would require a backend API endpoint to get resume by ID
           // For now, we'll use a placeholder approach
           console.log(`Loading existing resume with ID: ${resumeId}`);
-
+          
           // In a real implementation, you would fetch the resume data:
           // const resumeData = await apiClient.get(`/api/resumes/${resumeId}`);
           // setResumeData(resumeData.data);
@@ -316,7 +350,7 @@ export default function EditPage() {
   };
 
   const addSkill = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && skillInput.trim()) {  
+    if (e.key === "Enter" && skillInput.trim()) {
       e.preventDefault();
       if (!resumeData) return;
       const newSkill = skillInput.trim();
@@ -341,7 +375,14 @@ export default function EditPage() {
   const updateEducation = (index: number, field: string, value: string) => {
     if (!resumeData) return;
     const updated = [...resumeData.education];
-    updated[index] = { ...updated[index], [field]: value };
+
+    let processedValue = value;
+    if (field === "field" || field === "institution" || field === "degree") {
+      // Allow only text (a-z, A-Z), spaces, periods, commas, and hyphens
+      processedValue = value.replace(/[^a-zA-Z\s.,-]/g, "");
+    }
+
+    updated[index] = { ...updated[index], [field]: processedValue };
     setResumeData({ ...resumeData, education: updated });
   };
 
@@ -703,7 +744,9 @@ export default function EditPage() {
         return (
           !resumeData.education ||
           resumeData.education.length === 0 ||
-          resumeData.education.some((edu) => !edu.institution || !edu.degree)
+          resumeData.education.some(
+            (edu) => !edu.institution || !edu.degree || !edu.field
+          )
         );
       // Experience and Projects are optional, so they are always "valid" for navigation purposes
       case "experience":
@@ -1047,7 +1090,7 @@ export default function EditPage() {
                           Professional Summary{" "}
                           <span className="text-rose-500">*</span>
                         </label>
-                        <textarea
+                        <AutoHeightTextarea
                           value={resumeData?.summary}
                           onChange={(e) => updateSummary(e.target.value)}
                           className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 min-h-[250px] resize-none"
@@ -1068,14 +1111,14 @@ export default function EditPage() {
                         <label className="text-md px-2 font-semibold text-slate-700">
                           Key Skills
                         </label>
-                            <input
-                              type="text"
-                              value={skillInput}
-                              onChange={(e) => setSkillInput(e.target.value)}
-                              onKeyDown={addSkill}
-                              className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
-                              placeholder="Type a skill and press Enter..."
-                            />
+                        <input
+                          type="text"
+                          value={skillInput}
+                          onChange={(e) => setSkillInput(e.target.value)}
+                          onKeyDown={addSkill}
+                          className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
+                          placeholder="Type a skill and press Enter..."
+                        />
                         <div className="p-4 border border-slate-200 rounded-sm bg-white min-h-[120px] mb-3">
                           <div className="flex flex-wrap gap-2">
                             {resumeData.skills.length === 0 && (
@@ -1101,8 +1144,7 @@ export default function EditPage() {
                         </div>
                       </div>
                       <p className="text-xs text-slate-500 px-2">
-                        Press Enter to add a skill. Keywords help ATS systems
-                        find you.
+                        Press Enter to add a skill.
                       </p>
                     </div>
                   )}
@@ -1223,7 +1265,7 @@ export default function EditPage() {
                                     <label className="text-sm px-2 font-semibold text-slate-700">
                                       Description / Responsibilities
                                     </label>
-                                    <textarea
+                                    <AutoHeightTextarea
                                       value={proj.description}
                                       onChange={(e) =>
                                         updateProjectField(
@@ -1234,7 +1276,7 @@ export default function EditPage() {
                                         )
                                       }
                                       placeholder="What did you achieve? Use bullet points if needed..."
-                                      className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-sm min-h-[80px] resize-none"
+                                      className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-sm min-h-[100px] resize-none"
                                     />
                                   </div>
                                   <div className="space-y-1">
@@ -1360,7 +1402,8 @@ export default function EditPage() {
                             </div>
                             <div className="space-y-1">
                               <label className="text-md px-2 font-semibold text-slate-700">
-                                Field of Study
+                                Field of Study{" "}
+                                <span className="text-rose-500">*</span>
                               </label>
                               <input
                                 value={edu.field}
@@ -1377,10 +1420,10 @@ export default function EditPage() {
                             </div>
                             <div className="space-y-1">
                               <label className="text-md px-2 font-semibold text-slate-700">
-                                Graduation Year
+                                Graduation Date
                               </label>
                               <input
-                                type="text"
+                                type="date"
                                 value={edu.graduation_year}
                                 onChange={(e) =>
                                   updateEducation(
@@ -1389,8 +1432,7 @@ export default function EditPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
-                                placeholder="YYYY"
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] text-slate-700"
                               />
                             </div>
                           </div>
@@ -1442,7 +1484,7 @@ export default function EditPage() {
                               <label className="text-md px-2 font-semibold text-slate-700">
                                 Description
                               </label>
-                              <textarea
+                              <AutoHeightTextarea
                                 value={proj.description}
                                 onChange={(e) =>
                                   updateStandaloneProject(
@@ -1451,7 +1493,7 @@ export default function EditPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 min-h-[100px] resize-none"
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 min-h-[120px] resize-none"
                                 placeholder="Briefly describe what you built..."
                               />
                             </div>
