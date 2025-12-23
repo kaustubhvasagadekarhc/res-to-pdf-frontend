@@ -3,49 +3,42 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminService } from "@/app/api/client";
 import { toast } from "sonner";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { Loader2, Search, Filter, ChevronLeft, ChevronRight } from "lucide-react";
-import { format } from "date-fns";
+    Loader2,
+    CheckCircle2,
+    XCircle,
+    ChevronLeft,
+    ChevronRight,
+    RefreshCw,
+    AlertCircle
+} from "lucide-react";
+import { format, isToday, isYesterday } from "date-fns";
+import { ActivityLog, PaginatedResponse } from "../../../../types/api";
 
-interface ActivityLog {
-    id: string;
-    createdAt: string;
-    user?: {
-        email: string;
-    };
-    action: string;
-    details: unknown;
-    ipAddress?: string;
-}
-
-interface ApiResponse {
-    items: ActivityLog[];
-    total: number;
-}
+// Helper to determine color based on string (e.g. user name)
+const getStringColor = (str: string) => {
+    const colors = [
+        { bg: "bg-emerald-100", text: "text-emerald-700" },
+        { bg: "bg-rose-100", text: "text-rose-700" },
+        { bg: "bg-blue-100", text: "text-blue-700" },
+        { bg: "bg-amber-100", text: "text-amber-700" },
+        { bg: "bg-violet-100", text: "text-violet-700" },
+        { bg: "bg-indigo-100", text: "text-indigo-700" },
+    ];
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+};
 
 export default function ActivitiesPage() {
     const [activities, setActivities] = useState<ActivityLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
-    const [limit] = useState(10);
+    const [limit] = useState(20);
     const [total, setTotal] = useState(0);
-    const [filterType, setFilterType] = useState<string | undefined>(undefined);
 
     const fetchActivities = useCallback(async () => {
         try {
@@ -53,12 +46,11 @@ export default function ActivitiesPage() {
             const res = (await adminService.getAdminActivities({
                 page,
                 limit,
-                type: filterType,
-            })) as ApiResponse;
+            })) as unknown as PaginatedResponse<ActivityLog>;
 
-            if (res && res.items) {
-                setActivities(res.items);
-                setTotal(res.total || 0);
+            if (res && res.data) {
+                setActivities(res.data);
+                setTotal(res.pagination?.total || 0);
             } else {
                 setActivities([]);
             }
@@ -68,7 +60,7 @@ export default function ActivitiesPage() {
         } finally {
             setLoading(false);
         }
-    }, [page, limit, filterType]);
+    }, [page, limit]);
 
     useEffect(() => {
         void fetchActivities();
@@ -76,136 +68,166 @@ export default function ActivitiesPage() {
 
     const totalPages = Math.ceil(total / limit);
 
+    // Group activities by date
+    const groupedActivities = activities.reduce((groups, activity) => {
+        const date = new Date(activity.createdAt);
+        let key = format(date, "d MMMM, yyyy");
+        if (isToday(date)) key = "TODAY";
+        if (isYesterday(date)) key = "YESTERDAY";
+
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(activity);
+        return groups;
+    }, {} as Record<string, ActivityLog[]>);
+
+    // Helper to get status icon
+    const getStatusIcon = (action: string) => {
+        const lower = action.toLowerCase();
+        if (lower.includes('delete') || lower.includes('fail')) return <XCircle className="w-5 h-5 text-rose-500 fill-white" />;
+        if (lower.includes('warn')) return <AlertCircle className="w-5 h-5 text-amber-500 fill-white" />;
+        return <CheckCircle2 className="w-5 h-5 text-emerald-500 fill-white" />;
+    };
+
+    const getInitials = (name?: string, email?: string) => {
+        const source = name || email || "System";
+        return source.substring(0, 1).toUpperCase();
+    };
+
+    const getUserName = (user?: { name?: string, email: string }) => {
+        if (user?.name) return user.name;
+        if (user?.email) return user.email.split('@')[0];
+        return "System";
+    };
+
     return (
-        <div className="p-8 space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700">
-                        Activity Logs
-                    </h1>
-                    <p className="text-slate-500 mt-1">
-                        Monitor system-wide events and actions
-                    </p>
-                </div>
-                <Button variant="outline" onClick={fetchActivities} disabled={loading}>
-                    Refresh
+        <div className="p-8 max-w-5xl mx-auto font-sans text-slate-900">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-10">
+                <h1 className="text-2xl font-bold text-slate-800">Activity Logs</h1>
+                <Button variant="ghost" size="icon" onClick={fetchActivities} disabled={loading} className="hover:bg-slate-100 rounded-full">
+                    <RefreshCw className={`w-5 h-5 text-slate-500 ${loading ? 'animate-spin' : ''}`} />
                 </Button>
             </div>
 
-            <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm">
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input
-                            placeholder="Search logs..."
-                            className="pl-9 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-xl"
-                            disabled
-                        />
-                    </div>
-                    <Select
-                        value={filterType || "ALL"}
-                        onValueChange={(val) => {
-                            setFilterType(val === "ALL" ? undefined : val);
-                            setPage(1);
-                        }}
-                    >
-                        <SelectTrigger className="w-full sm:w-[200px] rounded-xl border-slate-200">
-                            <div className="flex items-center gap-2">
-                                <Filter className="w-4 h-4 text-slate-400" />
-                                <SelectValue placeholder="Filter by Type" />
+            {loading && activities.length === 0 ? (
+                <div className="py-20 flex justify-center text-slate-400">
+                    <Loader2 className="w-8 h-8 animate-spin" />
+                </div>
+            ) : activities.length === 0 ? (
+                <div className="py-20 text-center text-slate-500">No activities found</div>
+            ) : (
+                <div className="space-y-12">
+                    {Object.entries(groupedActivities).map(([dateLabel, groupLogs]) => (
+                        <div key={dateLabel}>
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">
+                                {dateLabel}
+                            </h3>
+
+                            <div className="relative">
+                                {/* Vertical Line */}
+                                <div className="absolute left-[78px] top-3 bottom-0 w-px bg-slate-200" />
+
+                                <div className="space-y-8">
+                                    {groupLogs.map((log) => {
+                                        const userName = getUserName(log.user);
+                                        const userColor = getStringColor(userName);
+
+                                        return (
+                                            <div key={log.id} className="grid grid-cols-[60px_40px_1fr] gap-0 relative group">
+                                                {/* Time */}
+                                                <div className="text-right pt-0.5 pr-4">
+                                                    <span className="text-xs font-medium text-slate-400">
+                                                        {format(new Date(log.createdAt), "hh:mm a")}
+                                                    </span>
+                                                </div>
+
+                                                {/* Timeline Node */}
+                                                <div className="flex justify-center pt-0.5 z-10">
+                                                    <div className="bg-white">
+                                                        {getStatusIcon(log.action)}
+                                                    </div>
+                                                </div>
+
+                                                {/* Content */}
+                                                <div className="pl-2 pt-0.5 pb-2">
+                                                    <div className="flex flex-wrap items-start gap-2 text-sm leading-6">
+                                                        {/* Avatar */}
+                                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] shadow-sm ${userColor.bg} ${userColor.text} ring-2 ring-white`}>
+                                                            {getInitials(log.user?.name, log.user?.email)}
+                                                        </div>
+
+                                                        {/* Text Content */}
+                                                        <div className="flex-1">
+                                                            <span className="font-bold text-slate-800 mr-1.5">
+                                                                {userName}
+                                                            </span>
+                                                            <span className="text-slate-600 mr-1.5">
+                                                                {log.action.replace(/_/g, ' ').toLowerCase()}
+                                                            </span>
+                                                            {log.ipAddress && (
+                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                                                    {log.ipAddress}
+                                                                </span>
+                                                            )}
+
+                                                            {/* Description as a sentence if short */}
+                                                            {log.description && !log.details && (
+                                                                <span className="text-slate-600 ml-1">
+                                                                    - {log.description}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Message / Details Card */}
+                                                    {(!!log.details || (log.description && log.description.length > 50)) && (
+                                                        <div className="mt-3 ml-8 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+                                                            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
+                                                                Details
+                                                            </div>
+                                                            <div className="text-sm text-slate-600">
+                                                                {log.description && (
+                                                                    <p className="mb-2 font-medium">{log.description}</p>
+                                                                )}
+                                                                {!!log.details && (
+                                                                    <pre className="text-xs bg-slate-50 p-2 rounded overflow-x-auto text-slate-500 font-mono">
+                                                                        {JSON.stringify(log.details, null, 2)}
+                                                                    </pre>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="ALL">All Types</SelectItem>
-                            <SelectItem value="USER_LOGIN">User Login</SelectItem>
-                            <SelectItem value="USER_UPDATE">User Update</SelectItem>
-                            <SelectItem value="USER_DELETE">User Delete</SelectItem>
-                            {/* Add other types as discovered */}
-                        </SelectContent>
-                    </Select>
+                        </div>
+                    ))}
                 </div>
+            )}
 
-                <div className="rounded-2xl border border-slate-100 overflow-hidden">
-                    <Table>
-                        <TableHeader className="bg-slate-50/50">
-                            <TableRow>
-                                <TableHead className="w-[180px]">Timestamp</TableHead>
-                                <TableHead className="w-[150px]">User</TableHead>
-                                <TableHead className="w-[150px]">Action</TableHead>
-                                <TableHead>Details</TableHead>
-                                <TableHead className="w-[120px]">IP Address</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {loading ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center">
-                                        <div className="flex items-center justify-center gap-2 text-slate-500">
-                                            <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
-                                            Loading...
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ) : activities.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center text-slate-500">
-                                        No activities found
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                activities.map((log: ActivityLog) => (
-                                    <TableRow key={log.id} className="hover:bg-slate-50/50">
-                                        <TableCell className="text-slate-600 font-medium">
-                                            {format(new Date(log.createdAt), 'MMM d, yyyy HH:mm')}
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className="font-medium text-slate-900">{log.user?.email || 'System'}</span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
-                                                {log.action}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="max-w-[300px] truncate text-slate-500">
-                                            {/* Assuming details is JSON or string */}
-                                            {JSON.stringify(log.details) || '-'}
-                                        </TableCell>
-                                        <TableCell className="text-slate-500 text-xs font-mono">
-                                            {log.ipAddress || 'N/A'}
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                <div className="flex items-center justify-between mt-6">
-                    <div className="text-sm text-slate-500">
-                        Page {page} of {totalPages || 1}
-                    </div>
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPage(p => Math.max(1, p - 1))}
-                            disabled={page === 1 || loading}
-                            className="rounded-xl border-slate-200"
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                            disabled={page >= totalPages || loading}
-                            className="rounded-xl border-slate-200"
-                        >
-                            <ChevronRight className="w-4 h-4" />
-                        </Button>
-                    </div>
-                </div>
-
+            {/* Simple Pagination */}
+            <div className="mt-12 pt-8 border-t border-slate-100 flex justify-end gap-2">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1 || loading}
+                    className="text-slate-500 hover:text-slate-900"
+                >
+                    <ChevronLeft className="w-4 h-4 mr-1" /> Newer
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages || loading}
+                    className="text-slate-500 hover:text-slate-900"
+                >
+                    Older <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
             </div>
         </div>
     );

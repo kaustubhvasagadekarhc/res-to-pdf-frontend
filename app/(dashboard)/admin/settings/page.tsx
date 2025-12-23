@@ -91,7 +91,7 @@ export default function SettingsPage() {
 
             <div className="grid gap-6">
                 {/* General Settings */}
-                <Card className="rounded-3xl border-slate-100 shadow-sm overflow-hidden">
+                <Card className="rounded-sm border-slate-100 shadow-sm overflow-hidden">
                     <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
                         <CardTitle className="text-lg text-slate-800">General Configuration</CardTitle>
                         <CardDescription>Control access and general behavior</CardDescription>
@@ -130,7 +130,7 @@ export default function SettingsPage() {
                 </Card>
 
                 {/* Support Settings */}
-                <Card className="rounded-3xl border-slate-100 shadow-sm overflow-hidden">
+                <Card className="rounded-sm border-slate-100 shadow-sm overflow-hidden">
                     <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
                         <CardTitle className="text-lg text-slate-800">Support & Limits</CardTitle>
                         <CardDescription>Contact information and upload limits</CardDescription>
@@ -145,7 +145,7 @@ export default function SettingsPage() {
                                 value={settings.supportEmail}
                                 onChange={(e) => setSettings(s => ({ ...s, supportEmail: e.target.value }))}
                                 placeholder="support@example.com"
-                                className="max-w-md rounded-xl border-slate-200"
+                                className="max-w-md rounded-sm border-slate-200"
                             />
                             <p className="text-sm text-slate-500">Displayed to users when they encounter issues</p>
                         </div>
@@ -159,7 +159,7 @@ export default function SettingsPage() {
                                 type="number"
                                 value={settings.maxUploadSize}
                                 onChange={(e) => setSettings(s => ({ ...s, maxUploadSize: parseInt(e.target.value) || 0 }))}
-                                className="max-w-md rounded-xl border-slate-200"
+                                className="max-w-md rounded-sm border-slate-200"
                             />
                             <p className="text-sm text-slate-500">
                                 Current limit: {(settings.maxUploadSize / 1024 / 1024).toFixed(2)} MB
@@ -174,7 +174,7 @@ export default function SettingsPage() {
                         size="lg"
                         onClick={handleSave}
                         disabled={saving}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8 shadow-lg shadow-indigo-200"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm px-8 shadow-lg shadow-indigo-200"
                     >
                         {saving ? (
                             <>

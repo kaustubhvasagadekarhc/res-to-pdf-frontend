@@ -17,7 +17,8 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { adminService } from "@/app/api/client";
-import { ActivityLog } from "@/app/api/generated";
+import { ActivityLog } from "../../../types/api";
+
 
 export default function AdminDashboard() {
   useAuthGuard("Admin");

@@ -2,6 +2,7 @@
 
 import { toast } from "sonner";
 import { adminService } from "@/app/api/client";
+import { User } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import {
@@ -53,10 +54,14 @@ export default function UserManagementPage() {
         try {
             setLoading(true);
             const response = await adminService.getAdminUsers();
-            if (Array.isArray(response)) {
+            // Handle PaginatedResponse<User> structure
+            if (response && Array.isArray(response.data)) {
+                setUsers(response.data);
+            } else if (Array.isArray(response)) {
+                // Fallback if backend returns direct array
                 setUsers(response);
             } else {
-                // Fallback if backend still returns wrapped object despite generated type
+                console.warn("Unexpected user response format:", response);
                 setUsers([]);
             }
         } catch (error) {

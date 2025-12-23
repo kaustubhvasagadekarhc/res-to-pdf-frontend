@@ -6,6 +6,7 @@ export interface ActivityLog {
         name?: string;
     };
     action: string;
+    description: string;
     details: unknown;
     ipAddress?: string;
 }
@@ -19,4 +20,14 @@ export interface PaginatedResponse<T> {
         total: number;
         totalPages: number;
     };
+}
+
+export interface User {
+    id: string;
+    name?: string;
+    email: string;
+    userType: "USER" | "ADMIN";
+    isVerified: boolean;
+    createdAt?: string;
+    updatedAt?: string;
 }
