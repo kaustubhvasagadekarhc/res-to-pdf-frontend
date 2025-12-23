@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { adminService } from "@/app/api/client";
+import { ActivityLog } from "@/app/api/generated";
 
 export default function AdminDashboard() {
   useAuthGuard("Admin");
@@ -27,25 +28,36 @@ export default function AdminDashboard() {
     totalResumes: 0,
     todayResumes: 0,
   });
+  // const [recentActivities, setRecentActivities] = useState<ActivityLog[]>([]); 
+  // keeping explicit type is fine since we import it
+  const [recentActivities, setRecentActivities] = useState<ActivityLog[]>([]);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
       try {
-        const response = await adminService.getAdminStats();
-        if (response.data) {
+        const [statsRes, activitiesRes] = await Promise.all([
+          adminService.getAdminStats(),
+          adminService.getAdminActivitiesRecent({ limit: 5 })
+        ]);
+
+        if (statsRes.data) {
           setStats({
-            totalUsers: response.data.totalUsers || 0,
-            activeUsers: response.data.totalUsers || 0, // Placeholder as API might not return this yet
-            totalResumes: response.data.totalResumes || 0,
-            todayResumes: response.data.totalGenerated || 0, // Mapping generated to today for now
+            totalUsers: statsRes.data.totalUsers || 0,
+            activeUsers: statsRes.data.totalUsers || 0,
+            totalResumes: statsRes.data.totalResumes || 0,
+            todayResumes: statsRes.data.totalGenerated || 0,
           });
         }
+
+        if (activitiesRes && activitiesRes.data) {
+          setRecentActivities(activitiesRes.data);
+        }
       } catch (error) {
-        console.error("Failed to fetch admin stats:", error);
+        console.error("Failed to fetch admin dashboard data:", error);
       }
     };
 
-    fetchStats();
+    fetchData();
   }, []);
 
   const cards = [
@@ -185,45 +197,26 @@ export default function AdminDashboard() {
         <div className="lg:col-span-2 bg-white rounded-md border border-slate-100 p-8">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl font-bold text-slate-800">Recent Activity</h2>
-            <Button variant="ghost" size="sm" className="text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 font-medium">View All</Button>
+            <Button variant="ghost" size="sm" className="text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 font-medium" onClick={() => router.push('/admin/activities')}>View All</Button>
           </div>
           <div className="relative border-l-2 border-indigo-50 ml-3 space-y-8">
-            {[
-              {
-                user: "John Doe",
-                action: "uploaded a new resume",
-                time: "2 mins ago",
-                avatar: "JD",
-                color: "bg-blue-100 text-blue-600"
-              },
-              {
-                user: "Jane Smith",
-                action: "generated PDFs for 3 clients",
-                time: "15 mins ago",
-                avatar: "JS",
-                color: "bg-purple-100 text-purple-600"
-              },
-              { user: "Mike Johnson", action: "registered a new account", time: "1 hr ago", avatar: "MJ", color: "bg-orange-100 text-orange-600" },
-              {
-                user: "Sarah Williams",
-                action: "updated profile settings",
-                time: "2 hrs ago",
-                avatar: "SW",
-                color: "bg-emerald-100 text-emerald-600"
-              },
-            ].map((activity, index) => (
-              <div key={index} className="relative pl-8 group">
-                <span className="absolute -left-[9px] top-1.5 h-4 w-4 rounded-md border-4 border-white bg-indigo-200 group-hover:bg-indigo-500 transition-colors" />
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 -m-3 rounded-md hover:bg-slate-50 transition-colors">
-                  <div>
-                    <p className="text-sm text-slate-600 font-medium">
-                      <span className="font-bold text-slate-800">{activity.user}</span> {activity.action}
-                    </p>
-                    <span className="text-xs text-slate-400 font-medium">{activity.time}</span>
+            {recentActivities.length === 0 ? (
+              <p className="text-slate-500 pl-8">No recent activities.</p>
+            ) : (
+              recentActivities.map((activity) => (
+                <div key={activity.id} className="relative pl-8 group">
+                  <span className="absolute -left-[9px] top-1.5 h-4 w-4 rounded-md border-4 border-white bg-indigo-200 group-hover:bg-indigo-500 transition-colors" />
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 -m-3 rounded-md hover:bg-slate-50 transition-colors">
+                    <div>
+                      <p className="text-sm text-slate-600 font-medium">
+                        <span className="font-bold text-slate-800">{activity.user?.email || 'System'}</span> {activity.action}
+                      </p>
+                      <span className="text-xs text-slate-400 font-medium">{activity.createdAt ? new Date(activity.createdAt).toLocaleString() : '-'}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 

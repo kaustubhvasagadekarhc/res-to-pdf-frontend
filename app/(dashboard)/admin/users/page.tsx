@@ -28,19 +28,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-interface AdminUser {
-    id: string;
-    name: string;
-    email: string;
-    userType: "USER" | "ADMIN";
-    isVerified: boolean;
-    createdAt: string;
-}
+
+
+
 
 export default function UserManagementPage() {
     useAuthGuard("Admin");
- 
-    const [users, setUsers] = useState<AdminUser[]>([]);
+
+    const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [showInviteDialog, setShowInviteDialog] = useState(false);
@@ -60,8 +55,9 @@ export default function UserManagementPage() {
             const response = await adminService.getAdminUsers();
             if (Array.isArray(response)) {
                 setUsers(response);
-            } else if (response.data && Array.isArray(response.data)) {
-                setUsers(response.data);
+            } else {
+                // Fallback if backend still returns wrapped object despite generated type
+                setUsers([]);
             }
         } catch (error) {
             console.error("Failed to fetch users:", error);
@@ -70,7 +66,7 @@ export default function UserManagementPage() {
         }
     };
 
-    const handleRoleUpdate = async (userId: string, currentRole: "USER" | "ADMIN") => {
+    const handleRoleUpdate = async (userId: string, currentRole: "USER" | "ADMIN" = "USER") => {
         try {
             const newRole = currentRole === "USER" ? "ADMIN" : "USER";
             await adminService.patchAdminUsersRole({
@@ -117,9 +113,9 @@ export default function UserManagementPage() {
                 const response = await adminService.postAdminResumeParse({
                     formData: { resume: file },
                 });
-                if (response && response.data) {
-                    setInviteEmail(response.data.email || "");
-                    setInviteName(response.data.name || "");
+                if (response && response.personal) {
+                    setInviteEmail(response.personal.email || "");
+                    setInviteName(response.personal.name || "");
                 } else {
                     // If structure key is missing, ensure it's blank or handle gracefully
                     // Assuming successful response might maintain previous state or simpler clearing if unexpected format
@@ -315,7 +311,7 @@ export default function UserManagementPage() {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => handleRoleUpdate(user.id, user.userType)}
+                                        onClick={() => user.id && handleRoleUpdate(user.id, user.userType || "USER")}
                                         title="Toggle Role"
                                     >
                                         <Shield className="w-4 h-4 text-slate-500" />
@@ -323,7 +319,7 @@ export default function UserManagementPage() {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => handleVerifyUpdate(user.id, user.isVerified)}
+                                        onClick={() => user.id && handleVerifyUpdate(user.id, user.isVerified || false)}
                                         title="Toggle Verification"
                                     >
                                         <Check className={`w-4 h-4 ${user.isVerified ? 'text-emerald-500' : 'text-slate-300'}`} />
@@ -331,7 +327,7 @@ export default function UserManagementPage() {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => handleDeleteUser(user.id)}
+                                        onClick={() => user.id && handleDeleteUser(user.id)}
                                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                     >
                                         <Trash2 className="w-4 h-4" />
