@@ -1,7 +1,7 @@
 "use client";
 
 import { apiClient, pdfService } from "@/app/api/client";
-import {  motion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   AlertCircle,
   ArrowRight,
@@ -16,10 +16,11 @@ import {
   Trash2,
   User,
   X,
-  
 } from "lucide-react";
+// import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface ResumeData {
   personal: {
@@ -69,6 +70,40 @@ interface ApiResponse {
   };
 }
 
+const AutoHeightTextarea = ({
+  value,
+  onChange,
+  className,
+  placeholder,
+}: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  className?: string;
+  placeholder?: string;
+}) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${Math.min(
+        textareaRef.current.scrollHeight,
+              )}px`;
+    }
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      onChange={onChange}
+      className={`${className} overflow-y-auto`}
+      placeholder={placeholder}
+      style={{ maxHeight: "700px" }}
+    />
+  );
+};
+
 export default function EditPage() {
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,13 +114,17 @@ export default function EditPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [skillInput, setSkillInput] = useState("");
-  const [workExpTechInputs, setWorkExpTechInputs] = useState<{ [key: string]: string }>({});
-  const [projectTechInputs, setProjectTechInputs] = useState<{ [key: number]: string }>({});
+  const [workExpTechInputs, setWorkExpTechInputs] = useState<{
+    [key: string]: string;
+  }>({});
+  const [projectTechInputs, setProjectTechInputs] = useState<{
+    [key: number]: string;
+  }>({});
 
   const STEPS = [
     { id: 1, key: "personal", label: "Personal Details", icon: User },
     { id: 2, key: "summary", label: "Professional Summary", icon: FileText },
-    { id: 3, key: "skills", label: "Skills", icon: Code }, 
+    { id: 3, key: "skills", label: "Skills", icon: Code },
     { id: 4, key: "experience", label: "Work Experience", icon: Briefcase },
     { id: 5, key: "education", label: "Education", icon: GraduationCap },
     { id: 6, key: "projects", label: "Projects", icon: Code },
@@ -104,7 +143,7 @@ export default function EditPage() {
           // This would require a backend API endpoint to get resume by ID
           // For now, we'll use a placeholder approach
           console.log(`Loading existing resume with ID: ${resumeId}`);
-
+          
           // In a real implementation, you would fetch the resume data:
           // const resumeData = await apiClient.get(`/api/resumes/${resumeId}`);
           // setResumeData(resumeData.data);
@@ -147,10 +186,73 @@ export default function EditPage() {
   }, [resumeData]);
 
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<{
+    [key: string]: string;
+  }>({});
+
+  const validatePersonalDetails = (): boolean => {
+    if (!resumeData) return false;
+    const errors: { [key: string]: string } = {};
+    const { name, email, mobile, designation } = resumeData.personal;
+
+    // Full Name Validation
+    const nameTrimmed = name.trim();
+    if (!nameTrimmed) {
+      errors.name = "Full Name is required";
+    } else {
+      if (nameTrimmed.length < 4) {
+        errors.name = "Full name must have at least 4 characters";
+      } else {
+        const nameParts = nameTrimmed.split(/\s+/);
+        if (nameParts.length < 2) {
+          errors.name = "Please enter at least two names (First and Last name)";
+        } else {
+          const namePartRegex = /^[A-Z][a-z]*$/;
+          const allPartsValid = nameParts.every((part) =>
+            namePartRegex.test(part)
+          );
+          if (!allPartsValid) {
+            errors.name =
+              "Each name must start with a capital letter and contain only letters";
+          }
+        }
+      }
+    }
+
+    // Email Validation
+    // "proper email format" is required.
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      errors.email = "Email is required";
+    } else if (!emailRegex.test(email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    // Mobile Validation
+    // "keep by default +91 as default and after valid 10 digit only"
+    const mobileClean = mobile.replace(/\s+/g, "");
+    const phoneRegex = /^\+91\d{10}$/;
+    if (!mobile || mobile === "+91") {
+      errors.mobile = "Mobile number is required";
+    } else if (!phoneRegex.test(mobileClean)) {
+      errors.mobile = "Must be +91 followed by exactly 10 digits";
+    }
+
+    // Job Title Validation
+    // "First letter capital"
+    if (!designation) {
+      errors.designation = "Job Title is required";
+    } else if (designation.charAt(0) !== designation.charAt(0).toUpperCase()) {
+      errors.designation = "First letter must be capital";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const generatePreview = async () => {
     if (!resumeData) return;
-    
+
     // reset states
     setPreviewLoading(true);
     setPreviewError(null);
@@ -166,50 +268,49 @@ export default function EditPage() {
 
       let url = "";
 
-       if (
+      if (
         response &&
         typeof response === "object" &&
         (response as unknown as ApiResponse).status === "success" &&
         (response as unknown as ApiResponse).data &&
         (response as unknown as ApiResponse).data.fileUrl
       ) {
-         url = (response as unknown as ApiResponse).data.fileUrl;
+        url = (response as unknown as ApiResponse).data.fileUrl;
       } else if (response instanceof Blob) {
-         url = URL.createObjectURL(response);
+        url = URL.createObjectURL(response);
       } else {
-          const maybeData =
-            (response as { pdfBase64?: string }).pdfBase64 ||
-            (response as { data?: string }).data ||
-            response;
-            
-          if (typeof maybeData === "string") {
-             // Handle both prefixed and non-prefixed base64
-             const base64 = maybeData.startsWith("data:application/pdf;base64,") 
-                ? maybeData.split(",")[1] 
-                : maybeData;
-                
-             try {
-               const byteCharacters = atob(base64);
-               const byteNumbers = new Array(byteCharacters.length);
-               for (let i = 0; i < byteCharacters.length; i++) {
-                 byteNumbers[i] = byteCharacters.charCodeAt(i);
-               }
-               const byteArray = new Uint8Array(byteNumbers);
-               const blob = new Blob([byteArray], { type: "application/pdf" });
-               url = URL.createObjectURL(blob);
-             } catch (e) {
-               console.error("Failed to decode base64 PDF", e);
-               throw new Error("Invalid PDF data received");
-             }
+        const maybeData =
+          (response as { pdfBase64?: string }).pdfBase64 ||
+          (response as { data?: string }).data ||
+          response;
+
+        if (typeof maybeData === "string") {
+          // Handle both prefixed and non-prefixed base64
+          const base64 = maybeData.startsWith("data:application/pdf;base64,")
+            ? maybeData.split(",")[1]
+            : maybeData;
+
+          try {
+            const byteCharacters = atob(base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: "application/pdf" });
+            url = URL.createObjectURL(blob);
+          } catch (e) {
+            console.error("Failed to decode base64 PDF", e);
+            throw new Error("Invalid PDF data received");
           }
+        }
       }
-      
+
       if (url) {
         setPreviewUrl(url);
       } else {
         throw new Error("Could not parse PDF from response");
       }
-
     } catch (error: unknown) {
       console.error("Preview generation failed", error);
       setPreviewError(
@@ -225,10 +326,8 @@ export default function EditPage() {
     if (currentStep === 7 && resumeData) {
       generatePreview();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep, resumeData]);
-
-
 
   const updatePersonal = (field: string, value: string) => {
     if (!resumeData) return;
@@ -236,6 +335,13 @@ export default function EditPage() {
       ...resumeData,
       personal: { ...resumeData.personal, [field]: value },
     });
+    if (validationErrors[field]) {
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const updateSummary = (value: string) => {
@@ -244,7 +350,7 @@ export default function EditPage() {
   };
 
   const addSkill = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && skillInput.trim()) {
+    if (e.key === "Enter" && skillInput.trim()) {
       e.preventDefault();
       if (!resumeData) return;
       const newSkill = skillInput.trim();
@@ -262,14 +368,21 @@ export default function EditPage() {
     if (!resumeData) return;
     setResumeData({
       ...resumeData,
-      skills: resumeData.skills.filter(s => s !== skillToRemove),
+      skills: resumeData.skills.filter((s) => s !== skillToRemove),
     });
   };
 
   const updateEducation = (index: number, field: string, value: string) => {
     if (!resumeData) return;
     const updated = [...resumeData.education];
-    updated[index] = { ...updated[index], [field]: value };
+
+    let processedValue = value;
+    if (field === "field" || field === "institution" || field === "degree") {
+      // Allow only text (a-z, A-Z), spaces, periods, commas, and hyphens
+      processedValue = value.replace(/[^a-zA-Z\s.,-]/g, "");
+    }
+
+    updated[index] = { ...updated[index], [field]: processedValue };
     setResumeData({ ...resumeData, education: updated });
   };
 
@@ -431,31 +544,49 @@ export default function EditPage() {
     setResumeData({ ...resumeData, projects: updated });
   };
 
-  const addWorkExpTech = (e: React.KeyboardEvent<HTMLInputElement>, expIndex: number, projIndex: number) => {
+  const addWorkExpTech = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    expIndex: number,
+    projIndex: number
+  ) => {
     const inputValue = workExpTechInputs[`${expIndex}-${projIndex}`] || "";
-    if (e.key === 'Enter' && inputValue.trim()) {
+    if (e.key === "Enter" && inputValue.trim()) {
       e.preventDefault();
       if (!resumeData) return;
       const newTech = inputValue.trim();
       const updated = [...resumeData.work_experience];
-      if (!updated[expIndex].projects[projIndex].technologies.includes(newTech)) {
-         updated[expIndex].projects[projIndex].technologies.push(newTech);
-         setResumeData({ ...resumeData, work_experience: updated });
+      if (
+        !updated[expIndex].projects[projIndex].technologies.includes(newTech)
+      ) {
+        updated[expIndex].projects[projIndex].technologies.push(newTech);
+        setResumeData({ ...resumeData, work_experience: updated });
       }
-      setWorkExpTechInputs({ ...workExpTechInputs, [`${expIndex}-${projIndex}`]: "" });
+      setWorkExpTechInputs({
+        ...workExpTechInputs,
+        [`${expIndex}-${projIndex}`]: "",
+      });
     }
   };
 
-  const removeWorkExpTech = (expIndex: number, projIndex: number, techToRemove: string) => {
+  const removeWorkExpTech = (
+    expIndex: number,
+    projIndex: number,
+    techToRemove: string
+  ) => {
     if (!resumeData) return;
     const updated = [...resumeData.work_experience];
-    updated[expIndex].projects[projIndex].technologies = updated[expIndex].projects[projIndex].technologies.filter(t => t !== techToRemove);
+    updated[expIndex].projects[projIndex].technologies = updated[
+      expIndex
+    ].projects[projIndex].technologies.filter((t) => t !== techToRemove);
     setResumeData({ ...resumeData, work_experience: updated });
   };
 
-  const addProjectTech = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+  const addProjectTech = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number
+  ) => {
     const inputValue = projectTechInputs[index] || "";
-    if (e.key === 'Enter' && inputValue.trim()) {
+    if (e.key === "Enter" && inputValue.trim()) {
       e.preventDefault();
       if (!resumeData) return;
       const newTech = inputValue.trim();
@@ -471,13 +602,14 @@ export default function EditPage() {
   const removeProjectTech = (index: number, techToRemove: string) => {
     if (!resumeData) return;
     const updated = [...resumeData.projects];
-    updated[index].technologies = updated[index].technologies.filter(t => t !== techToRemove);
+    updated[index].technologies = updated[index].technologies.filter(
+      (t) => t !== techToRemove
+    );
     setResumeData({ ...resumeData, projects: updated });
   };
 
   const handleGenerate = async () => {
     setGenerating(true);
-  
 
     try {
       apiClient.refreshTokenFromCookies();
@@ -562,10 +694,10 @@ export default function EditPage() {
       // We can trigger a refresh of the preview Url from the session storage we just set
       const pdfResponseStr = sessionStorage.getItem("pdfResponse");
       if (pdfResponseStr) {
-          const parsed = JSON.parse(pdfResponseStr);
-          if (parsed.pdfUrl) {
-             setPreviewUrl(parsed.pdfUrl);
-          }
+        const parsed = JSON.parse(pdfResponseStr);
+        if (parsed.pdfUrl) {
+          setPreviewUrl(parsed.pdfUrl);
+        }
       }
       setCurrentStep(7); // Ensure we are on the last step
     } catch (error: unknown) {
@@ -580,6 +712,9 @@ export default function EditPage() {
 
   const handleNext = () => {
     if (currentStep < STEPS.length) {
+      if (currentStep === 1) {
+        if (!validatePersonalDetails()) return;
+      }
       setCurrentStep((prev) => prev + 1);
       // Removed window.scrollTo because we want internal scroll
     }
@@ -595,443 +730,960 @@ export default function EditPage() {
     if (!resumeData) return true;
     switch (stepKey) {
       case "personal":
-        return !resumeData.personal.name || !resumeData.personal.email || !resumeData.personal.mobile || !resumeData.personal.designation;
+        return (
+          !resumeData.personal.name ||
+          !resumeData.personal.email ||
+          !resumeData.personal.mobile ||
+          !resumeData.personal.designation
+        );
       case "summary":
         return !resumeData.summary || resumeData.summary.trim() === "";
       case "skills":
         return !resumeData.skills || resumeData.skills.length === 0;
       case "education":
-         return !resumeData.education || resumeData.education.length === 0 || resumeData.education.some(edu => !edu.institution || !edu.degree);
+        return (
+          !resumeData.education ||
+          resumeData.education.length === 0 ||
+          resumeData.education.some(
+            (edu) => !edu.institution || !edu.degree || !edu.field
+          )
+        );
+      // Experience and Projects are optional, so they are always "valid" for navigation purposes
+      case "experience":
+        if (
+          !resumeData.work_experience ||
+          resumeData.work_experience.length === 0
+        ) {
+          return false;
+        }
+        return resumeData.work_experience.some(
+          (exp) =>
+            !exp.company || !exp.position || !exp.period_from || !exp.period_to
+        );
+      case "projects":
       default:
         return false;
     }
   };
 
-  const isFormComplete = STEPS.every((step) => !getMissingFieldsForStep(step.key));
+  // Calculate progress based on current step relative to total steps
+  const progress = (currentStep / STEPS.length) * 100;
+
+  const isFormComplete = STEPS.every(
+    (step) => !getMissingFieldsForStep(step.key)
+  );
 
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
       </div>
     );
   }
 
   const currentStepInfo = STEPS.find((s) => s.id === currentStep) || STEPS[0];
 
+  const STEP_DESCRIPTIONS: Record<
+    string,
+    { title: string; subtitle: string; context: string }
+  > = {
+    personal: {
+      title: "Tell us about yourself",
+      subtitle: "Personal Details",
+      context:
+        "Start with your basic contact information so employers can reach you.",
+    },
+    summary: {
+      title: "Your professional Summary",
+      subtitle: "Professional Summary",
+      context:
+        "Write a short, compelling summary of your career. scalable, and efficient software solutions.",
+    },
+    skills: {
+      title: "Showcase your expertise",
+      subtitle: "Key Skills",
+      context:
+        "List your technical and soft skills. These keywords help Applicant Tracking Systems (ATS) identify you as a match.",
+    },
+    experience: {
+      title: "Detail your work history",
+      subtitle: "Work Experience",
+      context:
+        "Add your relevant work experience, focusing on achievements and responsibilities. Use action verbs and metrics where possible.",
+    },
+    education: {
+      title: "List your academic background",
+      subtitle: "Education",
+      context:
+        "Include your degrees, schools, and graduation years. You can also mention relevant coursework or honors.",
+    },
+    projects: {
+      title: "Highlight your key projects",
+      subtitle: "Projects",
+      context:
+        "Showcase specific projects that demonstrate your skills. describe your role and the technologies used.",
+    },
+    review: {
+      title: "Final Review",
+      subtitle: "Review & Generate",
+      context:
+        "Check everything carefully. Once you're satisfied, generate your PDF resume.",
+    },
+  };
+
+  const stepContent =
+    STEP_DESCRIPTIONS[currentStepInfo.key] || STEP_DESCRIPTIONS.personal;
+
   return (
-    <div className="flex bg-slate-50 h-[calc(99vh-64px)] overflow-hidden font-sans text-slate-900">
-      {/* Sidebar - Left Panel */}
-      <aside className="hidden lg:flex flex-col w-1/3 max-w-[280px] bg-white border-r border-slate-200 h-full overflow-y-auto">
-        <div className="p-6 cursor-pointer" onClick={() => router.push("/user")}>
-          <div className="flex items-center gap-2">
-            {/* <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
-              <FileIcon className="w-5 h-5" />
-            </div> */}
-             <div>
-                {/* <h1 className="text-xl font-bold text-slate-800 tracking-tight leading-none">CVSync</h1>
-                <p className="text-[10px] text-slate-500 font-medium">Dashboard</p> */}
-             </div>
+    <div
+      className="h-full bg-slate-50 flex flex-col text-slate-900 overflow-hidden"
+      style={{
+        fontFamily: "Inter, system-ui, Avenir, Helvetica, Arial, sans-serif",
+      }}
+    >
+      {/* Main Content Grid */}
+      <div className="flex-1 w-full max-w-[1400px] mx-auto p-6 md:p-8 lg:p-8 overflow-hidden min-h-0">
+        <div className="grid lg:grid-cols-12 gap-12 h-full">
+          {/* Left Column: Context & Help */}
+          <div className="lg:col-span-5 h-full flex flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+            <div className="space-y-4">
+              <span className="text-sm font-semibold text-slate-500 tracking-wide">
+                <span className="font-bold text-slate-700">
+                  {" "}
+                  {currentStep}/{STEPS.length}{" "}
+                </span>
+                &nbsp; {stepContent.subtitle}
+              </span>
+              <h1 className="text-3xl md:text-4xl font-bold text-slate-800 leading-tight">
+                {stepContent.title}
+              </h1>
+              <p className="text-lg text-slate-600 leading-relaxed">
+                {stepContent.context}
+              </p>
+            </div>
+
+            {/* Large Illustration / Preview Card */}
+            <div className="hidden lg:flex flex-1 min-h-[400px] items-center justify-center p-2 relative overflow-hidden group">
+              <div className="relative w-full h-full">
+                <Image
+                  src="/resume-screen.png"
+                  alt="Resume "
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className="flex-1 px-4 pb-4">
-           {STEPS.map((step, index) => {
-             const isActive = step.id === currentStep;
-             const isCompleted = !getMissingFieldsForStep(step.key); 
-             const hasError = getMissingFieldsForStep(step.key);
-             const isLast = index === STEPS.length - 1;
+          {/* Right Column: Form Inputs */}
+          <div className="lg:col-span-7 h-full flex flex-col overflow-hidden">
+            <div className="flex flex-col h-full overflow-hidden">
+              <div className="px-4 md:px-4 pt-6 md:pt-8 pb-4 shrink-0"></div>
 
-             return (
-               <div 
-                 key={step.id} 
-                 className="relative"
-               >
-                 {/* Connecting Line Segments */}
-                 {index !== 0 && (
-                    <div className="absolute left-8 top-0 h-1/2 w-[2px] -ml-[1px] bg-slate-200 z-0" />
-                 )}
-                 {!isLast && (
-                    <div className="absolute left-8 top-1/2 h-1/2 w-[2px] -ml-[1px] bg-slate-200 z-0" />
-                 )}
+              <div className="pt-4 overflow-y-auto flex-1 pr-2">
+                <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  {currentStep === 1 && resumeData && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-4">
+                      <div className="space-y-1">
+                        <label className="text-md px-2 font-semibold text-slate-700">
+                          Full Name
+                        </label>
+                        <input
+                          value={resumeData?.personal.name || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            // 1. Allow only letters and spaces, replace multiple spaces with single space
+                            const filtered = val
+                              .replace(/[^a-zA-Z\s]/g, "")
+                              .replace(/\s{2,}/g, " ");
 
-                 <div 
-                   onClick={() => setCurrentStep(step.id)}
-                   className={`relative z-10 flex items-center gap-4 px-4 py-4 cursor-pointer transition-all duration-200 group rounded-xl ${
-                     isActive ? "bg-indigo-50/50" : "hover:bg-slate-50"
-                   }`}
-                 > 
-                   {/* Icon/Number Circle */}
-                   <div
-                     className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border-2 transition-all z-10 ${
-                       isActive
-                         ? "bg-indigo-600 border-indigo-600 text-white shadow-md scale-105"
-                         : hasError 
-                         ? "bg-white border-rose-200 text-rose-500"
-                         : isCompleted
-                         ? "bg-emerald-50 border-emerald-200 text-emerald-600"
-                         : "bg-white border-slate-200 text-slate-400 group-hover:border-indigo-300 group-hover:text-indigo-500"
-                     }`}
-                   >
-                     {isCompleted && !isActive && !hasError ? <CheckCircle2 className="w-4 h-4" /> : <step.icon className="w-4 h-4" />}
-                   </div>
-                   
-                   <span className={`text-sm flex-1 ${isActive ? 'font-bold text-indigo-900' : 'font-medium text-slate-500 group-hover:text-slate-700'}`}>
-                     {step.label}
-                   </span>
+                            // 2. Title Case: Capitalize first letter of each word, rest lowercase
+                            const parts = filtered.split(" ");
+                            const formatted = parts
+                              .map(
+                                (p) =>
+                                  p.charAt(0).toUpperCase() +
+                                  p.slice(1).toLowerCase()
+                              )
+                              .join(" ");
 
-                   {/* Error Dot at the end */}
-                   {hasError && (
-                     <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-sm" />
-                   )}
-                 </div>
-               </div>
-             );
-           })}
-        </div>
-      </aside>
-
-      {/* Main Content - Right Panel */}
-      <main className="flex-1 flex flex-col h-full min-w-0 bg-slate-50/50">
-        {/* Mobile Step Indicator */}
-        <div className="lg:hidden bg-white border-b px-4 py-3 flex items-center justify-between shrink-0">
-             <div className="flex items-center gap-2">
-                <span className="font-bold text-indigo-900 text-sm">Step {currentStep}</span>
-                <span className="text-slate-300">/</span>
-                <span className="text-sm font-medium text-slate-600 truncate max-w-[150px]">{currentStepInfo.label}</span>
-             </div>
-             <div className="text-xs font-medium px-2 py-1 bg-slate-100 rounded-full text-slate-600">
-               {Math.round((currentStep / STEPS.length) * 100)}%
-             </div>
-        </div>
-
-        {/* Scrollable Form Area */}
-        <div className="flex-1 overflow-y-auto w-full scroll-smooth">
-          <div className="max-w-3xl mx-auto w-full p-6 md:p-10 pb-24">
-            {/* <header className="mb-6">
-              <h2 className="text-2xl font-bold text-slate-800 mb-1">{currentStepInfo.label}</h2>
-              <p className="text-slate-500 text-sm">Please fill in the details below.</p>
-            </header> */}
-
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-6"
-            >
-              {currentStep === 1 && resumeData && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="space-y-1.5 col-span-2">
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Full Name <span className="text-rose-500">*</span></label>
-                    <input
-                      type="text"
-                      value={resumeData.personal.name}
-                      onChange={(e) => updatePersonal("name", e.target.value)}
-                      className={`w-full px-4 py-3 rounded-xl border bg-white focus:ring-2 focus:ring-indigo-100 outline-none transition-all ${!resumeData.personal.name ? 'border-rose-200 focus:border-rose-400' : 'border-slate-200 focus:border-indigo-500'}`}
-                      placeholder="e.g. John Doe"
-                    />
-                  </div>
-                  <div className="space-y-1.5 col-span-2">
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Designation <span className="text-rose-500">*</span></label>
-                    <input
-                      type="text"
-                      value={resumeData.personal.designation}
-                      onChange={(e) => updatePersonal("designation", e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                      placeholder="e.g. Senior Software Engineer"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email <span className="text-rose-500">*</span></label>
-                    <input
-                      type="email"
-                      value={resumeData.personal.email}
-                      onChange={(e) => updatePersonal("email", e.target.value)}
-                      className={`w-full px-4 py-3 rounded-xl border bg-white focus:ring-2 focus:ring-indigo-100 outline-none transition-all ${!resumeData.personal.email ? 'border-rose-200 focus:border-rose-400' : 'border-slate-200 focus:border-indigo-500'}`}
-                      placeholder="e.g. john@example.com"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Phone <span className="text-rose-500">*</span></label>
-                    <input
-                      type="tel"
-                      value={resumeData.personal.mobile}
-                      onChange={(e) => updatePersonal("mobile", e.target.value)}
-                      className={`w-full px-4 py-3 rounded-xl border bg-white focus:ring-2 focus:ring-indigo-100 outline-none transition-all ${!resumeData.personal.mobile ? 'border-rose-200 focus:border-rose-400' : 'border-slate-200 focus:border-indigo-500'}`}
-                      placeholder="e.g. +1 234 567 890"
-                    />
-                  </div>
-                   <div className="space-y-1.5 md:col-span-1">
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Location</label>
-                    <input
-                      type="text"
-                      value={resumeData.personal.location}
-                      onChange={(e) => updatePersonal("location", e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                      placeholder="City, Country"
-                    />
-                  </div>
-                   <div className="space-y-1.5 md:col-span-1">
-                     <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Marital Status</label>
-                     <select
-                        value={resumeData.personal.marital_status}
-                        onChange={(e) => updatePersonal("marital_status", e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all appearance-none"
-                     >
-                       <option value="">Select Status</option>
-                       <option value="Single">Single</option>
-                       <option value="Married">Married</option>
-                       <option value="Divorced">Divorced</option>
-                       <option value="Widowed">Widowed</option>
-                     </select>
-                   </div>
-                </div>
-              )}
-
-              {currentStep === 2 && resumeData && (
-                <div className="space-y-4">
-                  <label className="text-sm font-semibold text-slate-700">Professional Summary</label>
-                  <textarea
-                    value={resumeData.summary}
-                    onChange={(e) => updateSummary(e.target.value)}
-                    className="w-full h-80 p-5 rounded-xl border border-slate-200 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none resize-none transition-all leading-relaxed text-base"
-                    placeholder="Write a compelling summary..."
-                  />
-                  <div className="flex justify-end">
-                     <span className="text-xs text-slate-400">{resumeData.summary.length} characters</span>
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 3 && resumeData && (
-                 <div className="space-y-4">
-                   <label className="text-sm font-semibold text-slate-700">Key Skills</label>
-                   <div className="p-3 border border-slate-200 rounded-xl bg-white focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-500 transition-all min-h-[120px]">
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {resumeData.skills.map((skill, idx) => (
-                          <span key={idx} className="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1 border border-indigo-100">
-                            {skill}
-                            <button onClick={() => removeSkill(skill)} className="hover:text-rose-500 transition-colors p-0.5 rounded-full hover:bg-indigo-100">
-                               <X className="w-3 h-3" />
-                            </button>
-                          </span>
-                        ))}
+                            updatePersonal("name", formatted);
+                          }}
+                          className={`w-full bg-white border rounded-sm ${
+                            validationErrors.name
+                              ? "border-rose-500"
+                              : "border-slate-300"
+                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          placeholder="John Doe"
+                        />
+                        {validationErrors.name && (
+                          <p className="text-xs text-rose-500 px-2 mt-1">
+                            {validationErrors.name}
+                          </p>
+                        )}
                       </div>
-                      <input
-                        type="text"
-                         value={skillInput}
-                         onChange={(e) => setSkillInput(e.target.value)}
-                         onKeyDown={addSkill}
-                        className="w-full p-2 outline-none text-slate-700 placeholder:text-slate-400 bg-transparent"
-                        placeholder="Type a skill and press Enter..."
-                      />
-                   </div>
-                   <p className="text-xs text-slate-500">Press Enter to add a skill.</p>
-                 </div>
-              )}
+                      <div className="space-y-1">
+                        <label className="text-md px-2 font-semibold text-slate-700">
+                          Job Title
+                        </label>
+                        <input
+                          value={resumeData?.personal.designation || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            // 1. Allow only letters and spaces, replace multiple spaces with single space
+                            const filtered = val
+                              .replace(/[^a-zA-Z\s]/g, "")
+                              .replace(/\s{2,}/g, " ");
 
-              {currentStep === 4 && resumeData && (
-                <div className="space-y-6">
-                   {resumeData.work_experience.map((exp, index) => (
-                      <div key={index} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative group hover:shadow-md transition-shadow">
-                        <button onClick={() => deleteWorkExperience(index)} className="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition-colors"><Trash2 className="w-5 h-5" /></button>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                          <div className="space-y-1"><label className="text-xs font-semibold text-slate-500 uppercase">Company</label><input value={exp.company} onChange={(e) => updateWorkExperience(index, 'company', e.target.value)} className="w-full font-bold text-lg border-b border-transparent focus:border-indigo-500 outline-none pb-1 placeholder:text-slate-300 transition-colors" placeholder="Company Name" /></div>
-                          <div className="space-y-1"><label className="text-xs font-semibold text-slate-500 uppercase">Position</label><input value={exp.position} onChange={(e) => updateWorkExperience(index, 'position', e.target.value)} className="w-full font-semibold text-lg border-b border-transparent focus:border-indigo-500 outline-none pb-1 placeholder:text-slate-300 transition-colors" placeholder="Job Title" /></div>
-                           <div className="space-y-1"><label className="text-xs font-semibold text-slate-500 uppercase">Start Date</label><input type="date" value={exp.period_from} onChange={(e) => updateWorkExperience(index, 'period_from', e.target.value)} className="w-full text-sm border-b border-transparent focus:border-indigo-500 outline-none pb-1 text-slate-600 transition-colors" /></div>
-                           <div className="space-y-1"><label className="text-xs font-semibold text-slate-500 uppercase">End Date</label><input type="date" value={exp.period_to} onChange={(e) => updateWorkExperience(index, 'period_to', e.target.value)} className="w-full text-sm border-b border-transparent focus:border-indigo-500 outline-none pb-1 text-slate-600 transition-colors" /></div>
+                            // 2. Title Case: Capitalize first letter of each word, rest lowercase
+                            const parts = filtered.split(" ");
+                            const formatted = parts
+                              .map(
+                                (p) =>
+                                  p.charAt(0).toUpperCase() +
+                                  p.slice(1).toLowerCase()
+                              )
+                              .join(" ");
+
+                            updatePersonal("designation", formatted);
+                          }}
+                          className={`w-full bg-white border rounded-sm ${
+                            validationErrors.designation
+                              ? "border-rose-500"
+                              : "border-slate-300"
+                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          placeholder="Software Engineer"
+                        />
+                        {validationErrors.designation && (
+                          <p className="text-xs text-rose-500 px-2 mt-1">
+                            {validationErrors.designation}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-md px-2 font-semibold text-slate-700">
+                          Email
+                        </label>
+                        <input
+                          value={resumeData?.personal.email || ""}
+                          onChange={(e) =>
+                            updatePersonal("email", e.target.value)
+                          }
+                          className={`w-full bg-white border rounded-sm ${
+                            validationErrors.email
+                              ? "border-rose-500"
+                              : "border-slate-300"
+                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          placeholder="john@example.com"
+                        />
+                        {validationErrors.email && (
+                          <p className="text-xs text-rose-500 px-2 mt-1">
+                            {validationErrors.email}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-md px-2 font-semibold text-slate-700">
+                          Mobile
+                        </label>
+                        <input
+                          value={resumeData?.personal.mobile || "+91"}
+                          onChange={(e) => {
+                            let val = e.target.value;
+
+                            // 1. Ensure it always starts with +91
+                            if (!val.startsWith("+91")) {
+                              // If user tries to delete the prefix or change it, enforce it
+                              // But allow them to type if they are adding digits
+                              const digitsOnly = val.replace(/\D/g, "");
+                              // If they cleared it, keep +91
+                              if (digitsOnly.length === 0) {
+                                val = "+91";
+                              } else {
+                                // If they pasted something without +91
+                                val = "+91" + digitsOnly.slice(-10);
+                              }
+                            } else {
+                              // 2. Allow only digits after +91 and limit to 10 digits
+                              const prefix = "+91";
+                              const rest = val
+                                .slice(prefix.length)
+                                .replace(/[^0-9]/g, "")
+                                .slice(0, 10);
+                              val = prefix + rest;
+                            }
+
+                            updatePersonal("mobile", val);
+                          }}
+                          className={`w-full bg-white border rounded-sm ${
+                            validationErrors.mobile
+                              ? "border-rose-500"
+                              : "border-slate-300"
+                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          placeholder="+91 00000 00000"
+                        />
+                        {validationErrors.mobile && (
+                          <p className="text-xs text-rose-500 px-2 mt-1">
+                            {validationErrors.mobile}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-md px-2 font-semibold text-slate-700">
+                          Location
+                        </label>
+                        <input
+                          value={resumeData?.personal.location || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            // Allow only letters, numbers, spaces, commas, ', . , ", and :
+                            const filtered = val.replace(
+                              /[^a-zA-Z0-9,\s'.":]/g,
+                              ""
+                            );
+                            updatePersonal("location", filtered);
+                          }}
+                          className={`w-full bg-white border rounded-sm ${
+                            validationErrors.location
+                              ? "border-rose-500"
+                              : "border-slate-300"
+                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          placeholder="New York, USA"
+                        />
+                        {validationErrors.location && (
+                          <p className="text-xs text-rose-500 px-2 mt-1">
+                            {validationErrors.location}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-md px-2  font-semibold text-slate-700 ">
+                          Gender
+                        </label>
+                        <select
+                          value={resumeData?.personal.gender || ""}
+                          onChange={(e) =>
+                            updatePersonal("gender", e.target.value)
+                          }
+                          className="w-full bg-white border rounded-sm border-slate-300  px-4 py-3 border-b border-gray-300 transition-colors transition-[border-width] duration-200  focus:outline-none  focus:border-b-2  focus:border-[var(--primary)]  placeholder:text-slate-300 transition-all"
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {currentStep === 2 && resumeData && (
+                    <div className="space-y-4 pl-4">
+                      <div className="space-y-1">
+                        <label className="text-md px-2 font-semibold text-slate-700">
+                          Professional Summary{" "}
+                          <span className="text-rose-500">*</span>
+                        </label>
+                        <AutoHeightTextarea
+                          value={resumeData?.summary}
+                          onChange={(e) => updateSummary(e.target.value)}
+                          className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 min-h-[250px] resize-none"
+                          placeholder="Write a brief summary of your career highlights..."
+                        />
+                      </div>
+                      <div className="flex justify-end pr-2">
+                        <span className="text-xs text-slate-400">
+                          {resumeData.summary.length} characters
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {currentStep === 3 && resumeData && (
+                    <div className="space-y-4 pl-4">
+                      <div className="space-y-1">
+                        <label className="text-md px-2 font-semibold text-slate-700">
+                          Key Skills
+                        </label>
+                        <input
+                          type="text"
+                          value={skillInput}
+                          onChange={(e) => setSkillInput(e.target.value)}
+                          onKeyDown={addSkill}
+                          className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
+                          placeholder="Type a skill and press Enter..."
+                        />
+                        <div className="p-4 border border-slate-200 rounded-sm bg-white min-h-[120px] mb-3">
+                          <div className="flex flex-wrap gap-2">
+                            {resumeData.skills.length === 0 && (
+                              <p className="text-slate-400 text-sm italic">
+                                No skills added yet...
+                              </p>
+                            )}
+                            {resumeData.skills.map((skill, idx) => (
+                              <span
+                                key={idx}
+                                className="bg-slate-100 text-blue-600 px-3 py-1.5 rounded-sm text-sm font-medium flex items-center gap-1 border border-slate-200"
+                              >
+                                {skill}
+                                <button
+                                  onClick={() => removeSkill(skill)}
+                                  className="hover:text-rose-500 transition-colors p-0.5 rounded-full hover:bg-slate-200"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                        <div className="mt-4 pt-4 border-t border-slate-100">
-                           <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Key Highlights / Projects</h4>
-                           
-                           <div className="space-y-3">
-                              {exp.projects.map((proj, pIdx) => (
-                                <div key={pIdx} className="bg-slate-50 p-4 rounded-xl border border-slate-200 relative group/proj">
-                                   <input value={proj.name} onChange={(e) => updateProjectField(index, pIdx, 'name', e.target.value)} placeholder="Project Highlight Name" className="bg-transparent font-bold w-full outline-none mb-2 text-sm text-slate-800" />
-                                   
-                                   {/* Technologies Tag Input */}
-                                   <div className="mb-2">
-                                     <div className="flex flex-wrap gap-1 mb-2">
-                                       {proj.technologies.map((tech, tIdx) => (
-                                         <span key={tIdx} className="bg-white text-indigo-600 px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 border border-indigo-100 shadow-sm">
-                                           {tech}
-                                           <button onClick={() => removeWorkExpTech(index, pIdx, tech)} className="hover:text-rose-500 transition-colors p-0.5 rounded-full hover:bg-slate-50">
-                                              <X className="w-2.5 h-2.5" />
-                                           </button>
-                                         </span>
-                                       ))}
-                                     </div>
-                                     <input 
-                                       value={workExpTechInputs[`${index}-${pIdx}`] || ""}
-                                       onChange={(e) => setWorkExpTechInputs({ ...workExpTechInputs, [`${index}-${pIdx}`]: e.target.value })}
-                                       onKeyDown={(e) => addWorkExpTech(e, index, pIdx)}
-                                       placeholder="Add technology (Press Enter)" 
-                                       className="bg-transparent w-full text-xs text-slate-500 outline-none border-b border-transparent focus:border-indigo-300 pb-0.5 transition-all" 
-                                     />
-                                   </div>
+                      </div>
+                      <p className="text-xs text-slate-500 px-2">
+                        Press Enter to add a skill.
+                      </p>
+                    </div>
+                  )}
 
-                                   <textarea value={proj.description} onChange={(e) => updateProjectField(index, pIdx, 'description', e.target.value)} placeholder="Brief description..." className="bg-transparent w-full text-sm text-slate-600 resize-none outline-none min-h-[40px]" />
-                                   <button onClick={() => deleteProject(index, pIdx)} className="absolute top-2 right-2 text-slate-300 hover:text-rose-500 "><Trash2 className="w-3.5 h-3.5" /></button>
+                  {currentStep === 4 && resumeData && (
+                    <div className="space-y-6 pl-4">
+                      {resumeData.work_experience.map((exp, index) => (
+                        <div
+                          key={index}
+                          className="bg-white p-6 rounded-sm border border-slate-300 relative group transition-all"
+                        >
+                          <button
+                            onClick={() => deleteWorkExperience(index)}
+                            className="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition-colors"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div className="space-y-1">
+                              <label className="text-md px-2 font-semibold text-slate-700">
+                                Company
+                              </label>
+                              <input
+                                value={exp.company}
+                                onChange={(e) =>
+                                  updateWorkExperience(
+                                    index,
+                                    "company",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
+                                placeholder="Company Name"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-md px-2 font-semibold text-slate-700">
+                                Position
+                              </label>
+                              <input
+                                value={exp.position}
+                                onChange={(e) =>
+                                  updateWorkExperience(
+                                    index,
+                                    "position",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
+                                placeholder="Job Title"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-md px-2 font-semibold text-slate-700">
+                                Start Date
+                              </label>
+                              <input
+                                type="date"
+                                value={exp.period_from}
+                                onChange={(e) =>
+                                  updateWorkExperience(
+                                    index,
+                                    "period_from",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] text-slate-700"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-md px-2 font-semibold text-slate-700">
+                                End Date
+                              </label>
+                              <input
+                                type="date"
+                                value={exp.period_to}
+                                onChange={(e) =>
+                                  updateWorkExperience(
+                                    index,
+                                    "period_to",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] text-slate-700"
+                              />
+                            </div>
+                          </div>
+                          <div className="mt-4 pt-4 border-t border-slate-100">
+                            <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">
+                              Key Highlights / Projects
+                            </h4>
+
+                            <div className="space-y-3">
+                              {exp.projects.map((proj, pIdx) => (
+                                <div
+                                  key={pIdx}
+                                  className="bg-slate-50 p-6 rounded-sm border border-slate-200 relative group/proj space-y-4"
+                                >
+                                  <div className="space-y-1">
+                                    <label className="text-sm px-2 font-semibold text-slate-700">
+                                      Highlight Name
+                                    </label>
+                                    <input
+                                      value={proj.name}
+                                      onChange={(e) =>
+                                        updateProjectField(
+                                          index,
+                                          pIdx,
+                                          "name",
+                                          e.target.value
+                                        )
+                                      }
+                                      placeholder="e.g. Lead Frontend Development"
+                                      className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-sm"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-sm px-2 font-semibold text-slate-700">
+                                      Description / Responsibilities
+                                    </label>
+                                    <AutoHeightTextarea
+                                      value={proj.description}
+                                      onChange={(e) =>
+                                        updateProjectField(
+                                          index,
+                                          pIdx,
+                                          "description",
+                                          e.target.value
+                                        )
+                                      }
+                                      placeholder="What did you achieve? Use bullet points if needed..."
+                                      className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-sm min-h-[100px] resize-none"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-sm px-2 font-semibold text-slate-700">
+                                      Technologies
+                                    </label>
+                                    <input
+                                      value={
+                                        workExpTechInputs[`${index}-${pIdx}`] ||
+                                        ""
+                                      }
+                                      onChange={(e) =>
+                                        setWorkExpTechInputs({
+                                          ...workExpTechInputs,
+                                          [`${index}-${pIdx}`]: e.target.value,
+                                        })
+                                      }
+                                      onKeyDown={(e) =>
+                                        addWorkExpTech(e, index, pIdx)
+                                      }
+                                      placeholder="Add tech (Press Enter)"
+                                      className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-xs"
+                                    />
+                                    <div className="flex flex-wrap gap-1 mb-2">
+                                      {proj.technologies.map((tech, tIdx) => (
+                                        <span
+                                          key={tIdx}
+                                          className="bg-white text-slate-700 px-2 py-0.5 rounded-sm text-xs font-medium flex items-center gap-1 border border-slate-200"
+                                        >
+                                          {tech}
+                                          <button
+                                            onClick={() =>
+                                              removeWorkExpTech(
+                                                index,
+                                                pIdx,
+                                                tech
+                                              )
+                                            }
+                                            className="hover:text-rose-500 transition-colors p-0.5"
+                                          >
+                                            <X className="w-2.5 h-2.5" />
+                                          </button>
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  <button
+                                    onClick={() => deleteProject(index, pIdx)}
+                                    className="absolute top-2 right-2 text-slate-300 hover:text-rose-500 transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
                                 </div>
                               ))}
-                           </div>
-                           <button onClick={() => addProject(index)} className="mt-3 text-xs font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg transition-colors"><Plus className="w-3.5 h-3.5" /> Add Highlight</button>
+                            </div>
+                            <button
+                              onClick={() => addProject(index)}
+                              className="mt-4 text-sm font-bold text-[var(--primary)] flex items-center gap-2 hover:bg-slate-50 border border-transparent hover:border-slate-200 px-4 py-2 rounded-sm transition-all"
+                            >
+                              <Plus className="w-4 h-4" /> Add Highlight
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                   ))}
-                   <button onClick={addWorkExperience} className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-semibold hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2 group"><Plus className="w-5 h-5 group-hover:scale-110 transition-transform" /> Add New Experience</button>
-                </div>
-              )}
+                      ))}
+                      <button
+                        onClick={addWorkExperience}
+                        className="w-full py-4 border border-dashed border-slate-300 rounded-sm text-slate-500 font-semibold hover:border-[var(--primary)] hover:text-[var(--primary)] hover:bg-white transition-all flex items-center justify-center gap-2 group"
+                      >
+                        <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />{" "}
+                        Add New Experience
+                      </button>
+                    </div>
+                  )}
 
-              {currentStep === 5 && resumeData && (
-                <div className="space-y-6">
-                   {resumeData.education.map((edu, index) => (
-                      <div key={index} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative group hover:shadow-md transition-shadow">
-                        <button onClick={() => deleteEducation(index)} className="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition-colors"><Trash2 className="w-5 h-5" /></button>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                           <div className="space-y-1"><label className="text-xs font-semibold text-slate-500 uppercase">Institution</label><input value={edu.institution} onChange={(e) => updateEducation(index, 'institution', e.target.value)} className="w-full font-bold text-lg border-b border-transparent focus:border-indigo-500 outline-none pb-1 placeholder:text-slate-300" placeholder="University" /></div>
-                           <div className="space-y-1"><label className="text-xs font-semibold text-slate-500 uppercase">Degree</label><input value={edu.degree} onChange={(e) => updateEducation(index, 'degree', e.target.value)} className="w-full font-semibold text-lg border-b border-transparent focus:border-indigo-500 outline-none pb-1 placeholder:text-slate-300" placeholder="Degree" /></div>
-                           <div className="space-y-1"><label className="text-xs font-semibold text-slate-500 uppercase">Field of Study</label><input value={edu.field} onChange={(e) => updateEducation(index, 'field', e.target.value)} className="w-full text-sm border-b border-transparent focus:border-indigo-500 outline-none pb-1 text-slate-600" placeholder="Major" /></div>
-                            <div className="space-y-1"><label className="text-xs font-semibold text-slate-500 uppercase">Graduation Year</label><input type="text" value={edu.graduation_year} onChange={(e) => updateEducation(index, 'graduation_year', e.target.value)} className="w-full text-sm border-b border-transparent focus:border-indigo-500 outline-none pb-1 text-slate-600" placeholder="YYYY" /></div>
+                  {currentStep === 5 && resumeData && (
+                    <div className="space-y-6 pl-4">
+                      {resumeData.education.map((edu, index) => (
+                        <div
+                          key={index}
+                          className="bg-white p-6 rounded-sm border border-slate-300 relative group transition-all"
+                        >
+                          <button
+                            onClick={() => deleteEducation(index)}
+                            className="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition-colors"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-1">
+                              <label className="text-md px-2 font-semibold text-slate-700">
+                                Institution
+                              </label>
+                              <input
+                                value={edu.institution}
+                                onChange={(e) =>
+                                  updateEducation(
+                                    index,
+                                    "institution",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
+                                placeholder="University Name"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-md px-2 font-semibold text-slate-700">
+                                Degree
+                              </label>
+                              <input
+                                value={edu.degree}
+                                onChange={(e) =>
+                                  updateEducation(
+                                    index,
+                                    "degree",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
+                                placeholder="e.g. Bachelor's in CS"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-md px-2 font-semibold text-slate-700">
+                                Field of Study{" "}
+                                <span className="text-rose-500">*</span>
+                              </label>
+                              <input
+                                value={edu.field}
+                                onChange={(e) =>
+                                  updateEducation(
+                                    index,
+                                    "field",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
+                                placeholder="Major"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-md px-2 font-semibold text-slate-700">
+                                Graduation Date
+                              </label>
+                              <input
+                                type="date"
+                                value={edu.graduation_year}
+                                onChange={(e) =>
+                                  updateEducation(
+                                    index,
+                                    "graduation_year",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] text-slate-700"
+                              />
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                   ))}
-                   <button onClick={addEducation} className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-semibold hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2 group"><Plus className="w-5 h-5 group-hover:scale-110 transition-transform" /> Add Education</button>
-                </div>
-              )}
+                      ))}
+                      <button
+                        onClick={addEducation}
+                        className="w-full py-4 border border-dashed border-slate-300 rounded-sm text-slate-500 font-semibold hover:border-[var(--primary)] hover:text-[var(--primary)] hover:bg-white transition-all flex items-center justify-center gap-2 group"
+                      >
+                        <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />{" "}
+                        Add Education
+                      </button>
+                    </div>
+                  )}
 
-              {currentStep === 6 && resumeData && (
-                 <div className="space-y-6">
-                   {resumeData.projects.map((proj, index) => (
-                      <div key={index} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative group hover:shadow-md transition-shadow">
-                        <button onClick={() => deleteStandaloneProject(index)} className="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition-colors"><Trash2 className="w-5 h-5" /></button>
-                        <div className="space-y-4">
-                           <div><label className="text-xs font-semibold text-slate-500 uppercase">Project Name</label><input value={proj.name} onChange={(e) => updateStandaloneProject(index, 'name', e.target.value)} className="w-full font-bold text-lg border-b border-transparent focus:border-indigo-500 outline-none pb-1 placeholder:text-slate-300" placeholder="Name" /></div>
-                           
-                           <div>
-                             <label className="text-xs font-semibold text-slate-500 uppercase">Technologies</label>
-                             <div className="flex flex-wrap gap-2 my-2">
-                               {proj.technologies.map((tech, tIdx) => (
-                                 <span key={tIdx} className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 border border-indigo-100">
-                                   {tech}
-                                   <button onClick={() => removeProjectTech(index, tech)} className="hover:text-rose-500 transition-colors p-0.5 rounded-full hover:bg-indigo-100">
+                  {currentStep === 6 && resumeData && (
+                    <div className="space-y-6 pl-4">
+                      {resumeData.projects.map((proj, index) => (
+                        <div
+                          key={index}
+                          className="bg-white p-6 rounded-sm border border-slate-300 relative group transition-all"
+                        >
+                          <button
+                            onClick={() => deleteStandaloneProject(index)}
+                            className="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition-colors"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                          <div className="space-y-6">
+                            <div className="space-y-1">
+                              <label className="text-md px-2 font-semibold text-slate-700">
+                                Project Name
+                              </label>
+                              <input
+                                value={proj.name}
+                                onChange={(e) =>
+                                  updateStandaloneProject(
+                                    index,
+                                    "name",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
+                                placeholder="Project Name"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="text-md px-2 font-semibold text-slate-700">
+                                Description
+                              </label>
+                              <AutoHeightTextarea
+                                value={proj.description}
+                                onChange={(e) =>
+                                  updateStandaloneProject(
+                                    index,
+                                    "description",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 min-h-[120px] resize-none"
+                                placeholder="Briefly describe what you built..."
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="text-md px-2 font-semibold text-slate-700">
+                                Technologies
+                              </label>
+                              <input
+                                value={projectTechInputs[index] || ""}
+                                onChange={(e) =>
+                                  setProjectTechInputs({
+                                    ...projectTechInputs,
+                                    [index]: e.target.value,
+                                  })
+                                }
+                                onKeyDown={(e) => addProjectTech(e, index)}
+                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
+                                placeholder="Add technology (Press Enter)"
+                              />
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {proj.technologies.map((tech, tIdx) => (
+                                  <span
+                                    key={tIdx}
+                                    className="bg-white text-blue-600 px-2.5 py-1 rounded-sm text-xs font-medium flex items-center gap-1 border border-slate-200 shadow-sm"
+                                  >
+                                    {tech}
+                                    <button
+                                      onClick={() =>
+                                        removeProjectTech(index, tech)
+                                      }
+                                      className="hover:text-rose-500 transition-colors p-0.5"
+                                    >
                                       <X className="w-3 h-3" />
-                                   </button>
-                                 </span>
-                               ))}
-                             </div>
-                             <input 
-                               value={projectTechInputs[index] || ""} 
-                               onChange={(e) => setProjectTechInputs({ ...projectTechInputs, [index]: e.target.value })}
-                               onKeyDown={(e) => addProjectTech(e, index)}
-                               className="w-full text-sm border-b border-transparent focus:border-indigo-500 outline-none pb-1 text-slate-600 placeholder:text-slate-300" 
-                               placeholder="Add technology (Press Enter)" 
-                             />
-                           </div>
-
-                           <div><textarea value={proj.description} onChange={(e) => updateStandaloneProject(index, 'description', e.target.value)} className="w-full h-24 p-2 bg-slate-50 rounded-lg text-sm text-slate-700 border-none resize-none focus:ring-1 focus:ring-indigo-300 outline-none" placeholder="Description..." /></div>
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                   ))}
-                   <button onClick={addStandaloneProject} className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-semibold hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2 group"><Plus className="w-5 h-5 group-hover:scale-110 transition-transform" /> Add Project</button>
-                 </div>
-              )}
+                      ))}
+                      <button
+                        onClick={addStandaloneProject}
+                        className="w-full py-4 border border-dashed border-slate-300 rounded-sm text-slate-500 font-semibold hover:border-[var(--primary)] hover:text-[var(--primary)] hover:bg-white transition-all flex items-center justify-center gap-2 group"
+                      >
+                        <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />{" "}
+                        Add Project
+                      </button>
+                    </div>
+                  )}
 
-              {currentStep === 7 && (
-                <div className="flex flex-col items-center justify-center h-full py-4 text-center">
-                   {/* <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4 text-emerald-600 shadow-emerald-200 shadow-lg"><CheckCircle2 className="w-8 h-8" /></div> */}
-                   <h2 className="text-2xl font-bold text-slate-900 mb-2">Ready to Generate!</h2>
-                   <p className="text-slate-500 max-w-md mx-auto mb-6 text-sm">Review the preview below, then click Generate to finish.</p>
-                   
-                   {!isFormComplete && (
-                     <div className="bg-rose-50 text-rose-600 px-4 py-3 rounded-xl border border-rose-100 text-sm font-medium flex items-center gap-2 mb-4">
-                       <AlertCircle className="w-4 h-4" /> Some required fields are missing. Please check the sidebar.
-                     </div>
-                   )}
+                  {currentStep === 7 && (
+                    <div className="flex flex-col items-center justify-center h-full py-4 text-center">
+                      {/* <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4 text-emerald-600 shadow-emerald-200 shadow-lg"><CheckCircle2 className="w-8 h-8" /></div> */}
+                      <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                        Ready to Generate!
+                      </h2>
+                      <p className="text-slate-500 max-w-md mx-auto mb-6 text-sm">
+                        Review the preview below, then click Generate to finish.
+                      </p>
 
-                   {/* PDF Preview Area */}
-                   <div className="w-full max-w-4xl mx-auto bg-slate-200 rounded-xl overflow-hidden border border-slate-300 shadow-inner h-[500px] flex items-center justify-center relative">
-                      {previewLoading ? (
-                        <div className="flex flex-col items-center gap-3">
-                           <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
-                           <p className="text-slate-500 font-medium">Generating Preview...</p>
-                        </div>
-                      ) : previewError ? (
-                         <div className="flex flex-col items-center gap-3 p-6 max-w-sm">
-                           <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center text-rose-500 mb-2">
-                             <AlertCircle className="w-6 h-6" />
-                           </div>
-                           <p className="text-slate-800 font-semibold">Preview Failed</p>
-                           <p className="text-slate-500 text-sm mb-2">{previewError}</p>
-                           <button 
-                             onClick={generatePreview}
-                             className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2"
-                           >
-                              <RefreshCw className="w-4 h-4" /> Retry Preview
-                           </button>
-                        </div>
-                      ) : previewUrl ? (
-                        <iframe 
-                          src={previewUrl} 
-                          className="w-full h-full "
-                          title="Resume Preview"
-                        />
-                      ) : (
-                        <div className="text-slate-400 flex flex-col items-center gap-2">
-                           <FileText className="w-12 h-12 opacity-50" />
-                           <p>Preview will appear here</p>
-                           <p className="text-xs text-slate-300">v1.1 - {resumeData ? "Data Ready" : "No Data"}</p>
-                           <button 
-                             onClick={generatePreview}
-                             className="mt-2 px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 text-slate-600 transition-colors flex items-center gap-2"
-                           >
-                              <RefreshCw className="w-4 h-4" /> Load Preview
-                           </button>
+                      {!isFormComplete && (
+                        <div className="bg-rose-50 text-rose-600 px-4 py-3 rounded-sm border border-rose-100 text-sm font-bold flex items-center gap-2 mb-4">
+                          <AlertCircle className="w-4 h-4" /> Some required
+                          fields are missing. Please check the sidebar.
                         </div>
                       )}
-                   </div>
-                </div>
-              )}
-            </motion.div>
+
+                      {/* PDF Preview Area */}
+                      <div className="w-full max-w-4xl mx-auto bg-slate-200 rounded-sm overflow-hidden border border-slate-300 h-[500px] flex items-center justify-center relative">
+                        {previewLoading ? (
+                          <div className="flex flex-col items-center gap-3">
+                            <Loader2 className="w-10 h-10 animate-spin text-[var(--primary)]" />
+                            <p className="text-slate-500 font-medium">
+                              Generating Preview...
+                            </p>
+                          </div>
+                        ) : previewError ? (
+                          <div className="flex flex-col items-center gap-3 p-6 max-w-sm">
+                            <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center text-rose-500 mb-2">
+                              <AlertCircle className="w-6 h-6" />
+                            </div>
+                            <p className="text-slate-800 font-semibold">
+                              Preview Failed
+                            </p>
+                            <p className="text-slate-500 text-sm mb-2">
+                              {previewError}
+                            </p>
+                            <button
+                              onClick={generatePreview}
+                              className="px-4 py-2 bg-[var(--primary)] text-white rounded-sm text-sm font-bold hover:bg-[var(--primary-700)] transition-colors flex items-center gap-2"
+                            >
+                              <RefreshCw className="w-4 h-4" /> Retry Preview
+                            </button>
+                          </div>
+                        ) : previewUrl ? (
+                          <iframe
+                            src={previewUrl}
+                            className="w-full h-full "
+                            title="Resume Preview"
+                          />
+                        ) : (
+                          <div className="text-slate-400 flex flex-col items-center gap-2">
+                            <FileText className="w-12 h-12 opacity-50" />
+                            <p>Preview will appear here</p>
+                            <p className="text-xs text-slate-300">
+                              v1.1 - {resumeData ? "Data Ready" : "No Data"}
+                            </p>
+                            <button
+                              onClick={generatePreview}
+                              className="mt-2 px-4 py-2 bg-white border border-slate-300 rounded-sm text-sm font-bold hover:bg-slate-50 text-slate-600 transition-colors flex items-center gap-2"
+                            >
+                              <RefreshCw className="w-4 h-4" /> Load Preview
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Improved Footer */}
-        <div className="bg-white border-t border-slate-200 px-6 py-4 flex  justify-between shrink-0 z-50">
-           <div className="flex items-center gap-3">
-             <button 
-               onClick={handleBack} 
-               disabled={currentStep === 1} 
-               className={`px-6 py-2.5 rounded-xl font-semibold border transition-all flex items-center gap-2 ${currentStep === 1 ? 'opacity-0 pointer-events-none' : 'border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'}`}
-             >
-               Back
-             </button>
-             {currentStep < 7 && (
-               <button 
-                 onClick={handleNext} 
-                 className="px-8 py-2.5 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md  transition-all active:scale-95"
-               >
-                 Next
-               </button>
-             )}
-           </div>
-
-           <button 
-             onClick={handleGenerate} 
-             disabled={generating || !isFormComplete} 
-             className="px-8 py-2.5 rounded-xl font-bold text-white bg-emerald-500  hover:from-emerald-600 hover:to-teal-600 shadow-lg  transition-all active:scale-95 flex items-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed disabled:shadow-none disabled:bg-none disabled:bg-slate-300 disabled:text-slate-500"
-           >
-             {generating ? <><Loader2 className="w-5 h-5 animate-spin" /> Generating...</> : previewUrl ? <>Regenerate PDF <RefreshCw className="w-4 h-4" /></> : <>Generate PDF <ArrowRight className="w-5 h-5" /></>}
-           </button>
-
-           {previewUrl && (
-            <></>
-              
-           )}
+      {/* Sticky Footer with Progress Bar */}
+      {/* Sticky Footer with Progress Bar */}
+      <div className="bg-white border-t border-slate-200 flex flex-col z-50 shrink-0 relative">
+        {/* Progress Bar Container */}
+        <div className="w-full h-1.5 bg-slate-100">
+          <div
+            className="h-full bg-[var(--primary)] transition-all duration-700 ease-in-out"
+            style={{ width: `${progress}%` }}
+          />
         </div>
-      </main>
+
+        <div className="px-6 py-2 flex justify-between items-center w-full max-w-[1400px] mx-auto">
+          <div className="flex-1">
+            {" "}
+            {/* Left Side - Back Button */}
+            <button
+              onClick={handleBack}
+              disabled={currentStep === 1}
+              className={`px-8 py-2.5 rounded-sm font-bold border transition-all flex items-center gap-2 ${
+                currentStep === 1
+                  ? "opacity-0 pointer-events-none"
+                  : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400"
+              }`}
+            >
+              Back
+            </button>
+          </div>
+
+          <div className="flex-1 flex justify-end">
+            {" "}
+            {/* Right Side - Next/Generate Button */}
+            {currentStep < 7 ? (
+              <button
+                onClick={handleNext}
+                disabled={getMissingFieldsForStep(currentStepInfo.key)}
+                className="px-8 py-2.5 rounded-sm font-bold text-white bg-[var(--primary)] hover:bg-[var(--primary-700)] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            ) : (
+              <button
+                onClick={handleGenerate}
+                disabled={generating || !isFormComplete}
+                className="px-8 py-2.5 rounded-sm font-bold text-white bg-[var(--primary)] hover:bg-[var(--primary-700)] transition-all active:scale-95 flex items-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+              >
+                {generating ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" /> Generating...
+                  </>
+                ) : previewUrl ? (
+                  <>
+                    Regenerate PDF <RefreshCw className="w-4 h-4" />
+                  </>
+                ) : (
+                  <>
+                    Generate PDF <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
