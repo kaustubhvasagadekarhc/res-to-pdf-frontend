@@ -164,8 +164,10 @@ export default function ActivitiesPage() {
                                                                     {userName}
                                                                 </span>
                                                             </div>
-                                                            <div className="text-xs text-slate-500 mb-1">
-                                                                {log.user?.email} - {log.action.replace(/_/g, ' ').toLowerCase()}
+                                                            <div className="text-xs flex items-center gap-1 mb-1">
+                                                                <span className="text-slate-500">{log.user?.email}</span>
+                                                                <span className="text-slate-400">-</span>
+                                                                <span className="text-slate-900">{log.action.replace(/_/g, ' ').toLowerCase()}</span>
                                                             </div>
                                                             {/* {log.ipAddress && (
                                                                 <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
@@ -184,7 +186,7 @@ export default function ActivitiesPage() {
 
                                                     {/* Message / Details Card */}
                                                     {(!!log.details || (log.description && log.description.length > 10)) && (
-                                                        <div className="mt-3 ml-8 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+                                                        <div className="mt-2 ml-8 p-3 bg-white border border-slate-200 rounded-lg shadow-sm">
                                                             <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
                                                                 Details
                                                             </div>
