@@ -128,7 +128,7 @@ export default function AdminDashboard() {
       title: "Activity Logs",
       description: "Monitor system activity",
       icon: Activity,
-      href: "/admin/logs",
+      href: "/admin/activities",
       iconColor: "text-rose-600",
       bgColor: "bg-rose-50",
     },
@@ -136,7 +136,8 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-10 p-8">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end  md:justify-between">
+        {/* flex items-end justify-between */}
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-800">
             Admin Overview
@@ -148,13 +149,13 @@ export default function AdminDashboard() {
         <div className="flex gap-3">
           <Button
             variant="outline"
-            className="hidden sm:flex border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
+            className="   w-full md:w-auto lg:flex border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
             onClick={() => {}}
           >
             Export Report
           </Button>
           <Button
-            className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white transition-all hover:-translate-y-0.5"
+            className="  w-full md:w-auto bg-gradient-to-r from-indigo-600 to-blue-600 text-white transition-all hover:-translate-y-0.5"
             onClick={() => {}}
           >
             Create User

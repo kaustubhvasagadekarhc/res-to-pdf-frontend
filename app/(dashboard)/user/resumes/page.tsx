@@ -287,7 +287,7 @@ export default function ResumesPage() {
       <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="mb-8">
-          <div className="flex items-start justify-between gap-6 mb-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start mb-4 md:justify-between">
             <div>
               <h1 className="text-4xl font-bold text-[var(--primary)] mb-1">
                 My Resumes{" "}
@@ -300,12 +300,12 @@ export default function ResumesPage() {
               </p>
             </div>
             <div className="flex items-center">
-              <Button className=" bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50 whitespace-nowrap font-medium">
+              <Button className="w-full md:w-auto bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50 whitespace-nowrap font-medium">
                 Timesheet
               </Button>
               <Button
                 onClick={() => router.push("/user/upload")}
-                className="ml-3 bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] whitespace-nowrap font-medium"
+                className="w-full md:w-auto ml-3 bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] whitespace-nowrap font-medium"
               >
                 Create New Resume
               </Button>
@@ -313,7 +313,7 @@ export default function ResumesPage() {
           </div>
 
           {/* Search and Filters Bar */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex  flex-col md:flex-row items-center justify-between gap-4">
             <div className="relative w-full md:w-1/3">
               <Search className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
               <input
