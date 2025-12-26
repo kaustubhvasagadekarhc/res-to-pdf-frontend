@@ -7,6 +7,27 @@ import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
 export class ResumeService {
     /**
+     * Get user resume sections
+     * @returns any Resume sections retrieved successfully
+     * @throws ApiError
+     */
+    public static getResumeSections({
+        userId,
+    }: {
+        userId: string,
+    }): CancelablePromise<{
+        status?: string;
+        data?: Array<Record<string, any>>;
+    }> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/resume/sections/{userId}',
+            path: {
+                'userId': userId,
+            },
+        });
+    }
+    /**
      * Delete a resume
      * @returns any Resume deleted successfully
      * @throws ApiError
@@ -28,27 +49,6 @@ export class ResumeService {
             errors: {
                 403: `Unauthorized`,
                 404: `Resume not found`,
-            },
-        });
-    }
-    /**
-     * Get user resume sections
-     * @returns any Resume sections retrieved successfully
-     * @throws ApiError
-     */
-    public static getResumeSections({
-        userId,
-    }: {
-        userId: string,
-    }): CancelablePromise<{
-        status?: string;
-        data?: Array<Record<string, any>>;
-    }> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/resume/sections/{userId}',
-            path: {
-                'userId': userId,
             },
         });
     }

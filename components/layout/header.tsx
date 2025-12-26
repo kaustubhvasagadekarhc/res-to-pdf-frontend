@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/contexts/UserContext";
 import { authService as legacyAuthService } from "@/services/auth.services";
+import { authService } from "@/app/api/client";
 import { LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -12,9 +13,15 @@ export function Header() {
   const { user } = useUser();
 
   console.log("Header User:", user?.name);
-  const handleLogout = () => {
-    legacyAuthService.clearToken();
-    router.push("/login");
+  const handleLogout = async () => {
+    try {
+      await authService.postAuthLogout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      legacyAuthService.clearToken();
+      router.push("/login");
+    }
   };
 
   return (
