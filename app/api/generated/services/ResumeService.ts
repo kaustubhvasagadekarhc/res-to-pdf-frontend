@@ -28,6 +28,31 @@ export class ResumeService {
         });
     }
     /**
+     * Delete a resume
+     * @returns any Resume deleted successfully
+     * @throws ApiError
+     */
+    public static deleteResume({
+        id,
+    }: {
+        /**
+         * Resume ID
+         */
+        id: string,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/resume/{id}',
+            path: {
+                'id': id,
+            },
+            errors: {
+                403: `Unauthorized`,
+                404: `Resume not found`,
+            },
+        });
+    }
+    /**
      * Upload and parse a resume PDF
      * @returns any Resume parsed successfully
      * @throws ApiError

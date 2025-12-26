@@ -1,348 +1,472 @@
 "use client";
 
+// import { useAdmin } from "@/app/context/admin-context";
 import { toast } from "sonner";
 import { adminService } from "@/app/api/client";
-import { User } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import {
-    Check,
-
-    Search,
-    Shield,
-    ShieldAlert,
-    Trash2,
-    X,
-    UserPlus
+  Check,
+  Search,
+  Shield,
+  ShieldAlert,
+  Trash2,
+  X,
+  UserPlus,
+  Upload,
+  Mail,
+  Loader2,
+  User as UserIcon,
 } from "lucide-react";
-// import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-
-
-
+import { User } from "@/types/api";
 
 export default function UserManagementPage() {
-    useAuthGuard("Admin");
+  useAuthGuard("Admin");
 
-    const [users, setUsers] = useState<User[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [showInviteDialog, setShowInviteDialog] = useState(false);
-    const [, setInviteFile] = useState<File | null>(null);
-    const [inviteEmail, setInviteEmail] = useState("");
-    const [inviteName, setInviteName] = useState("");
-    const [isParsing, setIsParsing] = useState(false);
-    const [isInviting, setIsInviting] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [inviteFile, setInviteFile] = useState<File | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [isParsing, setIsParsing] = useState(false);
+  const [isInviting, setIsInviting] = useState(false);
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
+  const fetchUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await adminService.getAdminUsers();
+      // Handle PaginatedResponse<User> structure
+      if (response && Array.isArray(response.data)) {
+        setUsers(response.data);
+      } else if (Array.isArray(response)) {
+        // Fallback if backend returns direct array
+        setUsers(response);
+      } else {
+        console.warn("Unexpected user response format:", response);
+        setUsers([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    const fetchUsers = async () => {
-        try {
-            setLoading(true);
-            const response = await adminService.getAdminUsers();
-            // Handle PaginatedResponse<User> structure
-            if (response && Array.isArray(response.data)) {
-                setUsers(response.data);
-            } else if (Array.isArray(response)) {
-                // Fallback if backend returns direct array
-                setUsers(response);
-            } else {
-                console.warn("Unexpected user response format:", response);
-                setUsers([]);
-            }
-        } catch (error) {
-            console.error("Failed to fetch users:", error);
-        } finally {
-            setLoading(false);
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const handleRoleUpdate = async (
+    userId: string,
+    currentRole: "USER" | "ADMIN" = "USER"
+  ) => {
+    try {
+      const newRole = currentRole === "USER" ? "ADMIN" : "USER";
+      await adminService.patchAdminUsersRole({
+        id: userId,
+        requestBody: { userType: newRole },
+      });
+      fetchUsers();
+    } catch (error) {
+      console.error("Failed to update role:", error);
+      toast.error("Failed to update user role");
+    }
+  };
+
+  const handleVerifyUpdate = async (userId: string, isVerified: boolean) => {
+    try {
+      await adminService.patchAdminUsersVerify({
+        id: userId,
+        requestBody: { isVerified: !isVerified },
+      });
+      fetchUsers();
+    } catch (error) {
+      console.error("Failed to update verification:", error);
+      toast.error("Failed to update verification status");
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
+    try {
+      await adminService.deleteAdminUsers({ id: userId });
+      fetchUsers(); // Refresh list
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+      toast.error("Failed to delete user");
+    }
+  };
+
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setInviteFile(file);
+      setIsParsing(true);
+      try {
+        const response = await adminService.postAdminResumeParse({
+          formData: { resume: file },
+        });
+
+        // Backend response structure is { status: 'success', data: { parsed: { personal: { ... } } } }
+        const personal = response?.data?.parsed?.personal;
+
+        if (personal) {
+          setInviteEmail(personal.email || "");
+          setInviteName(personal.name || "");
+          toast.success("Resume parsed and details auto-filled!");
+        } else {
+          setInviteEmail("");
+          setInviteName("");
+          toast.info("Resume parsed but no contact details were found.");
         }
-    };
+      } catch (error) {
+        console.error("Failed to parse resume:", error);
+        toast.error("Failed to parse resume");
+      } finally {
+        setIsParsing(false);
+      }
+    }
+  };
 
-    const handleRoleUpdate = async (userId: string, currentRole: "USER" | "ADMIN" = "USER") => {
-        try {
-            const newRole = currentRole === "USER" ? "ADMIN" : "USER";
-            await adminService.patchAdminUsersRole({
-                id: userId,
-                requestBody: { userType: newRole },
-            });
-            fetchUsers(); // Refresh list
-        } catch (error) {
-            console.error("Failed to update role:", error);
-            toast.error("Failed to update user role");
-        }
-    };
+  const handleInvite = async () => {
+    if (!inviteEmail || !inviteName) {
+      toast.error("Please provide name and email");
+      return;
+    }
+    setIsInviting(true);
+    setInviteError(null);
+    try {
+      await adminService.postAdminUsersInvite({
+        requestBody: { email: inviteEmail, name: inviteName },
+      });
+      setShowInviteDialog(false);
+      setInviteFile(null);
+      setInviteEmail("");
+      setInviteName("");
+      toast.success("User invited successfully");
+      fetchUsers();
+    } catch (error: unknown) {
+      console.error("Failed to invite user:", error);
+      const apiError = error as {
+        status?: number;
+        body?: { message?: string };
+      };
+      if (
+        apiError.status === 409 ||
+        apiError.body?.message?.includes("exists")
+      ) {
+        setInviteError("This user already exists in the system.");
+      } else {
+        toast.error("Failed to invite user");
+      }
+    } finally {
+      setIsInviting(false);
+    }
+  };
 
-    const handleVerifyUpdate = async (userId: string, isVerified: boolean) => {
-        try {
-            await adminService.patchAdminUsersVerify({
-                id: userId,
-                requestBody: { isVerified: !isVerified },
-            });
-            fetchUsers(); // Refresh list
-        } catch (error) {
-            console.error("Failed to update verification:", error);
-            toast.error("Failed to update verification status");
-        }
-    };
+  const filteredUsers = users.filter(
+    (user) =>
+      user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-    const handleDeleteUser = async (userId: string) => {
-        if (!window.confirm("Are you sure you want to delete this user?")) return;
-        try {
-            await adminService.deleteAdminUsers({ id: userId });
-            fetchUsers(); // Refresh list
-        } catch (error) {
-            console.error("Failed to delete user:", error);
-            toast.error("Failed to delete user");
-        }
-    };
-
-    const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setInviteFile(file);
-            setIsParsing(true);
-            try {
-                const response = await adminService.postAdminResumeParse({
-                    formData: { resume: file },
-                });
-                if (response && response.personal) {
-                    setInviteEmail(response.personal.email || "");
-                    setInviteName(response.personal.name || "");
-                } else {
-                    // If structure key is missing, ensure it's blank or handle gracefully
-                    // Assuming successful response might maintain previous state or simpler clearing if unexpected format
-                    setInviteEmail("");
-                    setInviteName("");
-                }
-            } catch (error) {
-                console.error("Failed to parse resume:", error);
-                toast.error("Failed to parse resume");
-            } finally {
-                setIsParsing(false);
-            }
-        }
-    };
-
-    const handleInvite = async () => {
-        if (!inviteEmail || !inviteName) {
-            toast.error("Please provide name and email");
-            return;
-        }
-        setIsInviting(true);
-        try {
-            await adminService.postAdminUsersInvite({
-                requestBody: { email: inviteEmail, name: inviteName },
-            });
-            setShowInviteDialog(false);
-            setInviteFile(null);
-            setInviteEmail("");
-            setInviteName("");
-            toast.success("User invited successfully");
-            fetchUsers();
-        } catch (error) {
-            console.error("Failed to invite user:", error);
-            toast.error("Failed to invite user");
-        } finally {
-            setIsInviting(false);
-        }
-    };
-
-    const filteredUsers = users.filter(
-        (user) =>
-            user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.email?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    return (
-        <div className="min-h-screen bg-slate-50">
-            <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
-                <div className="mb-8">
-                    <div className="flex items-start justify-between gap-6 mb-6">
-                        <div>
-                            <h1 className="text-4xl font-bold text-[var(--primary)] mb-1">
-                                User Management
-                            </h1>
-                            <p className="text-slate-600">
-                                Manage system users, roles, and access.
-                            </p>
-                        </div>
-                        <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-                            <DialogTrigger asChild>
-                                <Button className="bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] whitespace-nowrap font-medium gap-2">
-                                    <UserPlus className="w-4 h-4" />
-                                    Invite User
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Invite New User</DialogTitle>
-                                    <DialogDescription>
-                                        Upload a resume to auto-fill details or enter them manually.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-4 py-4">
-                                    <div className="grid w-full items-center gap-1.5">
-                                        <Label htmlFor="resume">Resume (Optional)</Label>
-                                        <Input
-                                            id="resume"
-                                            type="file"
-                                            accept=".pdf"
-                                            onChange={handleResumeUpload}
-                                            disabled={isParsing}
-                                        />
-                                        {isParsing && <p className="text-sm text-slate-500">Parsing resume...</p>}
-                                    </div>
-                                    <div className="grid w-full items-center gap-1.5">
-                                        <Label htmlFor="name">Name</Label>
-                                        <Input
-                                            id="name"
-                                            value={inviteName}
-                                            onChange={(e) => setInviteName(e.target.value)}
-                                            placeholder="John Doe"
-                                        />
-                                    </div>
-                                    <div className="grid w-full items-center gap-1.5">
-                                        <Label htmlFor="email">Email</Label>
-                                        <Input
-                                            id="email"
-                                            type="email"
-                                            value={inviteEmail}
-                                            onChange={(e) => setInviteEmail(e.target.value)}
-                                            placeholder="john@example.com"
-                                        />
-                                    </div>
-                                </div>
-                                <DialogFooter>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setShowInviteDialog(false)}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button onClick={handleInvite} disabled={isInviting || isParsing}>
-                                        {isInviting ? "Inviting..." : "Send Invitation"}
-                                    </Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
-
-                    <div className="relative">
-                        <Search className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Search users..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-sm bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-700)] focus:border-transparent"
-                        />
-                    </div>
-                </div>
-
-                {loading ? (
-                    <div className="text-center py-10">Loading users...</div>
-                ) : (
-                    <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50">
-                            <div className="col-span-4 text-xs font-semibold text-slate-600 uppercase">
-                                User
-                            </div>
-                            <div className="col-span-3 text-xs font-semibold text-slate-600 uppercase">
-                                Role
-                            </div>
-                            <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase">
-                                Status
-                            </div>
-                            <div className="col-span-3 text-right text-xs font-semibold text-slate-600 uppercase">
-                                Actions
-                            </div>
-                        </div>
-                        {filteredUsers.map((user) => (
-                            <div
-                                key={user.id}
-                                className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 last:border-b-0 items-center hover:bg-slate-50 transition-colors"
-                            >
-                                <div className="col-span-4">
-                                    <div className="font-medium text-slate-900">{user.name}</div>
-                                    <div className="text-sm text-slate-500">{user.email}</div>
-                                </div>
-                                <div className="col-span-3">
-                                    <span
-                                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${user.userType === "ADMIN"
-                                            ? "bg-purple-100 text-purple-800"
-                                            : "bg-blue-100 text-blue-800"
-                                            }`}
-                                    >
-                                        {user.userType === "ADMIN" ? (
-                                            <ShieldAlert className="w-3 h-3" />
-                                        ) : (
-                                            <Shield className="w-3 h-3" />
-                                        )}
-                                        {user.userType}
-                                    </span>
-                                </div>
-                                <div className="col-span-2">
-                                    <span
-                                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${user.isVerified
-                                            ? "bg-emerald-100 text-emerald-800"
-                                            : "bg-yellow-100 text-yellow-800"
-                                            }`}
-                                    >
-                                        {user.isVerified ? (
-                                            <>
-                                                <Check className="w-3 h-3" /> Verified
-                                            </>
-                                        ) : (
-                                            <>
-                                                <X className="w-3 h-3" /> Unverified
-                                            </>
-                                        )}
-                                    </span>
-                                </div>
-                                <div className="col-span-3 flex justify-end gap-2">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => user.id && handleRoleUpdate(user.id, user.userType || "USER")}
-                                        title="Toggle Role"
-                                    >
-                                        <Shield className="w-4 h-4 text-slate-500" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => user.id && handleVerifyUpdate(user.id, user.isVerified || false)}
-                                        title="Toggle Verification"
-                                    >
-                                        <Check className={`w-4 h-4 ${user.isVerified ? 'text-emerald-500' : 'text-slate-300'}`} />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => user.id && handleDeleteUser(user.id)}
-                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <div className="flex items-start justify-between gap-6 mb-6">
+            <div>
+              <h1 className="text-4xl font-bold text-[var(--primary)] mb-1">
+                User Management
+              </h1>
+              <p className="text-slate-600">
+                Manage system users, roles, and access.
+              </p>
             </div>
+            <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+              <DialogTrigger asChild>
+                <Button className="bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] whitespace-nowrap font-medium gap-2">
+                  <UserPlus className="w-4 h-4" />
+                  Invite User
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Invite New User</DialogTitle>
+                  <DialogDescription>
+                    Upload a resume to auto-fill details or enter them manually.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-6 py-4">
+                  {/* Custom File Upload Area */}
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold">
+                      Resume (Optional)
+                    </Label>
+                    <div
+                      className={`relative border-2 border-dashed rounded-lg p-6 transition-all duration-200 flex flex-col items-center justify-center gap-2 group cursor-pointer
+                                                ${
+                                                  isParsing
+                                                    ? "bg-slate-50 border-slate-200"
+                                                    : "bg-white border-slate-300 hover:border-[var(--primary)] hover:bg-slate-50"
+                                                }`}
+                      onClick={() =>
+                        document.getElementById("resume-upload")?.click()
+                      }
+                    >
+                      <input
+                        id="resume-upload"
+                        type="file"
+                        accept=".pdf"
+                        className="hidden"
+                        onChange={handleResumeUpload}
+                        disabled={isParsing}
+                      />
+                      <div className="p-3 bg-slate-100 rounded-full group-hover:bg-[var(--primary-50)] transition-colors">
+                        {isParsing ? (
+                          <Loader2 className="w-6 h-6 text-[var(--primary)] animate-spin" />
+                        ) : inviteFile ? (
+                          <Check className="w-6 h-6 text-emerald-500" />
+                        ) : (
+                          <Upload className="w-6 h-6 text-slate-500 group-hover:text-[var(--primary)]" />
+                        )}
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm font-medium text-slate-700">
+                          {isParsing
+                            ? "Parsing Resume..."
+                            : inviteFile
+                            ? inviteFile.name
+                            : "Click to upload resume"}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {inviteFile
+                            ? "Resume uploaded successfully"
+                            : "PDF files only (max 5MB)"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {inviteError && (
+                    <div className="bg-rose-50 border border-rose-100 text-rose-600 px-4 py-3 rounded-lg text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+                      <ShieldAlert className="w-4 h-4 shrink-0" />
+                      {inviteError}
+                    </div>
+                  )}
+
+                  <div className="grid w-full items-center gap-2">
+                    <Label
+                      htmlFor="name"
+                      className="text-slate-700 font-semibold"
+                    >
+                      Name
+                    </Label>
+                    <div className="relative">
+                      <UserPlus className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Input
+                        id="name"
+                        value={inviteName}
+                        onChange={(e) => setInviteName(e.target.value)}
+                        placeholder="John Doe"
+                        className="pl-10 h-11 border-slate-200 focus:border-[var(--primary)] focus:ring-[var(--primary-50)]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid w-full items-center gap-2">
+                    <Label
+                      htmlFor="email"
+                      className="text-slate-700 font-semibold"
+                    >
+                      Email
+                    </Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Input
+                        id="email"
+                        type="email"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        placeholder="john@example.com"
+                        className="pl-10 h-11 border-slate-200 focus:border-[var(--primary)] focus:ring-[var(--primary-50)]"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter className="gap-2 sm:gap-0">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowInviteDialog(false)}
+                    className="text-slate-500 hover:bg-slate-100"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleInvite}
+                    disabled={
+                      isInviting || isParsing || !inviteName || !inviteEmail
+                    }
+                    className="bg-[var(--primary)] hover:bg-[var(--primary-700)] text-white px-8 h-11 transition-all active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {isInviting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Inviting...
+                      </>
+                    ) : (
+                      "Send Invitation"
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="relative max-w-2xl">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-[var(--primary)] transition-colors" />
+            <input
+              type="text"
+              placeholder="Search by name or email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-lg bg-white text-slate-700 placeholder-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-50)] focus:border-[var(--primary)] transition-all"
+            />
+          </div>
         </div>
-    );
+
+        {loading ? (
+          <div className="text-center py-10">Loading users...</div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-200 bg-slate-50/50">
+              <div className="col-span-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                User Details
+              </div>
+              <div className="col-span-3 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Access Level
+              </div>
+              <div className="col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Status
+              </div>
+              <div className="col-span-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Actions
+              </div>
+            </div>
+            {filteredUsers.map((user) => (
+              <div
+                key={user.id}
+                className="grid grid-cols-12 gap-4 px-6 py-5 border-b border-slate-100 last:border-b-0 items-center hover:bg-slate-50/80 transition-all group"
+              >
+                <div className="col-span-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200 shrink-0">
+                    {user.name?.charAt(0).toUpperCase() || (
+                      <UserIcon className="w-5 h-5" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-slate-900 truncate">
+                      {user.name}
+                    </div>
+                    <div className="text-sm text-slate-500 truncate">
+                      {user.email}
+                    </div>
+                  </div>
+                </div>
+                <div className="col-span-3">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
+                      user.userType === "ADMIN"
+                        ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                        : "bg-blue-50 text-blue-700 border border-blue-100"
+                    }`}
+                  >
+                    {user.userType === "ADMIN" ? (
+                      <ShieldAlert className="w-3.5 h-3.5" />
+                    ) : (
+                      <Shield className="w-3.5 h-3.5" />
+                    )}
+                    {user.userType}
+                  </span>
+                </div>
+                <div className="col-span-2">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
+                      user.isVerified
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                        : "bg-amber-50 text-amber-700 border border-amber-100"
+                    }`}
+                  >
+                    {user.isVerified ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" /> Verified
+                      </>
+                    ) : (
+                      <>
+                        <X className="w-3.5 h-3.5" /> Unverified
+                      </>
+                    )}
+                  </span>
+                </div>
+                <div className="col-span-3 flex justify-end gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      user.id &&
+                      handleRoleUpdate(user.id, user.userType || "USER")
+                    }
+                    className="h-9 w-9 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                    title="Toggle Role"
+                  >
+                    <Shield className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      user.id &&
+                      handleVerifyUpdate(user.id, user.isVerified || false)
+                    }
+                    className="h-9 w-9 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                    title="Toggle Verification"
+                  >
+                    <Check
+                      className={`w-4 h-4 ${
+                        user.isVerified ? "text-emerald-600" : ""
+                      }`}
+                    />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => user.id && handleDeleteUser(user.id)}
+                    className="h-9 w-9 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                    title="Delete User"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
