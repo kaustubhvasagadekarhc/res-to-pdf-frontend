@@ -879,7 +879,7 @@ export default function EditPage() {
           {/* Right Column: Form Inputs */}
           <div className="lg:col-span-7 h-full flex flex-col overflow-hidden">
             <div className="flex flex-col h-full overflow-hidden">
-              <div className="px-4 md:px-4 pt-6 md:pt-8 pb-4 shrink-0"></div>
+              <div className="px-4 md:px-4  pb-4 shrink-0"></div>
 
               <div className="pt-4 overflow-y-auto flex-1 pr-2">
                 <motion.div
@@ -1143,9 +1143,7 @@ export default function EditPage() {
                           </div>
                         </div>
                       </div>
-                      <p className="text-xs text-slate-500 px-2">
-                        Press Enter to add a skill.
-                      </p>
+                      
                     </div>
                   )}
 
@@ -1548,23 +1546,23 @@ export default function EditPage() {
 
                   {currentStep === 7 && (
                     <div className="flex flex-col items-center justify-center h-full py-4 text-center">
-                      {/* <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4 text-emerald-600 shadow-emerald-200 shadow-lg"><CheckCircle2 className="w-8 h-8" /></div> */}
+                      {/* <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4 text-emerald-600 shadow-emerald-200 shadow-lg"><CheckCircle2 className="w-8 h-8" /></div>
                       <h2 className="text-2xl font-bold text-slate-900 mb-2">
                         Ready to Generate!
                       </h2>
                       <p className="text-slate-500 max-w-md mx-auto mb-6 text-sm">
                         Review the preview below, then click Generate to finish.
-                      </p>
+                      </p> */}
 
                       {!isFormComplete && (
-                        <div className="bg-rose-50 text-rose-600 px-4 py-3 rounded-sm border border-rose-100 text-sm font-bold flex items-center gap-2 mb-4">
+                        <div className="bg-rose-50 text-rose-600 px-4 py-0   rounded-sm border border-rose-100 text-sm font-bold flex items-center gap-2 mb-4">
                           <AlertCircle className="w-4 h-4" /> Some required
                           fields are missing. Please check the sidebar.
                         </div>
                       )}
 
                       {/* PDF Preview Area */}
-                      <div className="w-full max-w-4xl mx-auto bg-slate-200 rounded-sm overflow-hidden border border-slate-300 h-[500px] flex items-center justify-center relative">
+                      <div className="w-full max-w-4xl mx-auto bg-slate-200 rounded-sm border border-slate-300 h-[500px] flex items-center justify-center ">
                         {previewLoading ? (
                           <div className="flex flex-col items-center gap-3">
                             <Loader2 className="w-10 h-10 animate-spin text-[var(--primary)]" />
@@ -1605,7 +1603,7 @@ export default function EditPage() {
                             </p>
                             <button
                               onClick={generatePreview}
-                              className="mt-2 px-4 py-2 bg-white border border-slate-300 rounded-sm text-sm font-bold hover:bg-slate-50 text-slate-600 transition-colors flex items-center gap-2"
+                              className="mt-2 px-4  bg-white border border-slate-300 rounded-sm text-sm font-bold hover:bg-slate-50 text-slate-600 transition-colors flex items-center gap-2"
                             >
                               <RefreshCw className="w-4 h-4" /> Load Preview
                             </button>
