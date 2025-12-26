@@ -7,6 +7,31 @@ import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
 export class ResumeService {
     /**
+     * Delete a resume
+     * @returns any Resume deleted successfully
+     * @throws ApiError
+     */
+    public static deleteResume({
+        id,
+    }: {
+        /**
+         * Resume ID
+         */
+        id: string,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/resume/{id}',
+            path: {
+                'id': id,
+            },
+            errors: {
+                403: `Unauthorized`,
+                404: `Resume not found`,
+            },
+        });
+    }
+    /**
      * Get user resume sections
      * @returns any Resume sections retrieved successfully
      * @throws ApiError

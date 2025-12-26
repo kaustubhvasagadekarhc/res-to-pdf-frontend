@@ -1,6 +1,6 @@
 "use client";
 
-import { apiClient, dashboardService } from "@/app/api/client";
+import { apiClient, dashboardService, resumeService } from "@/app/api/client";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/contexts/UserContext";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
@@ -159,9 +159,30 @@ export default function ResumesPage() {
   const [confirmResume, setConfirmResume] = useState<ResumeCard | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const openDeleteConfirm = (resume: ResumeCard) => {
+  const openDeleteConfirm = async (resume: ResumeCard) => {
     setConfirmResume(resume);
     setOpenMenuId(null);
+
+    try {
+      apiClient.refreshTokenFromCookies();
+
+      const response = await resumeService.deleteResume({
+        id: resume.id,
+      });
+
+      if (!response.parsed) {
+        setError("Failed to parse resume data");
+        return;
+      }
+
+      sessionStorage.setItem("resumeData", JSON.stringify(response.parsed));
+      router.push("/user/edit");
+    } catch (error: unknown) {
+      console.error("Resume upload failed:", error);
+      setError(error instanceof Error ? error.message : "Upload failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const cancelDelete = () => setConfirmResume(null);

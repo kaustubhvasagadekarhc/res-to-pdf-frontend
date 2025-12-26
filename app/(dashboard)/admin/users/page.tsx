@@ -1,22 +1,21 @@
 "use client";
 
+import { useAdmin } from "@/app/context/admin-context";
 import { toast } from "sonner";
 import { adminService } from "@/app/api/client";
-import { User } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import {
     Check,
-
     Search,
     Shield,
     ShieldAlert,
     Trash2,
     X,
-    UserPlus
+    UserPlus,
+    Loader2
 } from "lucide-react";
-// import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useMemo } from "react";
 import {
     Dialog,
     DialogContent,
@@ -29,15 +28,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-
-
-
-
 export default function UserManagementPage() {
     useAuthGuard("Admin");
 
-    const [users, setUsers] = useState<User[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { users, isLoading, updateLocalUser, removeLocalUser, refreshData } = useAdmin();
     const [searchQuery, setSearchQuery] = useState("");
     const [showInviteDialog, setShowInviteDialog] = useState(false);
     const [, setInviteFile] = useState<File | null>(null);
@@ -46,39 +40,16 @@ export default function UserManagementPage() {
     const [isParsing, setIsParsing] = useState(false);
     const [isInviting, setIsInviting] = useState(false);
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
-
-    const fetchUsers = async () => {
-        try {
-            setLoading(true);
-            const response = await adminService.getAdminUsers();
-            // Handle PaginatedResponse<User> structure
-            if (response && Array.isArray(response.data)) {
-                setUsers(response.data);
-            } else if (Array.isArray(response)) {
-                // Fallback if backend returns direct array
-                setUsers(response);
-            } else {
-                console.warn("Unexpected user response format:", response);
-                setUsers([]);
-            }
-        } catch (error) {
-            console.error("Failed to fetch users:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleRoleUpdate = async (userId: string, currentRole: "USER" | "ADMIN" = "USER") => {
         try {
             const newRole = currentRole === "USER" ? "ADMIN" : "USER";
+            // Confirmed update pattern: Call API -> Success -> Update Local State
             await adminService.patchAdminUsersRole({
                 id: userId,
                 requestBody: { userType: newRole },
             });
-            fetchUsers(); // Refresh list
+            updateLocalUser(userId, { userType: newRole });
+            toast.success(`Role updated to ${newRole}`);
         } catch (error) {
             console.error("Failed to update role:", error);
             toast.error("Failed to update user role");
@@ -87,11 +58,13 @@ export default function UserManagementPage() {
 
     const handleVerifyUpdate = async (userId: string, isVerified: boolean) => {
         try {
+            const newStatus = !isVerified;
             await adminService.patchAdminUsersVerify({
                 id: userId,
-                requestBody: { isVerified: !isVerified },
+                requestBody: { isVerified: newStatus },
             });
-            fetchUsers(); // Refresh list
+            updateLocalUser(userId, { isVerified: newStatus });
+            toast.success(`User ${newStatus ? 'verified' : 'unverified'}`);
         } catch (error) {
             console.error("Failed to update verification:", error);
             toast.error("Failed to update verification status");
@@ -102,7 +75,8 @@ export default function UserManagementPage() {
         if (!window.confirm("Are you sure you want to delete this user?")) return;
         try {
             await adminService.deleteAdminUsers({ id: userId });
-            fetchUsers(); // Refresh list
+            removeLocalUser(userId);
+            toast.success("User deleted successfully");
         } catch (error) {
             console.error("Failed to delete user:", error);
             toast.error("Failed to delete user");
@@ -122,8 +96,6 @@ export default function UserManagementPage() {
                     setInviteEmail(response.personal.email || "");
                     setInviteName(response.personal.name || "");
                 } else {
-                    // If structure key is missing, ensure it's blank or handle gracefully
-                    // Assuming successful response might maintain previous state or simpler clearing if unexpected format
                     setInviteEmail("");
                     setInviteName("");
                 }
@@ -151,7 +123,8 @@ export default function UserManagementPage() {
             setInviteEmail("");
             setInviteName("");
             toast.success("User invited successfully");
-            fetchUsers();
+            // Refresh full list to get the new user properly
+            refreshData();
         } catch (error) {
             console.error("Failed to invite user:", error);
             toast.error("Failed to invite user");
@@ -160,11 +133,24 @@ export default function UserManagementPage() {
         }
     };
 
-    const filteredUsers = users.filter(
-        (user) =>
-            user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.email?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredUsers = useMemo(() => {
+        return users.filter(
+            (user) =>
+                user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                user.email?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [users, searchQuery]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
+                    <p className="text-slate-500 font-medium">Loading users...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-50">
@@ -252,25 +238,27 @@ export default function UserManagementPage() {
                     </div>
                 </div>
 
-                {loading ? (
-                    <div className="text-center py-10">Loading users...</div>
-                ) : (
-                    <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50">
-                            <div className="col-span-4 text-xs font-semibold text-slate-600 uppercase">
-                                User
-                            </div>
-                            <div className="col-span-3 text-xs font-semibold text-slate-600 uppercase">
-                                Role
-                            </div>
-                            <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase">
-                                Status
-                            </div>
-                            <div className="col-span-3 text-right text-xs font-semibold text-slate-600 uppercase">
-                                Actions
-                            </div>
+                <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50">
+                        <div className="col-span-4 text-xs font-semibold text-slate-600 uppercase">
+                            User
                         </div>
-                        {filteredUsers.map((user) => (
+                        <div className="col-span-3 text-xs font-semibold text-slate-600 uppercase">
+                            Role
+                        </div>
+                        <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase">
+                            Status
+                        </div>
+                        <div className="col-span-3 text-right text-xs font-semibold text-slate-600 uppercase">
+                            Actions
+                        </div>
+                    </div>
+                    {filteredUsers.length === 0 ? (
+                        <div className="p-8 text-center text-slate-500">
+                            No users found.
+                        </div>
+                    ) : (
+                        filteredUsers.map((user) => (
                             <div
                                 key={user.id}
                                 className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 last:border-b-0 items-center hover:bg-slate-50 transition-colors"
@@ -339,9 +327,9 @@ export default function UserManagementPage() {
                                     </Button>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
+                        ))
+                    )}
+                </div>
             </div>
         </div>
     );

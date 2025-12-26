@@ -171,11 +171,11 @@ export default function ActivitiesPage() {
                                                             )}
 
                                                             {/* Description as a sentence if short */}
-                                                            {log.description && !log.details && (
+                                                            {/* {log.description && !log.details && (
                                                                 <span className="text-slate-600 ml-1">
                                                                     - {log.description}
                                                                 </span>
-                                                            )}
+                                                            )} */}
                                                         </div>
                                                     </div>
 
