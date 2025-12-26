@@ -9,13 +9,13 @@ import {
   Download,
   Edit3,
   Eye,
-  FileIcon,
   FileText,
   MoreVertical,
   Search,
 } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface ResumeCard {
   id: string;
@@ -25,7 +25,7 @@ interface ResumeCard {
   updatedAt: string;
   version: number;
   jobTitle?: string;
-  status: "completed" | "processing" | "failed";
+  status: "Generated" | "Draft";
   content?: string;
 }
 
@@ -40,12 +40,7 @@ export default function ResumesPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
 
-  useEffect(() => {
-    fetchResumes();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const fetchResumes = async () => {
+  const fetchResumes = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -62,19 +57,25 @@ export default function ResumesPage() {
       if (response && Array.isArray(response.data)) {
         // Map the response to our ResumeCard interface
         // In a real implementation, you'd have actual file URLs from a completed resumes endpoint
-        const mappedResumes = response.data.map((item) => ({
-          id: item.id || "",
-          fileName: item.jobTitle
-            ? `${item.jobTitle || "Resume"}.pdf`
-            : "Resume.pdf",
-          fileUrl: "", // In a real implementation, this would come from the API
-          createdAt: item.createdAt || new Date().toISOString(),
-          updatedAt: item.updatedAt || new Date().toISOString(),
-          version: item.version || 1,
-          jobTitle: item.jobTitle || "",
-          content: item.content,
-          status: "completed" as const,
-        }));
+        const mappedResumes = response.data.map(
+          (item: Record<string, unknown>) => {
+            const fileUrl =
+              (item.resumeurl as string) || (item.fileUrl as string) || "";
+            return {
+              id: (item.id as string) || "",
+              fileName: item.jobTitle
+                ? `${(item.jobTitle as string) || "Resume"}.pdf`
+                : "Resume.pdf",
+              fileUrl: fileUrl,
+              createdAt: (item.createdAt as string) || new Date().toISOString(),
+              updatedAt: (item.updatedAt as string) || new Date().toISOString(),
+              version: (item.version as number) || 1,
+              jobTitle: (item.jobTitle as string) || "",
+              content: item.content as string,
+              status: fileUrl ? ("Generated" as const) : ("Draft" as const),
+            };
+          }
+        );
         setResumes(mappedResumes);
       } else {
         setResumes([]);
@@ -85,24 +86,28 @@ export default function ResumesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
-  const filteredResumes = resumes.filter(
-    (resume) => {
-      const matchesSearch = resume.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        resume.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === "all" || resume.status === statusFilter;
+  useEffect(() => {
+    fetchResumes();
+  }, [fetchResumes]);
 
-      let matchesDate = true;
-      if (dateFilter) {
-        const resumeDate = new Date(resume.createdAt).toLocaleDateString();
-        const filterDate = new Date(dateFilter).toLocaleDateString();
-        matchesDate = resumeDate === filterDate;
-      }
+  const filteredResumes = resumes.filter((resume) => {
+    const matchesSearch =
+      resume.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      resume.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || resume.status === statusFilter;
 
-      return matchesSearch && matchesStatus && matchesDate;
+    let matchesDate = true;
+    if (dateFilter) {
+      const resumeDate = new Date(resume.createdAt).toLocaleDateString();
+      const filterDate = new Date(dateFilter).toLocaleDateString();
+      matchesDate = resumeDate === filterDate;
     }
-  );
+
+    return matchesSearch && matchesStatus && matchesDate;
+  });
 
   const handleEditResume = async (resume: ResumeCard) => {
     try {
@@ -198,11 +203,11 @@ export default function ResumesPage() {
       // Remove resume from local state
       setResumes((prev) => prev.filter((r) => r.id !== resume.id));
       setConfirmResume(null);
-      setToastMessage('Resume deleted');
+      setToastMessage("Resume deleted");
     } catch (err) {
-      console.error('Failed to delete resume:', err);
-      setError('Failed to delete resume. Please try again later.');
-      setToastMessage('Failed to delete resume');
+      console.error("Failed to delete resume:", err);
+      setError("Failed to delete resume. Please try again later.");
+      setToastMessage("Failed to delete resume");
     } finally {
       setDeletingId(null);
       // clear toast after 3s
@@ -212,28 +217,17 @@ export default function ResumesPage() {
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case "completed":
+      case "Generated":
         return "bg-[var(--success-100)] text-[var(--success-800)] px-3 py-1 rounded-full text-xs font-medium";
-      case "processing":
-        return "bg-[var(--warning-100)] text-[var(--warning-800)] px-3 py-1 rounded-full text-xs font-medium";
-      case "failed":
-        return "bg-[var(--danger-100)] text-[var(--danger-800)] px-3 py-1 rounded-full text-xs font-medium";
+      case "Draft":
+        return "bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-medium";
       default:
         return "bg-[var(--muted)] text-[var(--muted-foreground)] px-3 py-1 rounded-full text-xs font-medium";
     }
   };
 
   const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "Published";
-      case "processing":
-        return "Processing";
-      case "failed":
-        return "Draft";
-      default:
-        return status;
-    }
+    return status;
   };
 
   // Dropdown/menu state and helpers (click-driven, stable, and flips above if not enough space)
@@ -248,7 +242,10 @@ export default function ResumesPage() {
       const style = window.getComputedStyle(node);
       const overflowY = style.overflowY;
       const overflow = style.overflow;
-      if ((overflowY && overflowY !== "visible" && overflowY !== "clip") || (overflow && overflow !== "visible")) {
+      if (
+        (overflowY && overflowY !== "visible" && overflowY !== "clip") ||
+        (overflow && overflow !== "visible")
+      ) {
         return node as HTMLElement;
       }
       node = node.parentElement;
@@ -273,7 +270,11 @@ export default function ResumesPage() {
     const above = spaceBelow < dropdownHeight && spaceAbove >= dropdownHeight;
 
     // Fallback: if above not possible but viewport has space above, prefer above to avoid clipping
-    if (!above && (window.innerHeight - rect.bottom) < dropdownHeight && rect.top >= dropdownHeight) {
+    if (
+      !above &&
+      window.innerHeight - rect.bottom < dropdownHeight &&
+      rect.top >= dropdownHeight
+    ) {
       setMenuAbove((prev) => ({ ...prev, [id]: true }));
     } else {
       setMenuAbove((prev) => ({ ...prev, [id]: above }));
@@ -311,18 +312,16 @@ export default function ResumesPage() {
             <div>
               <h1 className="text-4xl font-bold text-[var(--primary)] mb-1">
                 My Resumes{" "}
-                <span className="text-slate-500 text-xl">({resumes.length})</span>
+                <span className="text-slate-500 text-xl">
+                  ({resumes.length})
+                </span>
               </h1>
               <p className="text-slate-600">
                 Manage, edit, and download your generated professional resumes.
               </p>
             </div>
             <div className="flex items-center">
-
-
-              <Button
-                className=" bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50 whitespace-nowrap font-medium"
-              >
+              <Button className=" bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50 whitespace-nowrap font-medium">
                 Timesheet
               </Button>
               <Button
@@ -355,9 +354,8 @@ export default function ResumesPage() {
                   className="w-full md:w-48 appearance-none bg-white border border-slate-200 rounded-sm px-4 py-2.5 pr-10 text-slate-600 font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary-700)] focus:border-transparent"
                 >
                   <option value="all">All Status</option>
-                  <option value="completed">Published</option>
-                  <option value="processing">Processing</option>
-                  <option value="failed">Draft</option>
+                  <option value="Generated">Generated</option>
+                  <option value="Draft">Draft</option>
                 </select>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                   <MoreVertical className="w-4 h-4 text-slate-400 rotate-90" />
@@ -457,7 +455,7 @@ export default function ResumesPage() {
           <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-visible">
             <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 rounded-t-lg">
               <div className="col-span-1 text-xs font-semibold text-slate-600 uppercase">
-                #
+                Sr No
               </div>
               <div className="col-span-4 text-xs font-semibold text-slate-600 uppercase">
                 File Name
@@ -485,8 +483,14 @@ export default function ResumesPage() {
                   {index + 1}
                 </div>
                 <div className="col-span-4 flex items-center gap-3">
-                  <div className="p-2 bg-[var(--primary-50)] rounded-lg text-[var(--primary)]">
-                    <FileIcon className="w-4 h-4" />
+                  <div className="rounded-lg">
+                    <Image
+                      alt="file-text.svg"
+                      src="/file-text.svg"
+                      className="w-4 h-4"
+                      width={10}
+                      height={10}
+                    />
                   </div>
                   <span className="truncate font-medium text-slate-900">
                     {resume.fileName.replace(".pdf", "")}
@@ -510,7 +514,13 @@ export default function ResumesPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      ref={(el) => { if (el) { menuButtonRefs.current.set(resume.id, el); } else { menuButtonRefs.current.delete(resume.id); } }}
+                      ref={(el) => {
+                        if (el) {
+                          menuButtonRefs.current.set(resume.id, el);
+                        } else {
+                          menuButtonRefs.current.delete(resume.id);
+                        }
+                      }}
                       onClick={(e) => toggleMenu(e, resume.id)}
                       aria-expanded={openMenuId === resume.id}
                       className="p-0 h-8 w-8 hover:bg-slate-100"
@@ -522,26 +532,40 @@ export default function ResumesPage() {
                     {openMenuId === resume.id && (
                       <div
                         id={`resume-menu-${resume.id}`}
-                        className={`absolute right-0 ${menuAbove[resume.id] ? "bottom-full mb-1" : "top-full mt-1"} w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50`
-                        }
+                        className={`absolute right-0 ${
+                          menuAbove[resume.id]
+                            ? "bottom-full mb-1"
+                            : "top-full mt-1"
+                        } w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50`}
                         onClick={(e) => e.stopPropagation()}
                       >
+                        {resume.status === "Generated" && (
+                          <button
+                            onClick={() => {
+                              handleViewResume(resume);
+                              setOpenMenuId(null);
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 border-b border-slate-100"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View
+                          </button>
+                        )}
                         <button
-                          onClick={() => { handleViewResume(resume); setOpenMenuId(null); }}
-                          className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 border-b border-slate-100"
-                        >
-                          <Eye className="w-4 h-4" />
-                          View
-                        </button>
-                        <button
-                          onClick={() => { handleEditResume(resume); setOpenMenuId(null); }}
+                          onClick={() => {
+                            handleEditResume(resume);
+                            setOpenMenuId(null);
+                          }}
                           className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 border-b border-slate-100"
                         >
                           <Edit3 className="w-4 h-4" />
                           Edit
                         </button>
                         <button
-                          onClick={() => { handleDownloadResume(resume); setOpenMenuId(null); }}
+                          onClick={() => {
+                            handleDownloadResume(resume);
+                            setOpenMenuId(null);
+                          }}
                           className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                         >
                           <Download className="w-4 h-4" />
@@ -553,7 +577,7 @@ export default function ResumesPage() {
                           disabled={deletingId === resume.id}
                           className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-slate-50 flex items-center gap-2 border-t border-slate-100"
                         >
-                          {deletingId === resume.id ? 'Deleting...' : 'Delete'}
+                          {deletingId === resume.id ? "Deleting..." : "Delete"}
                         </button>
                       </div>
                     )}
@@ -564,18 +588,45 @@ export default function ResumesPage() {
           </div>
         )}
 
-
         {/* Confirm delete modal */}
         {confirmResume && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title">
-            <div className="absolute inset-0 bg-black opacity-40" onClick={cancelDelete} />
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-dialog-title"
+          >
+            <div
+              className="absolute inset-0 bg-black opacity-40"
+              onClick={cancelDelete}
+            />
             <div className="relative bg-white rounded-lg shadow-lg w-full max-w-sm p-6 z-10">
-              <h3 id="delete-dialog-title" className="text-lg font-semibold mb-2">Delete Resume</h3>
+              <h3
+                id="delete-dialog-title"
+                className="text-lg font-semibold mb-2"
+              >
+                Delete Resume
+              </h3>
 
-              <p className="text-sm text-slate-600 mb-4">Are you sure you want to permanently delete &quot;{confirmResume.fileName.replace('.pdf', '')}&quot;? This action cannot be undone.</p>
+              <p className="text-sm text-slate-600 mb-4">
+                Are you sure you want to permanently delete &quot;
+                {confirmResume.fileName.replace(".pdf", "")}&quot;? This action
+                cannot be undone.
+              </p>
               <div className="flex justify-end gap-3">
-                <Button variant="ghost" onClick={cancelDelete} className="bg-slate-50 hover:bg-slate-100">Cancel</Button>
-                <Button onClick={performDelete} className="bg-red-600 text-white hover:bg-red-700">{deletingId === confirmResume.id ? 'Deleting...' : 'Delete'}</Button>
+                <Button
+                  variant="ghost"
+                  onClick={cancelDelete}
+                  className="bg-slate-50 hover:bg-slate-100"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={performDelete}
+                  className="bg-red-600 text-white hover:bg-red-700"
+                >
+                  {deletingId === confirmResume.id ? "Deleting..." : "Delete"}
+                </Button>
               </div>
             </div>
           </div>
@@ -584,10 +635,11 @@ export default function ResumesPage() {
         {/* Toast (bottom-center) */}
         {toastMessage && (
           <div className="fixed left-1/2 transform -translate-x-1/2 bottom-8 z-50">
-            <div className="bg-slate-800 text-white px-4 py-2 rounded-md shadow">{toastMessage}</div>
+            <div className="bg-slate-800 text-white px-4 py-2 rounded-md shadow">
+              {toastMessage}
+            </div>
           </div>
         )}
-
       </div>
     </div>
   );
