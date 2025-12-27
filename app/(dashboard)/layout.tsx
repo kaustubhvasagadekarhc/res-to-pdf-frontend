@@ -3,16 +3,11 @@
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Header } from "@/components/layout/header";
 import { Sidebar, SidebarItem } from "@/components/layout/sidebar";
-import {
-  Activity,
-  Home,
-  Settings,
-  Users,
-} from "lucide-react";
-// import { useState } from "react";
+import { Activity, Home, Settings, Users } from "lucide-react";
 import { UserProvider, useUser } from "@/contexts/UserContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 // Admin Sidebar Items
 const adminItems: SidebarItem[] = [
@@ -22,24 +17,25 @@ const adminItems: SidebarItem[] = [
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
-function DashboardContent({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function DashboardContent({ children }: { children: React.ReactNode }) {
   const { user, loading } = useUser();
   const pathname = usePathname();
   const router = useRouter();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  console.log("user", user?.userType);
+  useEffect(() => {
+    if (isSidebarOpen) {
+      const timer = setTimeout(() => setIsSidebarOpen(false), 0);
+      return () => clearTimeout(timer);
+    }
+  }, [pathname, isSidebarOpen]);
 
   useEffect(() => {
     if (user?.userType === "ADMIN") {
       if (pathname === "/user") {
         router.push("/admin");
       }
-    }
-    else if (user?.userType === "USER") {
+    } else if (user?.userType === "USER") {
       if (pathname === "/admin") {
         router.push("/user");
       }
@@ -52,12 +48,29 @@ function DashboardContent({
 
   return (
     <DashboardShell className="flex-col">
-      <Header />
-      <div className="flex-1 flex overflow-hidden">
-        {user?.userType === "ADMIN" && <Sidebar items={adminItems} />}
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+      <Header onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <div className="flex-1 flex overflow-hidden relative">
+        {user?.userType === "ADMIN" && (
+          <>
+            {/* Mobile Overlay */}
+            {isSidebarOpen && (
+              <div
+                className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+                onClick={() => setIsSidebarOpen(false)}
+              />
+            )}
+            <Sidebar
+              items={adminItems}
+              className={cn(
+                "fixed inset-y-0 left-0 z-40 lg:static lg:block transition-transform duration-300 ease-in-out",
+                isSidebarOpen
+                  ? "translate-x-0"
+                  : "-translate-x-full lg:translate-x-0"
+              )}
+            />
+          </>
+        )}
+        <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </DashboardShell>
   );

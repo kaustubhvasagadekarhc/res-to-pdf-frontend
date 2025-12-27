@@ -94,7 +94,7 @@ export default function AdminDashboard() {
       title: "Activity Logs",
       description: "Monitor system activity",
       icon: Activity,
-      href: "/admin/logs",
+      href: "/admin/activities",
       iconColor: "text-rose-600",
       bgColor: "bg-rose-50",
     },
@@ -113,7 +113,8 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-10 p-8">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end  md:justify-between">
+        {/* flex items-end justify-between */}
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-800">
             Admin Overview

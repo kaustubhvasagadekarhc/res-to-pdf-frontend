@@ -33,7 +33,7 @@ export function Sidebar({ items, className }: SidebarProps) {
        
       </div> */}
 
-      <div className="px-4 py-10 space-y-2 flex-1">
+      <div className="px-4 py-10 space-y-2 flex-1 pt-20">
         {items.map((item) => {
           // Exact match for root paths (/admin, /user) to prevent them from staying active on sub-routes
           const isRootPath = item.href === "/admin" || item.href === "/user";
@@ -41,8 +41,8 @@ export function Sidebar({ items, className }: SidebarProps) {
             ? pathname === item.href
             : pathname === item.href || pathname.startsWith(item.href + "/");
           return (
-            <Link key={item.href} href={item.href} className="block group">
-              <div className="relative">
+            <Link key={item.href} href={item.href} className="block group ">
+              <div className="relative ">
                 {isActive && (
                   <motion.div
                     layoutId="activeTab"
@@ -58,7 +58,7 @@ export function Sidebar({ items, className }: SidebarProps) {
                 <Button
                   variant="ghost"
                   className={cn(
-                    "w-full justify-start gap-3 relative z-10 h-11 transition-all duration-200 rounded-md overflow-hidden",
+                    "w-full justify-start  gap-3 relative z-10 h-11 transition-all duration-200 rounded-md overflow-hidden",
                     isActive
                       ? "text-blue-600 font-semibold hover:bg-transparent"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"

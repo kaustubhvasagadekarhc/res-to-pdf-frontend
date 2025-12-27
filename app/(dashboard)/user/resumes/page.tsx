@@ -159,6 +159,31 @@ export default function ResumesPage() {
     });
   };
 
+  // Shorter date for mobile (omits year)
+  // const formatShortDate = (dateString: string) => {
+  //   const date = new Date(dateString);
+  //   return date.toLocaleString("en-US", {
+  //     month: "short",
+  //     day: "numeric",
+  //     hour: "2-digit",
+  //     minute: "2-digit",
+  //   });
+  // };
+
+  // Mobile full date in dd/mm/yyyy format and separate time line
+  const formatDateMobile = (dateString: string) => {
+    const d = new Date(dateString);
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  };
+
+  const formatTimeMobile = (dateString: string) => {
+    const d = new Date(dateString);
+    return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  };
+
   // Delete handling (confirm modal + toast)
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmResume, setConfirmResume] = useState<ResumeCard | null>(null);
@@ -218,11 +243,11 @@ export default function ResumesPage() {
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "Generated":
-        return "bg-[var(--success-100)] text-[var(--success-800)] px-3 py-1 rounded-full text-xs font-medium";
+        return "bg-[var(--success-100)] text-[var(--success-800)] px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap";
       case "Draft":
-        return "bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-medium";
+        return "bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap";
       default:
-        return "bg-[var(--muted)] text-[var(--muted-foreground)] px-3 py-1 rounded-full text-xs font-medium";
+        return "bg-[var(--muted)] text-[var(--muted-foreground)] px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap";
     }
   };
 
@@ -308,7 +333,7 @@ export default function ResumesPage() {
       <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="mb-8">
-          <div className="flex items-start justify-between gap-6 mb-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start mb-4 md:justify-between">
             <div>
               <h1 className="text-4xl font-bold text-[var(--primary)] mb-1">
                 My Resumes{" "}
@@ -321,12 +346,12 @@ export default function ResumesPage() {
               </p>
             </div>
             <div className="flex items-center">
-              <Button className=" bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50 whitespace-nowrap font-medium">
+              <Button className="w-full md:w-auto bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50 whitespace-nowrap font-medium">
                 Timesheet
               </Button>
               <Button
                 onClick={() => router.push("/user/upload")}
-                className="ml-3 bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] whitespace-nowrap font-medium"
+                className="w-full md:w-auto ml-3 bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] whitespace-nowrap font-medium"
               >
                 Create New Resume
               </Button>
@@ -334,7 +359,7 @@ export default function ResumesPage() {
           </div>
 
           {/* Search and Filters Bar */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex  flex-col md:flex-row items-center justify-between gap-4">
             <div className="relative w-full md:w-1/3">
               <Search className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
               <input
@@ -383,7 +408,7 @@ export default function ResumesPage() {
 
         {loading ? (
           <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-visible">
-            <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 rounded-t-sm">
+            <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 rounded-t-sm min-w-0">
               <div className="col-span-1 text-xs font-semibold bg- text-slate-600 uppercase">
                 Sr. No.
               </div>
@@ -406,7 +431,7 @@ export default function ResumesPage() {
             {[...Array(6)].map((_, index) => (
               <div
                 key={index}
-                className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 last:border-b-0 items-center"
+                className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 last:border-b-0 items-center min-w-0"
               >
                 <div className="col-span-1">
                   <div className="h-4 w-6 bg-slate-200 rounded animate-pulse"></div>
@@ -435,7 +460,7 @@ export default function ResumesPage() {
         ) : resumes.length === 0 ? (
           <div className="text-center py-20">
             <div className="mx-auto w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6">
-              <FileText className="w-12 h-12 text-slate-400" />
+              <FileText className=" w-12 h-12 text-slate-400" />
             </div>
             <h3 className="text-xl font-semibold text-slate-700 mb-2">
               No resumes yet
@@ -453,7 +478,7 @@ export default function ResumesPage() {
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-visible">
-            <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 rounded-t-lg">
+            <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 rounded-t-lg min-w-0">
               <div className="col-span-1 text-xs font-semibold text-slate-600 uppercase">
                 Sr No
               </div>
@@ -463,27 +488,28 @@ export default function ResumesPage() {
               <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase">
                 Job Title
               </div>
-              <div className="col-span-1 text-xs font-semibold text-slate-600 uppercase">
-                Version
+              <div className="col-span-1 text-xs font-semibold text-slate-600 uppercase whitespace-normal sm:whitespace-nowrap">
+                <span className="hidden sm:inline">Version</span>
               </div>
-              <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase">
-                Created
+              <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase whitespace-normal sm:whitespace-nowrap">
+                <span className="hidden sm:inline">Created</span>
+                <span className="sm:hidden">Ver / Date</span>
               </div>
-              <div className="col-span-2 flex justify-between text-xs font-semibold text-slate-600 uppercase">
-                <span>Status</span>
-                <span>Actions</span>
+              <div className="col-span-2 flex flex-col sm:flex-row sm:justify-between text-xs font-semibold text-slate-600 uppercase gap-2">
+                <span className="whitespace-normal">Status</span>
+                <span className="whitespace-normal text-right sm:text-left">Actions</span>
               </div>
             </div>
             {filteredResumes.map((resume, index) => (
               <div
                 key={resume.id}
-                className="grid grid-cols-12 gap-4 p-4 bg-slate border-b border-slate-100 last:border-b-0 items-center hover:bg-slate-50 transition-colors"
+                className="grid grid-cols-12 gap-4 p-4 bg-slate border-b border-slate-100 last:border-b-0 items-center hover:bg-slate-50 transition-colors min-w-0"
               >
                 <div className="col-span-1 text-sm text-slate-600 font-medium">
                   {index + 1}
                 </div>
-                <div className="col-span-4 flex items-center gap-3">
-                  <div className="rounded-lg">
+                <div className="col-span-4 flex items-center gap-3 min-w-0">
+                  <div className="hidden md:block rounded-lg">
                     <Image
                       alt="file-text.svg"
                       src="/file-text.svg"
@@ -492,25 +518,36 @@ export default function ResumesPage() {
                       height={10}
                     />
                   </div>
-                  <span className="truncate font-medium text-slate-900">
+                  <span className="font-medium text-slate-900 break-words whitespace-normal sm:truncate sm:whitespace-nowrap">
                     {resume.fileName.replace(".pdf", "")}
                   </span>
                 </div>
-                <div className="col-span-2 text-slate-600 text-sm">
+                <div className="col-span-2 text-slate-600 text-sm break-words whitespace-normal">
                   {resume.jobTitle || "-"}
                 </div>
-                <div className="col-span-1 text-slate-600 text-sm font-medium">
+                <div className="col-span-1 text-slate-600 text-sm font-medium hidden sm:block">
                   v{resume.version}
                 </div>
                 <div className="col-span-2 text-slate-600 text-sm flex items-center gap-1">
-                  <Calendar className="w-4 h-4 text-slate-400" />
-                  <span>{formatDate(resume.createdAt)}</span>
-                </div>
-                <div className="col-span-2 flex items-center justify-between">
-                  <div className={getStatusBadgeClass(resume.status)}>
-                    {getStatusLabel(resume.status)}
+                  <Calendar className="hidden md:block w-4 h-4 text-slate-400" />
+
+                  {/* Desktop / tablet: full date */}
+                  <span className="hidden sm:inline break-words whitespace-normal">{formatDate(resume.createdAt)}</span>
+
+                  {/* Mobile: show version, short date (dd/mm/yyyy) and time on next line */}
+                  <div className="sm:hidden flex flex-col text-slate-700">
+                    <span className="font-medium">v{resume.version}</span>
+                    <span className="text-sm">{formatDateMobile(resume.createdAt)}</span>
+                    <span className="text-sm">{formatTimeMobile(resume.createdAt)}</span>
                   </div>
-                  <div className="relative">
+                  </div>
+                <div className="col-span-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 min-w-0">
+                    <div className="hidden sm:block">
+                    <div className={getStatusBadgeClass(resume.status)}>
+                      {getStatusLabel(resume.status)}
+                    </div>
+                  </div>
+                  <div className="relative self-end sm:self-auto flex items-center gap-2">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -538,6 +575,11 @@ export default function ResumesPage() {
                           } w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50`}
                         onClick={(e) => e.stopPropagation()}
                       >
+                        {/* Mobile-only status shown inside the dropdown */}
+                        <div className="px-4 py-2.5 text-sm text-slate-700 sm:hidden flex items-center gap-2 border-b border-slate-100">
+                          <span className="font-medium">{getStatusLabel(resume.status)}</span>
+                        </div>
+
                         {resume.status === "Generated" && (
                           <button
                             onClick={() => {
