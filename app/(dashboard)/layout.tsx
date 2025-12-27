@@ -24,11 +24,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (isSidebarOpen) {
-      const timer = setTimeout(() => setIsSidebarOpen(false), 0);
-      return () => clearTimeout(timer);
-    }
-  }, [pathname, isSidebarOpen]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsSidebarOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (user?.userType === "ADMIN") {

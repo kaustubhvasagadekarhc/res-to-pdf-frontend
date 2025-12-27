@@ -33,7 +33,7 @@ export function Sidebar({ items, className }: SidebarProps) {
        
       </div> */}
 
-      <div className="px-4 py-10 space-y-2 flex-1 pt-20">
+      <div className="px-4 py-10 space-y-2 flex-1 pt-20 md:pt-10">
         {items.map((item) => {
           // Exact match for root paths (/admin, /user) to prevent them from staying active on sub-routes
           const isRootPath = item.href === "/admin" || item.href === "/user";
