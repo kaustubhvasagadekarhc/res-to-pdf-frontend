@@ -1,8 +1,8 @@
 "use client";
 
+// import { useAdmin } from "@/app/context/admin-context";
 import { toast } from "sonner";
 import { adminService } from "@/app/api/client";
-import { User } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import {
@@ -18,8 +18,7 @@ import {
   Loader2,
   User as UserIcon,
 } from "lucide-react";
-// import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { User } from "@/types/api";
 
 export default function UserManagementPage() {
   useAuthGuard("Admin");

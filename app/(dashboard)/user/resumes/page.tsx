@@ -656,11 +656,13 @@ export default function ResumesPage() {
 
         {/* Delete Confirmation Dialog */}
         {confirmResume && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <div
-              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
-              onClick={cancelDelete}
-            />
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-dialog-title"
+          >
+            <div className="absolute inset-0 bg-black opacity-40" />
             <div className="relative bg-white rounded-sm p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in duration-200">
               <div className="w-12 h-12 bg-red-50 rounded-sm flex items-center justify-center mb-4 text-red-600">
                 <svg

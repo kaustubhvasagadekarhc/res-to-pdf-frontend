@@ -12,9 +12,9 @@ import { AuthService, OpenAPI, PdfService, ResumeService, DashboardService, Admi
 // ============================================
 
 export class ApiClient {
-  protected axios: AxiosInstance; // FIX: was private
-  protected baseURL: string; // FIX: was private
-  protected defaultHeaders: Record<string, string>; // FIX: was private
+  protected axios: AxiosInstance; 
+  protected baseURL: string; 
+  protected defaultHeaders: Record<string, string>; 
 
   constructor(
     axios: AxiosInstance,
@@ -22,7 +22,7 @@ export class ApiClient {
     headers?: Record<string, string>
   ) {
     this.axios = axios;
-    this.baseURL = baseURL || "http://localhost:5000";
+    this.baseURL = baseURL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
     this.defaultHeaders = {
       "Content-Type": "application/json",

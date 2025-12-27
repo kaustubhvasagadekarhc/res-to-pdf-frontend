@@ -12,53 +12,19 @@ import {
   Users,
   MoreHorizontal,
   ArrowUpRight,
+  Loader2
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { adminService } from "@/app/api/client";
-import { ActivityLog } from "../../../types/api";
+import { useAdmin } from "@/app/context/admin-context";
+
+// import { adminService } from "@/app/api/client";
+// import { ActivityLog } from "../../../types/api";
 
 export default function AdminDashboard() {
   useAuthGuard("Admin");
   const router = useRouter();
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    activeUsers: 0,
-    totalResumes: 0,
-    todayResumes: 0,
-  });
-  // const [recentActivities, setRecentActivities] = useState<ActivityLog[]>([]);
-  // keeping explicit type is fine since we import it
-  const [recentActivities, setRecentActivities] = useState<ActivityLog[]>([]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [statsRes, activitiesRes] = await Promise.all([
-          adminService.getAdminStats(),
-          adminService.getAdminActivitiesRecent({ limit: 5 }),
-        ]);
-
-        if (statsRes.data) {
-          setStats({
-            totalUsers: statsRes.data.totalUsers || 0,
-            activeUsers: statsRes.data.totalUsers || 0,
-            totalResumes: statsRes.data.totalResumes || 0,
-            todayResumes: statsRes.data.totalGenerated || 0,
-          });
-        }
-
-        if (activitiesRes && activitiesRes.data) {
-          setRecentActivities(activitiesRes.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch admin dashboard data:", error);
-      }
-    };
-
-    fetchData();
-  }, []);
+  const { stats, recentActivities, isLoading } = useAdmin();
 
   const cards = [
     {
@@ -134,6 +100,17 @@ export default function AdminDashboard() {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
+          <p className="text-slate-500 font-medium">Loading Overview...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-10 p-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-end  md:justify-between">
@@ -146,21 +123,10 @@ export default function AdminDashboard() {
             Welcome back to your control center.
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            className="   w-full md:w-auto lg:flex border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
-            onClick={() => {}}
-          >
-            Export Report
-          </Button>
-          <Button
-            className="  w-full md:w-auto bg-gradient-to-r from-indigo-600 to-blue-600 text-white transition-all hover:-translate-y-0.5"
-            onClick={() => {}}
-          >
-            Create User
-          </Button>
-        </div>
+        {/* <div className="flex gap-3">
+          <Button variant="outline" className="hidden sm:flex border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800" onClick={() => { }}>Export Report</Button>
+          <Button className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white transition-all hover:-translate-y-0.5" onClick={() => { }}>Create User</Button>
+        </div> */}
       </div>
 
       {/* Stats Grid */}
