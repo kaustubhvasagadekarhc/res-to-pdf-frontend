@@ -189,9 +189,30 @@ export default function ResumesPage() {
   const [confirmResume, setConfirmResume] = useState<ResumeCard | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const openDeleteConfirm = (resume: ResumeCard) => {
+  const openDeleteConfirm = async (resume: ResumeCard) => {
     setConfirmResume(resume);
     setOpenMenuId(null);
+
+    // try {
+    //   apiClient.refreshTokenFromCookies();
+
+    //   const response = await resumeService.deleteResume({
+    //     id: resume.id,
+    //   });
+
+    //   if (!response.parsed) {
+    //     setError("Failed to parse resume data");
+    //     return;
+    //   }
+
+    //   sessionStorage.setItem("resumeData", JSON.stringify(response.parsed));
+    //   router.push("/user/edit");
+    // } catch (error: unknown) {
+    //   console.error("Resume upload failed:", error);
+    //   setError(error instanceof Error ? error.message : "Upload failed");
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   const cancelDelete = () => setConfirmResume(null);
@@ -548,11 +569,10 @@ export default function ResumesPage() {
                     {openMenuId === resume.id && (
                       <div
                         id={`resume-menu-${resume.id}`}
-                        className={`absolute right-0 ${
-                          menuAbove[resume.id]
+                        className={`absolute right-0 ${menuAbove[resume.id]
                             ? "bottom-full mb-1"
                             : "top-full mt-1"
-                        } w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50`}
+                          } w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50`}
                         onClick={(e) => e.stopPropagation()}
                       >
                         {/* Mobile-only status shown inside the dropdown */}
@@ -612,14 +632,13 @@ export default function ResumesPage() {
         {/* Confirm delete modal */}
         {confirmResume && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center"
+            className="fixed inset-0 z-50 flex items-center justify-center "
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-dialog-title"
           >
             <div
               className="absolute inset-0 bg-black opacity-40"
-              onClick={cancelDelete}
             />
             <div className="relative bg-white rounded-lg shadow-lg w-full max-w-sm p-6 z-10">
               <h3

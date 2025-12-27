@@ -100,10 +100,10 @@ export default function ActivitiesPage() {
     };
 
     return (
-        <div className="p-8 max-w-5xl mx-auto font-sans text-slate-900">
+        <div className="p-8 max-w-7xl mx-auto font-sans text-slate-900">
             {/* Header */}
-            <div className="flex justify-between items-center mb-10">
-                <h1 className="text-2xl font-bold text-slate-800">Activity Logs</h1>
+            <div className="flex items-center mb-10">
+                <h1 className="text-2xl font-bold text-slate-800 mr-3">Activity Logs</h1>
                 <Button variant="ghost" size="icon" onClick={fetchActivities} disabled={loading} className="hover:bg-slate-100 rounded-full">
                     <RefreshCw className={`w-5 h-5 text-slate-500 ${loading ? 'animate-spin' : ''}`} />
                 </Button>
@@ -135,7 +135,7 @@ export default function ActivitiesPage() {
                                         return (
                                             <div key={log.id} className="grid grid-cols-[60px_40px_1fr] gap-0 relative group">
                                                 {/* Time */}
-                                                <div className="text-right pt-0.5 pr-4">
+                                                <div className="text-right  pr-2">
                                                     <span className="text-xs font-medium text-slate-400">
                                                         {format(new Date(log.createdAt), "hh:mm a")}
                                                     </span>
@@ -157,31 +157,36 @@ export default function ActivitiesPage() {
                                                         </div>
 
                                                         {/* Text Content */}
+
                                                         <div className="flex-1">
-                                                            <span className="font-bold text-slate-800 mr-1.5">
-                                                                {userName}
-                                                            </span>
-                                                            <span className="text-slate-600 mr-1.5">
-                                                                {log.action.replace(/_/g, ' ').toLowerCase()}
-                                                            </span>
-                                                            {log.ipAddress && (
+                                                            <div>
+                                                                <span className="font-bold text-slate-800">
+                                                                    {userName}
+                                                                </span>
+                                                            </div>
+                                                            <div className="text-xs flex items-center gap-1 mb-1">
+                                                                <span className="text-slate-500">{log.user?.email}</span>
+                                                                <span className="text-slate-400">-</span>
+                                                                <span className="text-slate-900">{log.action.replace(/_/g, ' ').toLowerCase()}</span>
+                                                            </div>
+                                                            {/* {log.ipAddress && (
                                                                 <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
                                                                     {log.ipAddress}
                                                                 </span>
-                                                            )}
+                                                            )} */}
 
                                                             {/* Description as a sentence if short */}
-                                                            {log.description && !log.details && (
+                                                            {/* {log.description && !log.details && (
                                                                 <span className="text-slate-600 ml-1">
                                                                     - {log.description}
                                                                 </span>
-                                                            )}
+                                                            )} */}
                                                         </div>
                                                     </div>
 
                                                     {/* Message / Details Card */}
-                                                    {(!!log.details || (log.description && log.description.length > 50)) && (
-                                                        <div className="mt-3 ml-8 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+                                                    {(!!log.details || (log.description && log.description.length > 10)) && (
+                                                        <div className="mt-2 ml-8 p-3 bg-white border border-slate-200 rounded-lg shadow-sm">
                                                             <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
                                                                 Details
                                                             </div>
