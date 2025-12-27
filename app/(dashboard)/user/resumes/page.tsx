@@ -10,10 +10,11 @@ import {
   Edit3,
   Eye,
   FileText,
+  History,
   MoreVertical,
   Search,
+  Trash2,
 } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -148,7 +149,7 @@ export default function ResumesPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDateFull = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -156,6 +157,15 @@ export default function ResumesPage() {
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+    });
+  };
+
+  const formatDateShort = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
@@ -171,17 +181,20 @@ export default function ResumesPage() {
   // };
 
   // Mobile full date in dd/mm/yyyy format and separate time line
-  const formatDateMobile = (dateString: string) => {
-    const d = new Date(dateString);
-    const dd = String(d.getDate()).padStart(2, "0");
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const yyyy = d.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-  };
+  // const formatDateMobile = (dateString: string) => {
+  //   const d = new Date(dateString);
+  //   const dd = String(d.getDate()).padStart(2, "0");
+  //   const mm = String(d.getMonth() + 1).padStart(2, "0");
+  //   const yyyy = d.getFullYear();
+  //   return `${dd}/${mm}/${yyyy}`;
+  // };
 
   const formatTimeMobile = (dateString: string) => {
     const d = new Date(dateString);
-    return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   // Delete handling (confirm modal + toast)
@@ -189,30 +202,9 @@ export default function ResumesPage() {
   const [confirmResume, setConfirmResume] = useState<ResumeCard | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const openDeleteConfirm = async (resume: ResumeCard) => {
+  const openDeleteConfirm = (resume: ResumeCard) => {
     setConfirmResume(resume);
     setOpenMenuId(null);
-
-    // try {
-    //   apiClient.refreshTokenFromCookies();
-
-    //   const response = await resumeService.deleteResume({
-    //     id: resume.id,
-    //   });
-
-    //   if (!response.parsed) {
-    //     setError("Failed to parse resume data");
-    //     return;
-    //   }
-
-    //   sessionStorage.setItem("resumeData", JSON.stringify(response.parsed));
-    //   router.push("/user/edit");
-    // } catch (error: unknown) {
-    //   console.error("Resume upload failed:", error);
-    //   setError(error instanceof Error ? error.message : "Upload failed");
-    // } finally {
-    //   setLoading(false);
-    // }
   };
 
   const cancelDelete = () => setConfirmResume(null);
@@ -251,9 +243,9 @@ export default function ResumesPage() {
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    return status;
-  };
+  // const getStatusLabel = (status: string) => {
+  //   return status;
+  // };
 
   // Dropdown/menu state and helpers (click-driven, stable, and flips above if not enough space)
   const menuButtonRefs = useRef<Map<string, HTMLElement>>(new Map());
@@ -329,341 +321,385 @@ export default function ResumesPage() {
   }, [openMenuId]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#f8f9fa] pb-24 sm:pb-8">
+      <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start mb-4 md:justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-[var(--primary)] mb-1">
-                My Resumes{" "}
-                <span className="text-slate-500 text-xl">
-                  ({resumes.length})
-                </span>
-              </h1>
-              <p className="text-slate-600">
-                Manage, edit, and download your generated professional resumes.
-              </p>
-            </div>
-            <div className="flex items-center">
-              <Button className="w-full md:w-auto bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50 whitespace-nowrap font-medium">
-                Timesheet
-              </Button>
-              <Button
-                onClick={() => router.push("/user/upload")}
-                className="w-full md:w-auto ml-3 bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] whitespace-nowrap font-medium"
-              >
-                Create New Resume
-              </Button>
-            </div>
+        <div className="mb-6">
+          <div className="flex flex-col gap-1 mb-6">
+            <h1 className="text-3xl font-bold text-[#1a56db]">
+              My Resumes{" "}
+              <span className="text-gray-500 font-normal">
+                ({resumes.length})
+              </span>
+            </h1>
+            <p className="text-gray-500 text-sm">
+              Manage, edit, and download your generated professional resumes.
+            </p>
           </div>
 
           {/* Search and Filters Bar */}
-          <div className="flex  flex-col md:flex-row items-center justify-between gap-4">
-            <div className="relative w-full md:w-1/3">
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+          <div className="space-y-4">
+            <div className="relative w-full">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search resumes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-sm bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--primary-700)] focus:border-transparent"
+                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all"
               />
             </div>
 
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <div className="relative flex-1 md:flex-initial">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+              <div className="relative shrink-0">
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full md:w-48 appearance-none bg-white border border-slate-200 rounded-sm px-4 py-2.5 pr-10 text-slate-600 font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary-700)] focus:border-transparent"
+                  className="appearance-none bg-white border border-gray-200 rounded-sm px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer"
                 >
                   <option value="all">All Status</option>
                   <option value="Generated">Generated</option>
                   <option value="Draft">Draft</option>
                 </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <MoreVertical className="w-4 h-4 text-slate-400 rotate-90" />
-                </div>
+                <MoreVertical className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 rotate-90 pointer-events-none" />
               </div>
 
-              <div className="relative">
+              <div className="relative shrink-0">
+                <button
+                  onClick={() =>
+                    (
+                      document.getElementById("date-filter") as HTMLInputElement
+                    ).showPicker()
+                  }
+                  className="flex items-center gap-2 bg-white border border-gray-200 rounded-sm px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                >
+                  <Calendar className="w-4 h-4 text-gray-500" />
+                  <span>
+                    {dateFilter
+                      ? new Date(dateFilter).toLocaleDateString()
+                      : "Date"}
+                  </span>
+                </button>
                 <input
+                  id="date-filter"
                   type="date"
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
-                  className="appearance-none bg-white border border-slate-200 rounded-sm px-4 py-2.5 text-slate-600 font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary-700)] focus:border-transparent h-[42px] cursor-pointer"
+                  className="absolute opacity-0 pointer-events-none"
                 />
               </div>
+
+              <Button
+                variant="outline"
+                className="shrink-0 rounded-sm border-gray-200 bg-white text-blue-600 hover:text-blue-700 font-medium px-4 py-2.5 h-auto text-sm shadow-sm flex items-center gap-2"
+              >
+                <History className="w-4 h-4" />
+                Timesheet
+              </Button>
             </div>
           </div>
         </div>
 
-        {/* {error && (
-          <div className="mb-6 bg-[var(--danger-100)] border border-[#fecaca] text-[var(--danger-800)] p-4 rounded-lg flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-red-500" />
-            {error}
-          </div>
-        )} */}
-
-        {loading ? (
-          <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-visible">
-            <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 rounded-t-sm min-w-0">
-              <div className="col-span-1 text-xs font-semibold bg- text-slate-600 uppercase">
-                Sr. No.
-              </div>
-              <div className="col-span-4 text-xs font-semibold text-slate-600 uppercase">
-                File Name
-              </div>
-              <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase">
-                Job Title
-              </div>
-              <div className="col-span-1 text-xs font-semibold text-slate-600 uppercase">
-                Version
-              </div>
-              <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase">
-                Created
-              </div>
-              <div className="col-span-2 text-right text-xs font-semibold text-slate-600 uppercase">
-                Status
-              </div>
-            </div>
-            {[...Array(6)].map((_, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 last:border-b-0 items-center min-w-0"
-              >
-                <div className="col-span-1">
-                  <div className="h-4 w-6 bg-slate-200 rounded animate-pulse"></div>
+        {/* Desktop Table View */}
+        <div className="hidden sm:block">
+          {loading ? (
+            <div className="bg-white rounded-sm shadow-sm border border-gray-200 overflow-hidden">
+              <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-100 bg-gray-50/50">
+                <div className="col-span-1 text-xs font-bold text-gray-400 uppercase">
+                  Sr. No.
                 </div>
-                <div className="col-span-4 flex items-center gap-3">
-                  <div className="h-8 w-8 bg-slate-200 rounded animate-pulse" />
-                  <div className="flex-1">
-                    <div className="h-4 w-3/4 bg-slate-200 rounded animate-pulse"></div>
+                <div className="col-span-4 text-xs font-bold text-gray-400 uppercase">
+                  File Name
+                </div>
+                <div className="col-span-2 text-xs font-bold text-gray-400 uppercase">
+                  Job Title
+                </div>
+                <div className="col-span-1 text-xs font-bold text-gray-400 uppercase">
+                  Version
+                </div>
+                <div className="col-span-2 text-xs font-bold text-gray-400 uppercase">
+                  Created
+                </div>
+                <div className="col-span-2 text-right text-xs font-bold text-gray-400 uppercase">
+                  Status
+                </div>
+              </div>
+              {[...Array(6)].map((_, index) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-12 gap-4 p-5 border-b border-gray-50 items-center"
+                >
+                  <div className="col-span-1">
+                    <div className="h-4 w-6 bg-gray-100 rounded animate-pulse" />
+                  </div>
+                  <div className="col-span-4">
+                    <div className="h-4 w-3/4 bg-gray-100 rounded animate-pulse" />
+                  </div>
+                  <div className="col-span-2">
+                    <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+                  </div>
+                  <div className="col-span-1">
+                    <div className="h-4 w-1/2 bg-gray-100 rounded animate-pulse" />
+                  </div>
+                  <div className="col-span-2">
+                    <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+                  </div>
+                  <div className="col-span-2 flex justify-end">
+                    <div className="h-6 w-20 bg-gray-100 rounded-full animate-pulse" />
                   </div>
                 </div>
-                <div className="col-span-2">
-                  <div className="h-4 w-full bg-slate-200 rounded animate-pulse"></div>
-                </div>
-                <div className="col-span-1">
-                  <div className="h-4 w-3/4 bg-slate-200 rounded animate-pulse"></div>
-                </div>
-                <div className="col-span-2">
-                  <div className="h-4 w-full bg-slate-200 rounded animate-pulse"></div>
-                </div>
-                <div className="col-span-2 flex justify-end gap-2">
-                  <div className="h-6 w-6 bg-slate-200 rounded animate-pulse"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : resumes.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="mx-auto w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6">
-              <FileText className=" w-12 h-12 text-slate-400" />
+              ))}
             </div>
-            <h3 className="text-xl font-semibold text-slate-700 mb-2">
-              No resumes yet
-            </h3>
-            <p className="text-slate-500 mb-8 max-w-md mx-auto">
-              You haven&apos;t generated any resumes yet. Upload a resume
-              template or create one to get started.
-            </p>
-            <Button
-              onClick={() => router.push("/user/upload")}
-              className="bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] font-medium"
-            >
-              Create New Resume
-            </Button>
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-visible">
-            <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 rounded-t-lg min-w-0">
-              <div className="col-span-1 text-xs font-semibold text-slate-600 uppercase">
-                Sr No
-              </div>
-              <div className="col-span-4 text-xs font-semibold text-slate-600 uppercase">
-                File Name
-              </div>
-              <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase">
-                Job Title
-              </div>
-              <div className="col-span-1 text-xs font-semibold text-slate-600 uppercase whitespace-normal sm:whitespace-nowrap">
-                <span className="hidden sm:inline">Version</span>
-              </div>
-              <div className="col-span-2 text-xs font-semibold text-slate-600 uppercase whitespace-normal sm:whitespace-nowrap">
-                <span className="hidden sm:inline">Created</span>
-                <span className="sm:hidden">Ver / Date</span>
-              </div>
-              <div className="col-span-2 flex flex-col sm:flex-row sm:justify-between text-xs font-semibold text-slate-600 uppercase gap-2">
-                <span className="whitespace-normal">Status</span>
-                <span className="whitespace-normal text-right sm:text-left">Actions</span>
-              </div>
-            </div>
-            {filteredResumes.map((resume, index) => (
-              <div
-                key={resume.id}
-                className="grid grid-cols-12 gap-4 p-4 bg-slate border-b border-slate-100 last:border-b-0 items-center hover:bg-slate-50 transition-colors min-w-0"
-              >
-                <div className="col-span-1 text-sm text-slate-600 font-medium">
-                  {index + 1}
+          ) : filteredResumes.length === 0 ? (
+            <EmptyState router={router} />
+          ) : (
+            <div className="bg-white rounded-sm shadow-sm border border-gray-200 overflow-hidden">
+              <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-100 bg-gray-50/50">
+                <div className="col-span-1 text-xs font-bold text-gray-400 uppercase">
+                  Sr No
                 </div>
-                <div className="col-span-4 flex items-center gap-3 min-w-0">
-                  <div className="hidden md:block rounded-lg">
-                    <Image
-                      alt="file-text.svg"
-                      src="/file-text.svg"
-                      className="w-4 h-4"
-                      width={10}
-                      height={10}
+                <div className="col-span-4 text-xs font-bold text-gray-400 uppercase">
+                  File Name
+                </div>
+                <div className="col-span-2 text-xs font-bold text-gray-400 uppercase">
+                  Job Title
+                </div>
+                <div className="col-span-1 text-xs font-bold text-gray-400 uppercase text-center">
+                  Version
+                </div>
+                <div className="col-span-2 text-xs font-bold text-gray-400 uppercase">
+                  Created
+                </div>
+                <div className="col-span-2 text-right text-xs font-bold text-gray-400 uppercase pr-8">
+                  Actions
+                </div>
+              </div>
+              {filteredResumes.map((resume, index) => (
+                <div
+                  key={resume.id}
+                  className="grid grid-cols-12 gap-4 p-5 border-b border-gray-50 items-center hover:bg-gray-50/50 transition-colors"
+                >
+                  <div className="col-span-1 text-sm font-semibold text-gray-600">
+                    {index + 1}
+                  </div>
+                  <div className="col-span-4 flex items-center gap-3">
+                    <div className="p-2 bg-blue-50 rounded-sm">
+                      <FileText className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <span className="font-semibold text-gray-800 truncate">
+                      {resume.fileName.replace(".pdf", "")}
+                    </span>
+                  </div>
+                  <div className="col-span-2 text-sm text-gray-600">
+                    {resume.jobTitle || "-"}
+                  </div>
+                  <div className="col-span-1 text-center">
+                    <span className="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                      v{resume.version}
+                    </span>
+                  </div>
+                  <div className="col-span-2 text-sm text-gray-500">
+                    {formatDateFull(resume.createdAt)}
+                  </div>
+                  <div className="col-span-2 flex items-center justify-end gap-3 pr-4">
+                    <div className={getStatusBadgeClass(resume.status)}>
+                      {resume.status}
+                    </div>
+                    <ActionsMenu
+                      resume={resume}
+                      handleViewResume={handleViewResume}
+                      handleEditResume={handleEditResume}
+                      handleDownloadResume={handleDownloadResume}
+                      openDeleteConfirm={openDeleteConfirm}
+                      deletingId={deletingId}
+                      menuButtonRefs={menuButtonRefs}
+                      toggleMenu={toggleMenu}
+                      openMenuId={openMenuId}
+                      menuAbove={menuAbove}
+                      setOpenMenuId={setOpenMenuId}
                     />
                   </div>
-                  <span className="font-medium text-slate-900 break-words whitespace-normal sm:truncate sm:whitespace-nowrap">
-                    {resume.fileName.replace(".pdf", "")}
-                  </span>
                 </div>
-                <div className="col-span-2 text-slate-600 text-sm break-words whitespace-normal">
-                  {resume.jobTitle || "-"}
-                </div>
-                <div className="col-span-1 text-slate-600 text-sm font-medium hidden sm:block">
-                  v{resume.version}
-                </div>
-                <div className="col-span-2 text-slate-600 text-sm flex items-center gap-1">
-                  <Calendar className="hidden md:block w-4 h-4 text-slate-400" />
+              ))}
+            </div>
+          )}
+        </div>
 
-                  {/* Desktop / tablet: full date */}
-                  <span className="hidden sm:inline break-words whitespace-normal">{formatDate(resume.createdAt)}</span>
-
-                  {/* Mobile: show version, short date (dd/mm/yyyy) and time on next line */}
-                  <div className="sm:hidden flex flex-col text-slate-700">
-                    <span className="font-medium">v{resume.version}</span>
-                    <span className="text-sm">{formatDateMobile(resume.createdAt)}</span>
-                    <span className="text-sm">{formatTimeMobile(resume.createdAt)}</span>
-                  </div>
-                  </div>
-                <div className="col-span-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 min-w-0">
-                    <div className="hidden sm:block">
-                    <div className={getStatusBadgeClass(resume.status)}>
-                      {getStatusLabel(resume.status)}
+        {/* Mobile List View */}
+        <div className="sm:hidden space-y-4">
+          {loading ? (
+            [...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="bg-white rounded-sm p-4 shadow-sm animate-pulse space-y-4"
+              >
+                <div className="flex justify-between">
+                  <div className="flex gap-3">
+                    <div className="h-12 w-12 bg-gray-100 rounded-sm" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-32 bg-gray-100 rounded" />
+                      <div className="h-3 w-20 bg-gray-100 rounded" />
                     </div>
                   </div>
-                  <div className="relative self-end sm:self-auto flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      ref={(el) => {
-                        if (el) {
-                          menuButtonRefs.current.set(resume.id, el);
-                        } else {
-                          menuButtonRefs.current.delete(resume.id);
-                        }
-                      }}
-                      onClick={(e) => toggleMenu(e, resume.id)}
-                      aria-expanded={openMenuId === resume.id}
-                      className="p-0 h-8 w-8 hover:bg-slate-100"
-                    >
-                      <MoreVertical className="w-4 h-4 text-slate-400" />
-                    </Button>
-
-                    {/* Dropdown menu (click to open; flips above when needed) */}
-                    {openMenuId === resume.id && (
-                      <div
-                        id={`resume-menu-${resume.id}`}
-                        className={`absolute right-0 ${menuAbove[resume.id]
-                            ? "bottom-full mb-1"
-                            : "top-full mt-1"
-                          } w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {/* Mobile-only status shown inside the dropdown */}
-                        <div className="px-4 py-2.5 text-sm text-slate-700 sm:hidden flex items-center gap-2 border-b border-slate-100">
-                          <span className="font-medium">{getStatusLabel(resume.status)}</span>
-                        </div>
-
-                        {resume.status === "Generated" && (
-                          <button
-                            onClick={() => {
-                              handleViewResume(resume);
-                              setOpenMenuId(null);
-                            }}
-                            className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 border-b border-slate-100"
-                          >
-                            <Eye className="w-4 h-4" />
-                            View
-                          </button>
-                        )}
-                        <button
-                          onClick={() => {
-                            handleEditResume(resume);
-                            setOpenMenuId(null);
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 border-b border-slate-100"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => {
-                            handleDownloadResume(resume);
-                            setOpenMenuId(null);
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                        >
-                          <Download className="w-4 h-4" />
-                          Download
-                        </button>
-
-                        <button
-                          onClick={() => openDeleteConfirm(resume)}
-                          disabled={deletingId === resume.id}
-                          className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-slate-50 flex items-center gap-2 border-t border-slate-100"
-                        >
-                          {deletingId === resume.id ? "Deleting..." : "Delete"}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                </div>
+                <div className="h-px bg-gray-50" />
+                <div className="flex justify-between">
+                  <div className="h-6 w-20 bg-gray-100 rounded-full" />
+                  <div className="h-4 w-24 bg-gray-100 rounded" />
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          ) : filteredResumes.length === 0 ? (
+            <EmptyState router={router} />
+          ) : (
+            filteredResumes.map((resume) => (
+              <div
+                key={resume.id}
+                className="bg-white rounded-sm p-4 shadow-sm border border-gray-100"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex gap-4">
+                    <div className="h-12 w-12 shrink-0 bg-[#e7f0ff] rounded-sm flex items-center justify-center">
+                      <FileText className="w-6 h-6 text-blue-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900 text-lg mb-1">
+                        {resume.jobTitle || "Resume"}
+                        {resume.status === "Draft" && " (Draft)"}
+                      </h3>
+                      <div className="flex items-center gap-2 text-gray-400 text-sm">
+                        <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-1.5 py-0.5 rounded leading-none uppercase">
+                          v{resume.version}
+                        </span>
+                        <span className="text-[10px]">•</span>
+                        <span>{formatDateShort(resume.createdAt)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <ActionsMenu
+                    resume={resume}
+                    handleViewResume={handleViewResume}
+                    handleEditResume={handleEditResume}
+                    handleDownloadResume={handleDownloadResume}
+                    openDeleteConfirm={openDeleteConfirm}
+                    deletingId={deletingId}
+                    menuButtonRefs={menuButtonRefs}
+                    toggleMenu={toggleMenu}
+                    openMenuId={openMenuId}
+                    menuAbove={menuAbove}
+                    setOpenMenuId={setOpenMenuId}
+                  />
+                </div>
+                <div className="h-px bg-gray-100 -mx-4 my-4" />
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`px-2.5 py-1 rounded-sm text-xs font-bold leading-none ${
+                      resume.status === "Generated"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {resume.status}
+                  </span>
+                  <span className="text-gray-500 text-sm font-medium">
+                    {formatTimeMobile(resume.createdAt)}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
 
-        {/* Confirm delete modal */}
+        {/* Floating Action Button for Mobile */}
+        <button
+          onClick={() => router.push("/user/upload")}
+          className="sm:hidden fixed right-6 bottom-24 w-14 h-14 bg-blue-600 rounded-full shadow-lg shadow-blue-200 flex items-center justify-center text-white z-50 hover:bg-blue-700 transition-colors active:scale-95"
+        >
+          <svg
+            className="w-8 h-8"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+            />
+          </svg>
+        </button>
+
+        {/* Bottom Navigation */}
+        {/* <div className="sm:hidden fixed bottom-0 left-0 right-0 h-20 bg-white border-t border-gray-100 flex items-center justify-around px-2 z-40">
+          <button className="flex flex-col items-center gap-1 group">
+            <FileText className="w-6 h-6 text-blue-600" strokeWidth={2.5} />
+            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+              Resumes
+            </span>
+          </button>
+          <button className="flex flex-col items-center gap-1 text-gray-400 group">
+            <Briefcase className="w-6 h-6" />
+            <span className="text-[10px] font-bold uppercase tracking-wider">
+              Jobs
+            </span>
+          </button>
+          <button className="flex flex-col items-center gap-1 text-gray-400 group">
+            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-[10px] font-bold text-blue-600">
+              {user?.name?.charAt(0) || user?.email?.charAt(0) || "U"}
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider">
+              Profile
+            </span>
+          </button>
+        </div> */}
+
+        {/* Delete Confirmation Dialog */}
         {confirmResume && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center "
+            className="fixed inset-0 z-50 flex items-center justify-center"
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-dialog-title"
           >
-            <div
-              className="absolute inset-0 bg-black opacity-40"
-            />
-            <div className="relative bg-white rounded-lg shadow-lg w-full max-w-sm p-6 z-10">
-              <h3
-                id="delete-dialog-title"
-                className="text-lg font-semibold mb-2"
-              >
-                Delete Resume
+            <div className="absolute inset-0 bg-black opacity-40" />
+            <div className="relative bg-white rounded-sm p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in duration-200">
+              <div className="w-12 h-12 bg-red-50 rounded-sm flex items-center justify-center mb-4 text-red-600">
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Delete Resume?
               </h3>
-
-              <p className="text-sm text-slate-600 mb-4">
-                Are you sure you want to permanently delete &quot;
-                {confirmResume.fileName.replace(".pdf", "")}&quot;? This action
-                cannot be undone.
+              <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                Are you sure you want to delete{" "}
+                <span className="text-gray-900 font-semibold">
+                  {confirmResume.fileName.replace(".pdf", "")}
+                </span>
+                ? This action cannot be undone.
               </p>
-              <div className="flex justify-end gap-3">
+              <div className="flex gap-3">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   onClick={cancelDelete}
-                  className="bg-slate-50 hover:bg-slate-100"
+                  className="flex-1 rounded-sm h-12 border-gray-200 font-bold"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={performDelete}
-                  className="bg-red-600 text-white hover:bg-red-700"
+                  className="flex-1 text-white rounded-sm h-12 bg-red-600 hover:bg-red-700 font-bold"
                 >
                   {deletingId === confirmResume.id ? "Deleting..." : "Delete"}
                 </Button>
@@ -672,15 +708,130 @@ export default function ResumesPage() {
           </div>
         )}
 
-        {/* Toast (bottom-center) */}
+        {/* Toast */}
         {toastMessage && (
-          <div className="fixed left-1/2 transform -translate-x-1/2 bottom-8 z-50">
-            <div className="bg-slate-800 text-white px-4 py-2 rounded-md shadow">
+          <div className="fixed left-1/2 -translate-x-1/2 bottom-24 z-[70] animate-in slide-in-from-bottom-5">
+            <div className="bg-gray-900 text-white px-6 py-3 rounded-sm shadow-xl font-medium text-sm">
               {toastMessage}
             </div>
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function EmptyState({ router }: { router: ReturnType<typeof useRouter> }) {
+  return (
+    <div className="text-center py-24 bg-white rounded-3xl border-2 border-dashed border-gray-100">
+      <div className="mx-auto w-24 h-24 bg-blue-50 rounded-3xl flex items-center justify-center mb-6">
+        <FileText className="w-12 h-12 text-blue-400" />
+      </div>
+      <h3 className="text-2xl font-bold text-gray-900 mb-2">No resumes yet</h3>
+      <p className="text-gray-500 mb-8 max-w-xs mx-auto">
+        You haven&apos;t generated any resumes yet. Create your first
+        professional resume now!
+      </p>
+      <Button
+        onClick={() => router.push("/user/upload")}
+        className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 px-8 rounded-sm shadow-lg shadow-blue-200"
+      >
+        Create New Resume
+      </Button>
+    </div>
+  );
+}
+
+interface ActionsMenuProps {
+  resume: ResumeCard;
+  handleViewResume: (resume: ResumeCard) => void;
+  handleEditResume: (resume: ResumeCard) => void;
+  handleDownloadResume: (resume: ResumeCard) => void;
+  openDeleteConfirm: (resume: ResumeCard) => void;
+  deletingId: string | null;
+  menuButtonRefs: React.MutableRefObject<Map<string, HTMLElement>>;
+  toggleMenu: (e: React.MouseEvent, id: string) => void;
+  openMenuId: string | null;
+  menuAbove: Record<string, boolean>;
+  setOpenMenuId: React.Dispatch<React.SetStateAction<string | null>>;
+}
+
+function ActionsMenu({
+  resume,
+  handleViewResume,
+  handleEditResume,
+  handleDownloadResume,
+  openDeleteConfirm,
+  deletingId,
+  menuButtonRefs,
+  toggleMenu,
+  openMenuId,
+  menuAbove,
+  setOpenMenuId,
+}: ActionsMenuProps) {
+  return (
+    <div className="relative">
+      <Button
+        variant="ghost"
+        size="sm"
+        ref={(el) => {
+          if (el) menuButtonRefs.current.set(resume.id, el);
+          else menuButtonRefs.current.delete(resume.id);
+        }}
+        onClick={(e) => toggleMenu(e, resume.id)}
+        className="p-1 h-8 w-8 hover:bg-gray-100 rounded-sm"
+      >
+        <MoreVertical className="w-5 h-5 text-gray-400" />
+      </Button>
+
+      {openMenuId === resume.id && (
+        <div
+          id={`resume-menu-${resume.id}`}
+          className={`absolute right-0 ${
+            menuAbove[resume.id] ? "bottom-full mb-2" : "top-full mt-2"
+          } w-48 bg-white border border-gray-100 rounded-sm shadow-xl z-50 py-1 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {resume.status === "Generated" && (
+            <button
+              onClick={() => {
+                handleViewResume(resume);
+                setOpenMenuId(null);
+              }}
+              className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3 transition-colors"
+            >
+              <Eye className="w-4 h-4" /> View
+            </button>
+          )}
+          <button
+            onClick={() => {
+              handleEditResume(resume);
+              setOpenMenuId(null);
+            }}
+            className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3 transition-colors"
+          >
+            <Edit3 className="w-4 h-4" /> Edit
+          </button>
+          <button
+            onClick={() => {
+              handleDownloadResume(resume);
+              setOpenMenuId(null);
+            }}
+            className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3 transition-colors"
+          >
+            <Download className="w-4 h-4" /> Download
+          </button>
+          <div className="h-px bg-gray-50 mx-2 my-1" />
+          <button
+            onClick={() => openDeleteConfirm(resume)}
+            disabled={deletingId === resume.id}
+            className="w-full text-left px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+          >
+            <Trash2 className="w-4 h-4 text-red-600" />{" "}
+            {deletingId === resume.id ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

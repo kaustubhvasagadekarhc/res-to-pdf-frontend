@@ -5,6 +5,7 @@ import { useUser } from "@/contexts/UserContext";
 import { authService as legacyAuthService } from "@/services/auth.services";
 import { LogOut, User, Menu } from "lucide-react";
 import { authService } from "@/app/api/client";
+
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
