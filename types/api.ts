@@ -31,3 +31,10 @@ export interface User {
     createdAt?: string;
     updatedAt?: string;
 }
+
+export interface AdminSettings {
+    allowRegistration: boolean;
+    maintenanceMode: boolean;
+    supportEmail: string;
+    maxUploadSize: number;
+}

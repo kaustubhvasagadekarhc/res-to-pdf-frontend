@@ -1,6 +1,8 @@
 "use client";
 
-import { apiClient, pdfService } from "@/app/api/client";
+import { toast } from "sonner";
+
+import { apiClient, pdfService, recommendationService } from "@/app/api/client";
 import { motion } from "framer-motion";
 import {
   AlertCircle,
@@ -12,7 +14,6 @@ import {
   GraduationCap,
   Loader2,
   Plus,
-  RefreshCw,
   Trash2,
   User,
   X,
@@ -21,6 +22,7 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+import { useUser } from "@/contexts/UserContext";
 
 interface ResumeData {
   personal: {
@@ -88,7 +90,7 @@ const AutoHeightTextarea = ({
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${Math.min(
         textareaRef.current.scrollHeight,
-              )}px`;
+      )}px`;
     }
   }, [value]);
 
@@ -110,9 +112,9 @@ export default function EditPage() {
   const [generating, setGenerating] = useState(false);
   const [, setError] = useState("");
   const router = useRouter();
+  const { refreshResumes } = useUser();
   const [currentStep, setCurrentStep] = useState(1);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
+
   const [skillInput, setSkillInput] = useState("");
   const [workExpTechInputs, setWorkExpTechInputs] = useState<{
     [key: string]: string;
@@ -120,6 +122,57 @@ export default function EditPage() {
   const [projectTechInputs, setProjectTechInputs] = useState<{
     [key: number]: string;
   }>({});
+
+  // Analysis State
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<{
+    atsScore?: number;
+    improvements?: string[];
+  } | null>(null);
+
+  const handleAnalyze = async () => {
+    if (!resumeData) return;
+    setAnalyzing(true);
+    setAnalysisResult(null);
+    try {
+      const response = await recommendationService.postRecommendationAnalyze({
+        requestBody: resumeData
+      });
+
+      interface AnalysisResponse {
+        atsScore?: number;
+        formattingIssues?: string[];
+        generalImprovements?: string[];
+        // We can add other fields if we want to use them later
+        summaryFeedback?: { feedback: string; status: string };
+        skillsFeedback?: { feedback: string; missingCriticalSkills: string[] };
+      }
+
+      let result: AnalysisResponse = {};
+
+      if (response && response.data) {
+        result = response.data as unknown as AnalysisResponse;
+      }
+
+      // Combine relevant feedback into a single list for the simple UI
+      const improvements = [
+        ...(result.formattingIssues || []),
+        ...(result.generalImprovements || []),
+        ...(result.skillsFeedback?.missingCriticalSkills ? [`Missing Skills: ${result.skillsFeedback.missingCriticalSkills.join(", ")}`] : [])
+      ];
+
+      setAnalysisResult({
+        atsScore: result.atsScore,
+        improvements: improvements.length > 0 ? improvements : undefined
+      });
+
+    } catch (error) {
+      console.error("Analysis failed", error);
+      toast.error("Failed to analyze resume");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
   const STEPS = [
     { id: 1, key: "personal", label: "Personal Details", icon: User },
@@ -143,7 +196,7 @@ export default function EditPage() {
           // This would require a backend API endpoint to get resume by ID
           // For now, we'll use a placeholder approach
           console.log(`Loading existing resume with ID: ${resumeId}`);
-          
+
           // In a real implementation, you would fetch the resume data:
           // const resumeData = await apiClient.get(`/api/resumes/${resumeId}`);
           // setResumeData(resumeData.data);
@@ -185,7 +238,7 @@ export default function EditPage() {
     }
   }, [resumeData]);
 
-  const [previewError, setPreviewError] = useState<string | null>(null);
+  // const [previewError, setPreviewError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<{
     [key: string]: string;
   }>({});
@@ -250,84 +303,7 @@ export default function EditPage() {
     return Object.keys(errors).length === 0;
   };
 
-  const generatePreview = async () => {
-    if (!resumeData) return;
 
-    // reset states
-    setPreviewLoading(true);
-    setPreviewError(null);
-    setPreviewUrl(null);
-
-    try {
-      console.log("Generating preview for data:", resumeData);
-      apiClient.refreshTokenFromCookies();
-      const response = await pdfService.postGeneratePdf({
-        requestBody: resumeData,
-      });
-      console.log("Preview response:", response);
-
-      let url = "";
-
-      if (
-        response &&
-        typeof response === "object" &&
-        (response as unknown as ApiResponse).status === "success" &&
-        (response as unknown as ApiResponse).data &&
-        (response as unknown as ApiResponse).data.fileUrl
-      ) {
-        url = (response as unknown as ApiResponse).data.fileUrl;
-      } else if (response instanceof Blob) {
-        url = URL.createObjectURL(response);
-      } else {
-        const maybeData =
-          (response as { pdfBase64?: string }).pdfBase64 ||
-          (response as { data?: string }).data ||
-          response;
-
-        if (typeof maybeData === "string") {
-          // Handle both prefixed and non-prefixed base64
-          const base64 = maybeData.startsWith("data:application/pdf;base64,")
-            ? maybeData.split(",")[1]
-            : maybeData;
-
-          try {
-            const byteCharacters = atob(base64);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: "application/pdf" });
-            url = URL.createObjectURL(blob);
-          } catch (e) {
-            console.error("Failed to decode base64 PDF", e);
-            throw new Error("Invalid PDF data received");
-          }
-        }
-      }
-
-      if (url) {
-        setPreviewUrl(url);
-      } else {
-        throw new Error("Could not parse PDF from response");
-      }
-    } catch (error: unknown) {
-      console.error("Preview generation failed", error);
-      setPreviewError(
-        error instanceof Error ? error.message : "Failed to generate preview"
-      );
-    } finally {
-      setPreviewLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    // Attempt to generate preview when entering step 7
-    if (currentStep === 7 && resumeData) {
-      generatePreview();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, resumeData]);
 
   const updatePersonal = (field: string, value: string) => {
     if (!resumeData) return;
@@ -620,6 +596,9 @@ export default function EditPage() {
 
       console.log("PDF generation successful:", response);
 
+      let downloadUrl = "";
+      let downloadFileName = `${resumeData!.personal.name || "resume"}.pdf`;
+
       if (
         response &&
         typeof response === "object" &&
@@ -628,25 +607,27 @@ export default function EditPage() {
         (response as unknown as ApiResponse).data.fileUrl
       ) {
         const apiResponse = response as unknown as ApiResponse;
+        const apiData = apiResponse.data;
+        downloadUrl = apiData.fileUrl;
+        if (apiData.fileName) downloadFileName = apiData.fileName;
+
         sessionStorage.setItem(
           "pdfResponse",
           JSON.stringify({
             success: true,
-            data: apiResponse.data,
-            pdfUrl: apiResponse.data.fileUrl,
-            fileName:
-              apiResponse.data.fileName ||
-              `${resumeData!.personal.name || "resume"}.pdf`,
+            data: apiData,
+            pdfUrl: downloadUrl,
+            fileName: downloadFileName,
           })
         );
       } else if (response instanceof Blob) {
-        const pdfUrl = URL.createObjectURL(response);
+        downloadUrl = URL.createObjectURL(response);
         sessionStorage.setItem(
           "pdfResponse",
           JSON.stringify({
             success: true,
-            pdfUrl,
-            fileName: `${resumeData!.personal.name || "resume"}.pdf`,
+            pdfUrl: downloadUrl,
+            fileName: downloadFileName,
           })
         );
       } else {
@@ -667,13 +648,14 @@ export default function EditPage() {
             }
             const byteArray = new Uint8Array(byteNumbers);
             const blob = new Blob([byteArray], { type: "application/pdf" });
-            const pdfUrl = URL.createObjectURL(blob);
+            downloadUrl = URL.createObjectURL(blob);
+
             sessionStorage.setItem(
               "pdfResponse",
               JSON.stringify({
                 success: true,
-                pdfUrl,
-                fileName: `${resumeData!.personal.name || "resume"}.pdf`,
+                pdfUrl: downloadUrl,
+                fileName: downloadFileName,
               })
             );
           } else {
@@ -689,20 +671,33 @@ export default function EditPage() {
           );
         }
       }
-      // router.push("/user/result");
-      // Instead of redirecting, just ensure preview is updated and show success
-      // We can trigger a refresh of the preview Url from the session storage we just set
-      const pdfResponseStr = sessionStorage.getItem("pdfResponse");
-      if (pdfResponseStr) {
-        const parsed = JSON.parse(pdfResponseStr);
-        if (parsed.pdfUrl) {
-          setPreviewUrl(parsed.pdfUrl);
-        }
+
+      // 0. Open in browser (new tab)
+      if (downloadUrl) {
+        window.open(downloadUrl, "_blank");
       }
-      setCurrentStep(7); // Ensure we are on the last step
+
+      // 1. Auto-download the PDF
+      if (downloadUrl) {
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = downloadFileName;
+        link.target = "_blank";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      // 2. Refresh resumes (so dashboard is up to date)
+      await refreshResumes(true);
+
+      // 3. Redirect to /user (as requested)
+      toast.success("Resume generated and downloaded!");
+      router.push("/user");
+
     } catch (error: unknown) {
       console.error("PDF generation failed:", error);
-      setError(
+      toast.error(
         error instanceof Error ? error.message : "Failed to generate PDF"
       );
     } finally {
@@ -916,11 +911,10 @@ export default function EditPage() {
 
                             updatePersonal("name", formatted);
                           }}
-                          className={`w-full bg-white border rounded-sm ${
-                            validationErrors.name
-                              ? "border-rose-500"
-                              : "border-slate-300"
-                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          className={`w-full bg-white border rounded-sm ${validationErrors.name
+                            ? "border-rose-500"
+                            : "border-slate-300"
+                            } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="John Doe"
                         />
                         {validationErrors.name && (
@@ -954,11 +948,10 @@ export default function EditPage() {
 
                             updatePersonal("designation", formatted);
                           }}
-                          className={`w-full bg-white border rounded-sm ${
-                            validationErrors.designation
-                              ? "border-rose-500"
-                              : "border-slate-300"
-                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          className={`w-full bg-white border rounded-sm ${validationErrors.designation
+                            ? "border-rose-500"
+                            : "border-slate-300"
+                            } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="Software Engineer"
                         />
                         {validationErrors.designation && (
@@ -976,11 +969,10 @@ export default function EditPage() {
                           onChange={(e) =>
                             updatePersonal("email", e.target.value)
                           }
-                          className={`w-full bg-white border rounded-sm ${
-                            validationErrors.email
-                              ? "border-rose-500"
-                              : "border-slate-300"
-                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          className={`w-full bg-white border rounded-sm ${validationErrors.email
+                            ? "border-rose-500"
+                            : "border-slate-300"
+                            } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="john@example.com"
                         />
                         {validationErrors.email && (
@@ -1022,11 +1014,10 @@ export default function EditPage() {
 
                             updatePersonal("mobile", val);
                           }}
-                          className={`w-full bg-white border rounded-sm ${
-                            validationErrors.mobile
-                              ? "border-rose-500"
-                              : "border-slate-300"
-                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          className={`w-full bg-white border rounded-sm ${validationErrors.mobile
+                            ? "border-rose-500"
+                            : "border-slate-300"
+                            } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="+91 00000 00000"
                         />
                         {validationErrors.mobile && (
@@ -1050,11 +1041,10 @@ export default function EditPage() {
                             );
                             updatePersonal("location", filtered);
                           }}
-                          className={`w-full bg-white border rounded-sm ${
-                            validationErrors.location
-                              ? "border-rose-500"
-                              : "border-slate-300"
-                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          className={`w-full bg-white border rounded-sm ${validationErrors.location
+                            ? "border-rose-500"
+                            : "border-slate-300"
+                            } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="New York, USA"
                         />
                         {validationErrors.location && (
@@ -1143,7 +1133,7 @@ export default function EditPage() {
                           </div>
                         </div>
                       </div>
-                      
+
                     </div>
                   )}
 
@@ -1545,70 +1535,127 @@ export default function EditPage() {
                   )}
 
                   {currentStep === 7 && (
-                    <div className="flex flex-col items-center justify-center h-full py-4 text-center">
-                      {/* <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4 text-emerald-600 shadow-emerald-200 shadow-lg"><CheckCircle2 className="w-8 h-8" /></div>
-                      <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                        Ready to Generate!
-                      </h2>
-                      <p className="text-slate-500 max-w-md mx-auto mb-6 text-sm">
-                        Review the preview below, then click Generate to finish.
-                      </p> */}
+                    <div className="flex flex-col items-center justify-center h-full py-0 text-center">
+
 
                       {!isFormComplete && (
-                        <div className="bg-rose-50 text-rose-600 px-4 py-0   rounded-sm border border-rose-100 text-sm font-bold flex items-center gap-2 mb-4">
-                          <AlertCircle className="w-4 h-4" /> Some required
-                          fields are missing. Please check the sidebar.
+                        <div className="bg-rose-50 text-rose-600 px-4 py-0 rounded-sm border border-rose-100 text-sm font-bold flex items-center gap-2 mb-4">
+                          <AlertCircle className="w-4 h-4" />
+                          Some required fields are missing. Please check.
                         </div>
                       )}
 
-                      {/* PDF Preview Area */}
-                      <div className="w-full max-w-4xl mx-auto bg-slate-200 rounded-sm border border-slate-300 h-[500px] flex items-center justify-center ">
-                        {previewLoading ? (
-                          <div className="flex flex-col items-center gap-3">
-                            <Loader2 className="w-10 h-10 animate-spin text-[var(--primary)]" />
-                            <p className="text-slate-500 font-medium">
-                              Generating Preview...
-                            </p>
-                          </div>
-                        ) : previewError ? (
-                          <div className="flex flex-col items-center gap-3 p-6 max-w-sm">
-                            <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center text-rose-500 mb-2">
-                              <AlertCircle className="w-6 h-6" />
+
+                      {/* Analysis Section */}
+                      <div className="w-full max-w-4xl mx-auto mb-6">
+                        {analysisResult && (
+                          <div className="bg-white border-2 border-indigo-100 rounded-sm p-6 shadow-sm mb-6 animate-in slide-in-from-top-2">
+                            <div className="flex items-center gap-4 mb-4 border-b border-indigo-50 pb-4">
+                              <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center border-4 border-indigo-100 text-xl font-bold text-indigo-700">
+                                {analysisResult.atsScore || 0}%
+                              </div>
+                              <div>
+                                <h3 className="text-xl font-bold text-slate-800">Resume Analysis Score</h3>
+                                <p className="text-slate-500 text-sm">Based on industry standards and ATS compatibility</p>
+                              </div>
                             </div>
-                            <p className="text-slate-800 font-semibold">
-                              Preview Failed
-                            </p>
-                            <p className="text-slate-500 text-sm mb-2">
-                              {previewError}
-                            </p>
-                            <button
-                              onClick={generatePreview}
-                              className="px-4 py-2 bg-[var(--primary)] text-white rounded-sm text-sm font-bold hover:bg-[var(--primary-700)] transition-colors flex items-center gap-2"
-                            >
-                              <RefreshCw className="w-4 h-4" /> Retry Preview
-                            </button>
-                          </div>
-                        ) : previewUrl ? (
-                          <iframe
-                            src={previewUrl}
-                            className="w-full h-full "
-                            title="Resume Preview"
-                          />
-                        ) : (
-                          <div className="text-slate-400 flex flex-col items-center gap-2">
-                            <FileText className="w-12 h-12 opacity-50" />
-                            <p>Preview will appear here</p>
-                            <p className="text-xs text-slate-300">
-                              v1.1 - {resumeData ? "Data Ready" : "No Data"}
-                            </p>
-                            <button
-                              onClick={generatePreview}
-                              className="mt-2 px-4  bg-white border border-slate-300 rounded-sm text-sm font-bold hover:bg-slate-50 text-slate-600 transition-colors flex items-center gap-2"
-                            >
-                              <RefreshCw className="w-4 h-4" /> Load Preview
-                            </button>
+
+                            {analysisResult.improvements && analysisResult.improvements.length > 0 ? (
+                              <div className="space-y-3">
+                                <h4 className="font-semibold text-slate-700 flex items-center gap-2">
+                                  <AlertCircle className="w-4 h-4 text-amber-500" />
+                                  Areas for Improvement
+                                </h4>
+                                <ul className="space-y-2">
+                                  {analysisResult.improvements.map((point, i) => (
+                                    <li key={i} className="flex items-start gap-2 text-slate-600 text-sm bg-slate-50 p-2.5 rounded-sm">
+                                      <span className="text-amber-500 mt-0.5">•</span>
+                                      {point}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ) : (
+                              <div className="text-slate-500 text-sm italic">
+                                No specific improvements detected. Your resume looks good!
+                              </div>
+                            )}
                           </div>
                         )}
+                      </div>
+
+                      {/* Finalize Action Card */}
+                      <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center py-12 bg-white border-2 border-dashed border-slate-200 rounded-xl shadow-sm">
+                        <div className="text-center space-y-6 max-w-lg w-full px-6">
+
+                          {/* 1. Pre-Analysis Action (Only show if not analyzed yet) */}
+                          {!analysisResult && (
+                            <div className="animate-in fade-in slide-in-from-bottom-2">
+                              <div className="bg-indigo-50/50 rounded-xl p-6 border border-indigo-100 mb-6">
+                                {/* <h3 className="text-sm font-bold text-indigo-900 mb-3 uppercase tracking-wider">Recommended Step</h3> */}
+                                <button
+                                  onClick={handleAnalyze}
+                                  disabled={analyzing}
+                                  className="w-full bg-white text-indigo-600 border-2 border-indigo-200 px-6 py-4 rounded-sm font-bold hover:bg-indigo-50 hover:border-indigo-300 transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-sm"
+                                >
+                                  {analyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+                                  {analyzing ? "Analyzing..." : "Analyze Resume"}
+                                </button>
+                              </div>
+
+                              {/* Styled Divider */}
+                              <div className="relative flex items-center py-2">
+                                <div className="flex-grow border-t border-slate-200"></div>
+                                <span className="flex-shrink-0 mx-4 text-slate-400 text-xs font-bold uppercase tracking-widest">or skip to finalization</span>
+                                <div className="flex-grow border-t border-slate-200"></div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 2. Final Generation Action */}
+                          <div className="space-y-4">
+                            {!analysisResult && (
+                              <h2 className="text-xl font-bold text-slate-700">Ready to Download?</h2>
+                            )}
+                            {analysisResult && (
+                              <div className="w-16 h-16 bg-emerald-100 rounded-md flex items-center justify-center mx-auto text-emerald-600 mb-4 shadow-sm animate-in zoom-in">
+                                <CheckCircle2 className="w-8 h-8" />
+                              </div>
+                            )}
+
+                            <p className="text-slate-500 text-sm leading-relaxed">
+                              {analysisResult
+                                ? "Great! Your resume has been analyzed and is ready for export."
+                                : "You can generate your PDF now, but we recommend analyzing it first."}
+                            </p>
+
+                            <button
+                              onClick={handleGenerate}
+                              disabled={generating || !isFormComplete}
+                              className={`w-full sm:w-auto mx-auto px-12 py-4 rounded-md text-lg font-bold transition-all  active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-75 disabled:cursor-not-allowed ${analysisResult
+                                ? "bg-[var(--primary)] hover:bg-indigo-600 text-white"
+                                : "bg-slate-800 hover:bg-slate-900 text-white"
+                                } bb `}
+                            >
+                              {generating ? (
+                                <>
+                                  <Loader2 className="w-6 h-6 animate-spin" /> Generating...
+                                </>
+                              ) : (
+                                <>
+                                  Generate Resume <ArrowRight className="w-6 h-6" />
+                                </>
+                              )}
+                            </button>
+
+                            {!isFormComplete && (
+                              <p className="text-rose-500 text-sm font-medium mt-4 bg-rose-50 p-2 rounded-lg inline-block">
+                                Please complete all required fields before generating.
+                              </p>
+                            )}
+                          </div>
+
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1619,7 +1666,6 @@ export default function EditPage() {
         </div>
       </div>
 
-      {/* Sticky Footer with Progress Bar */}
       {/* Sticky Footer with Progress Bar */}
       <div className="bg-white border-t border-slate-200 flex flex-col z-50 shrink-0 relative">
         {/* Progress Bar Container */}
@@ -1637,11 +1683,10 @@ export default function EditPage() {
             <button
               onClick={handleBack}
               disabled={currentStep === 1}
-              className={`px-8 py-2.5 rounded-sm font-bold border transition-all flex items-center gap-2 ${
-                currentStep === 1
-                  ? "opacity-0 pointer-events-none"
-                  : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400"
-              }`}
+              className={`px-8 py-2.5 rounded-sm font-bold border transition-all flex items-center gap-2 ${currentStep === 1
+                ? "opacity-0 pointer-events-none"
+                : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400"
+                }`}
             >
               Back
             </button>
@@ -1660,23 +1705,10 @@ export default function EditPage() {
               </button>
             ) : (
               <button
-                onClick={handleGenerate}
-                disabled={generating || !isFormComplete}
-                className="px-8 py-2.5 rounded-sm font-bold text-white bg-[var(--primary)] hover:bg-[var(--primary-700)] transition-all active:scale-95 flex items-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+                onClick={() => router.push("/user/resumes")}
+                className="px-8 py-2.5 rounded-sm font-bold text-slate-600 border border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2"
               >
-                {generating ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" /> Generating...
-                  </>
-                ) : previewUrl ? (
-                  <>
-                    Regenerate PDF <RefreshCw className="w-4 h-4" />
-                  </>
-                ) : (
-                  <>
-                    Generate PDF <ArrowRight className="w-5 h-5" />
-                  </>
-                )}
+                Go to Dashboard
               </button>
             )}
           </div>

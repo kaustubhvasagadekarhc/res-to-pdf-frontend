@@ -11,14 +11,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Save } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
-interface AdminSettings {
-    allowRegistration: boolean;
-    maintenanceMode: boolean;
-    supportEmail: string;
-    maxUploadSize: number;
-}
+import { useAdmin } from "@/app/context/admin-context";
+import { AdminSettings } from "@/types/api";
 
 export default function SettingsPage() {
+    const { settings: ctxSettings, isLoading: ctxLoading, updateSettings, refreshData } = useAdmin();
     const [settings, setSettings] = useState<AdminSettings>({
         allowRegistration: true,
         maintenanceMode: false,
@@ -29,39 +26,31 @@ export default function SettingsPage() {
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                setLoading(true);
-                // Assuming API returns data in response.data or directly
-                const res = await adminService.getAdminSettings();
-                if (res) {
-                    setSettings({
-                        allowRegistration: res.allowRegistration ?? true,
-                        maintenanceMode: res.maintenanceMode ?? false,
-                        supportEmail: res.supportEmail || "",
-                        maxUploadSize: res.maxUploadSize || 10485760
-                    });
-                }
-            } catch (error) {
-                console.error("Failed to load settings", error);
-                toast.error("Failed to load settings");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchSettings();
-    }, []);
+        if (!ctxLoading && ctxSettings) {
+            setSettings(ctxSettings);
+            setLoading(false);
+        } else if (!ctxLoading && !ctxSettings) {
+            // Fallback or retry if settings failed to load but context finished
+            setLoading(false);
+        }
+    }, [ctxSettings, ctxLoading]);
 
     const handleSave = async () => {
         try {
             setSaving(true);
+
+            // Optimistic update (optional, but we have local state anyway driving the UI)
+            updateSettings(settings);
+
             await adminService.putAdminSettings({
                 requestBody: settings,
             });
             toast.success("Settings updated successfully");
+            refreshData(); // Ensure context is perfectly synced
         } catch (error) {
             console.error("Failed to update settings", error);
             toast.error("Failed to update settings");
+            refreshData(); // Revert on error
         } finally {
             setSaving(false);
         }
