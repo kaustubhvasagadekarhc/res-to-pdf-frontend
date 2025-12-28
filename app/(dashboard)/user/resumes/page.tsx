@@ -1,6 +1,6 @@
 "use client";
 
-import { apiClient } from "@/app/api/client";
+import { apiClient, resumeService } from "@/app/api/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useUser, Resume } from "@/contexts/UserContext"; // Import from Context
@@ -161,7 +161,7 @@ export default function ResumesPage() {
     try {
       // apiClient usage here is fine for the delete call itself
       apiClient.refreshTokenFromCookies();
-      await apiClient.delete(`/resume/${resume.id}`);
+      await resumeService.deleteResume({ id: resume.id });
 
       // Optimistic update using context
       removeResume(resume.id);
