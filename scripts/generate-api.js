@@ -174,4 +174,28 @@ fs.rmSync(outputDir, { recursive: true, force: true });
   }
 
   console.log("API client generated successfully.");
+
+  // Post-process request.ts to use custom axios instance
+  const requestFile = path.join(outputDir, "core/request.ts");
+  if (fs.existsSync(requestFile)) {
+    console.log("Patching request.ts to use custom axios instance...");
+    let content = fs.readFileSync(requestFile, "utf8");
+
+    // 1. Add import if not present
+    if (!content.includes("@/lib/axiosInstance")) {
+      content = content.replace(
+        "import axios from 'axios';",
+        "import axios from 'axios';\nimport axiosInstance from '@/lib/axiosInstance';"
+      );
+    }
+
+    // 2. Use axiosInstance as default
+    content = content.replace(
+      "axiosClient: AxiosInstance = axios",
+      "axiosClient: AxiosInstance = axiosInstance"
+    );
+
+    fs.writeFileSync(requestFile, content, "utf8");
+    console.log("✓ request.ts patched successfully.");
+  }
 })();

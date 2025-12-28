@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import axios from 'axios';
+import axiosInstance from '@/lib/axiosInstance';
 import type { AxiosError, AxiosRequestConfig, AxiosResponse, AxiosInstance } from 'axios';
 import FormData from 'form-data';
 
@@ -160,11 +161,11 @@ export const getHeaders = async (config: OpenAPIConfig, options: ApiRequestOptio
         ...options.headers,
         ...formHeaders,
     })
-    .filter(([_, value]) => isDefined(value))
-    .reduce((headers, [key, value]) => ({
-        ...headers,
-        [key]: String(value),
-    }), {} as Record<string, string>);
+        .filter(([_, value]) => isDefined(value))
+        .reduce((headers, [key, value]) => ({
+            ...headers,
+            [key]: String(value),
+        }), {} as Record<string, string>);
 
     if (isStringWithValue(token)) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -225,6 +226,12 @@ export const sendRequest = async <T>(
         return await axiosClient.request(requestConfig);
     } catch (error) {
         const axiosError = error as AxiosError<T>;
+        console.error(`[API Error] ${options.method} ${url}`, {
+            message: axiosError.message,
+            code: axiosError.code,
+            response: axiosError.response?.data,
+            baseURL: axiosClient.defaults.baseURL,
+        });
         if (axiosError.response) {
             return axiosError.response;
         }
@@ -291,7 +298,7 @@ export const catchErrorCodes = (options: ApiRequestOptions, result: ApiResult): 
  * @returns CancelablePromise<T>
  * @throws ApiError
  */
-export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions, axiosClient: AxiosInstance = axios): CancelablePromise<T> => {
+export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions, axiosClient: AxiosInstance = axiosInstance): CancelablePromise<T> => {
     return new CancelablePromise(async (resolve, reject, onCancel) => {
         try {
             const url = getUrl(config, options);
