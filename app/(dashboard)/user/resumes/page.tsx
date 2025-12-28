@@ -11,13 +11,12 @@ import {
   Edit3,
   Eye,
   FileText,
-  // History,
   MoreVertical,
   Search,
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 
 export default function ResumesPage() {
   useAuthGuard("User");
@@ -37,22 +36,24 @@ export default function ResumesPage() {
     }
   }, [user?.id, refreshResumes]);
 
-  const filteredResumes = resumes.filter((resume) => {
-    const matchesSearch =
-      resume.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      resume.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || resume.status === statusFilter;
+  const filteredResumes = useMemo(() => {
+    return resumes.filter((resume) => {
+      const matchesSearch =
+        resume.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        resume.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus =
+        statusFilter === "all" || resume.status === statusFilter;
 
-    let matchesDate = true;
-    if (dateFilter) {
-      const resumeDate = new Date(resume.createdAt).toLocaleDateString();
-      const filterDate = new Date(dateFilter).toLocaleDateString();
-      matchesDate = resumeDate === filterDate;
-    }
+      let matchesDate = true;
+      if (dateFilter) {
+        const resumeDate = new Date(resume.createdAt).toLocaleDateString();
+        const filterDate = new Date(dateFilter).toLocaleDateString();
+        matchesDate = resumeDate === filterDate;
+      }
 
-    return matchesSearch && matchesStatus && matchesDate;
-  });
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [resumes, searchQuery, statusFilter, dateFilter]);
 
   const handleEditResume = async (resume: Resume) => {
     try {
@@ -267,7 +268,7 @@ export default function ResumesPage() {
   }, [openMenuId]);
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] pb-8 sm:pb-8">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f8f9fa] pb-8 sm:pb-8">
       <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="mb-2">
