@@ -1,6 +1,6 @@
 "use client";
 
-// import { useAdmin } from "@/app/context/admin-context";
+import { useAdmin } from "@/app/context/admin-context";
 import { toast } from "sonner";
 import { adminService } from "@/app/api/client";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import {
   Loader2,
   User as UserIcon,
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,12 +30,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User } from "@/types/api";
+
 
 export default function UserManagementPage() {
   useAuthGuard("Admin");
 
-  const [users, setUsers] = useState<User[]>([]);
+  const { users, isLoading: ctxLoading, refreshData, updateLocalUser } = useAdmin();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showInviteDialog, setShowInviteDialog] = useState(false);
@@ -46,30 +46,10 @@ export default function UserManagementPage() {
   const [isParsing, setIsParsing] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
 
-  const fetchUsers = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await adminService.getAdminUsers();
-      // Handle PaginatedResponse<User> structure
-      if (response && Array.isArray(response.data)) {
-        setUsers(response.data);
-      } else if (Array.isArray(response)) {
-        // Fallback if backend returns direct array
-        setUsers(response);
-      } else {
-        console.warn("Unexpected user response format:", response);
-        setUsers([]);
-      }
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  // Sync local loading state with context loading
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    setLoading(ctxLoading);
+  }, [ctxLoading]);
 
   const handleRoleUpdate = async (
     userId: string,
@@ -77,27 +57,37 @@ export default function UserManagementPage() {
   ) => {
     try {
       const newRole = currentRole === "USER" ? "ADMIN" : "USER";
+      // Optimistic update
+      updateLocalUser(userId, { userType: newRole });
+
       await adminService.patchAdminUsersRole({
         id: userId,
         requestBody: { userType: newRole },
       });
-      fetchUsers();
+      // Refresh to ensure consistency
+      refreshData();
     } catch (error) {
       console.error("Failed to update role:", error);
       toast.error("Failed to update user role");
+      // Revert optimization if needed (or just refresh)
+      refreshData();
     }
   };
 
   const handleVerifyUpdate = async (userId: string, isVerified: boolean) => {
     try {
+      // Optimistic update
+      updateLocalUser(userId, { isVerified: !isVerified });
+
       await adminService.patchAdminUsersVerify({
         id: userId,
         requestBody: { isVerified: !isVerified },
       });
-      fetchUsers();
+      refreshData();
     } catch (error) {
       console.error("Failed to update verification:", error);
       toast.error("Failed to update verification status");
+      refreshData();
     }
   };
 
@@ -105,7 +95,7 @@ export default function UserManagementPage() {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
       await adminService.deleteAdminUsers({ id: userId });
-      fetchUsers(); // Refresh list
+      refreshData(); // Refresh list
     } catch (error) {
       console.error("Failed to delete user:", error);
       toast.error("Failed to delete user");
@@ -156,10 +146,9 @@ export default function UserManagementPage() {
       });
       setShowInviteDialog(false);
       setInviteFile(null);
-      setInviteEmail("");
       setInviteName("");
       toast.success("User invited successfully");
-      fetchUsers();
+      refreshData();
     } catch (error: unknown) {
       console.error("Failed to invite user:", error);
       const apiError = error as {
@@ -220,11 +209,10 @@ export default function UserManagementPage() {
                     </Label>
                     <div
                       className={`relative border-2 border-dashed rounded-lg p-6 transition-all duration-200 flex flex-col items-center justify-center gap-2 group cursor-pointer
-                                                ${
-                                                  isParsing
-                                                    ? "bg-slate-50 border-slate-200"
-                                                    : "bg-white border-slate-300 hover:border-[var(--primary)] hover:bg-slate-50"
-                                                }`}
+                                                ${isParsing
+                          ? "bg-slate-50 border-slate-200"
+                          : "bg-white border-slate-300 hover:border-[var(--primary)] hover:bg-slate-50"
+                        }`}
                       onClick={() =>
                         document.getElementById("resume-upload")?.click()
                       }
@@ -251,8 +239,8 @@ export default function UserManagementPage() {
                           {isParsing
                             ? "Parsing Resume..."
                             : inviteFile
-                            ? inviteFile.name
-                            : "Click to upload resume"}
+                              ? inviteFile.name
+                              : "Click to upload resume"}
                         </p>
                         <p className="text-xs text-slate-500 mt-1">
                           {inviteFile
@@ -390,11 +378,10 @@ export default function UserManagementPage() {
                 </div>
                 <div className="col-span-3">
                   <span
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
-                      user.userType === "ADMIN"
-                        ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
-                        : "bg-blue-50 text-blue-700 border border-blue-100"
-                    }`}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${user.userType === "ADMIN"
+                      ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                      : "bg-blue-50 text-blue-700 border border-blue-100"
+                      }`}
                   >
                     {user.userType === "ADMIN" ? (
                       <ShieldAlert className="w-3.5 h-3.5" />
@@ -406,11 +393,10 @@ export default function UserManagementPage() {
                 </div>
                 <div className="col-span-2">
                   <span
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
-                      user.isVerified
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                        : "bg-amber-50 text-amber-700 border border-amber-100"
-                    }`}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${user.isVerified
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                      : "bg-amber-50 text-amber-700 border border-amber-100"
+                      }`}
                   >
                     {user.isVerified ? (
                       <>
@@ -447,9 +433,8 @@ export default function UserManagementPage() {
                     title="Toggle Verification"
                   >
                     <Check
-                      className={`w-4 h-4 ${
-                        user.isVerified ? "text-emerald-600" : ""
-                      }`}
+                      className={`w-4 h-4 ${user.isVerified ? "text-emerald-600" : ""
+                        }`}
                     />
                   </Button>
                   <Button

@@ -4,7 +4,6 @@ import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { motion } from "framer-motion";
 import {
   Activity,
-  BarChart3,
   FileText,
   Settings,
   TrendingUp,
@@ -73,14 +72,6 @@ export default function AdminDashboard() {
       href: "/admin/users",
       iconColor: "text-indigo-600",
       bgColor: "bg-indigo-50",
-    },
-    {
-      title: "Analytics",
-      description: "View detailed analytics",
-      icon: BarChart3,
-      href: "/admin/analytics",
-      iconColor: "text-violet-600",
-      bgColor: "bg-violet-50",
     },
     {
       title: "System Settings",
@@ -238,7 +229,7 @@ export default function AdminDashboard() {
             <h2 className="text-xl font-bold text-slate-800 mb-6">
               Quick Actions
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {quickActions.map((action, index) => (
                 <motion.button
                   key={action.title}

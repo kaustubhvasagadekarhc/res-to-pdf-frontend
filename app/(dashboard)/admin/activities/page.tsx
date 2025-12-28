@@ -125,7 +125,7 @@ export default function ActivitiesPage() {
 
                             <div className="relative">
                                 {/* Vertical Line */}
-                                <div className="absolute left-[78px] top-3 bottom-0 w-px bg-slate-200" />
+                                <div className="absolute left-[80px] top-3 bottom-0 w-px  bg-slate-200" />
 
                                 <div className="space-y-8">
                                     {groupLogs.map((log) => {
@@ -142,7 +142,7 @@ export default function ActivitiesPage() {
                                                 </div>
 
                                                 {/* Timeline Node */}
-                                                <div className="flex justify-center pt-0.5 z-10">
+                                                <div className="flex justify-center pt-0.5 z-0">
                                                     <div className="bg-white">
                                                         {getStatusIcon(log.action)}
                                                     </div>
@@ -169,24 +169,12 @@ export default function ActivitiesPage() {
                                                                 <span className="text-slate-400">-</span>
                                                                 <span className="text-slate-900">{log.action.replace(/_/g, ' ').toLowerCase()}</span>
                                                             </div>
-                                                            {/* {log.ipAddress && (
-                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                                                                    {log.ipAddress}
-                                                                </span>
-                                                            )} */}
-
-                                                            {/* Description as a sentence if short */}
-                                                            {/* {log.description && !log.details && (
-                                                                <span className="text-slate-600 ml-1">
-                                                                    - {log.description}
-                                                                </span>
-                                                            )} */}
                                                         </div>
                                                     </div>
 
                                                     {/* Message / Details Card */}
                                                     {(!!log.details || (log.description && log.description.length > 10)) && (
-                                                        <div className="mt-2 ml-8 p-3 bg-white border border-slate-200 rounded-lg shadow-sm">
+                                                        <div className="mt-2 ml-8 p-3 bg-white border border-slate-200 rounded-sm shadow-sm">
                                                             <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
                                                                 Details
                                                             </div>

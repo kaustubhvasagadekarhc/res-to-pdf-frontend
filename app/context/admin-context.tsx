@@ -1,8 +1,6 @@
-"use client";
-
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 import { adminService } from "@/app/api/client";
-import { ActivityLog, User } from "../../types/api";
+import { ActivityLog, User, AdminSettings } from "../../types/api";
 
 type AdminStats = {
     totalUsers: number;
@@ -15,10 +13,12 @@ interface AdminContextType {
     users: User[];
     stats: AdminStats;
     recentActivities: ActivityLog[];
+    settings: AdminSettings | null;
     isLoading: boolean;
     refreshData: () => Promise<void>;
     updateLocalUser: (userId: string, updates: Partial<User>) => void;
     removeLocalUser: (userId: string) => void;
+    updateSettings: (newSettings: AdminSettings) => void;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -32,15 +32,17 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         todayResumes: 0,
     });
     const [recentActivities, setRecentActivities] = useState<ActivityLog[]>([]);
+    const [settings, setSettings] = useState<AdminSettings | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     const refreshData = async () => {
         setIsLoading(true);
         try {
-            const [usersRes, statsRes, activitiesRes] = await Promise.all([
+            const [usersRes, statsRes, activitiesRes, settingsRes] = await Promise.all([
                 adminService.getAdminUsers(),
                 adminService.getAdminStats(),
-                adminService.getAdminActivitiesRecent({ limit: 5 })
+                adminService.getAdminActivitiesRecent({ limit: 5 }),
+                adminService.getAdminSettings()
             ]);
 
             // Handle Users
@@ -65,6 +67,16 @@ export function AdminProvider({ children }: { children: ReactNode }) {
                 setRecentActivities(activitiesRes.data);
             }
 
+            // Handle Settings
+            if (settingsRes) {
+                setSettings({
+                    allowRegistration: settingsRes.allowRegistration ?? true,
+                    maintenanceMode: settingsRes.maintenanceMode ?? false,
+                    supportEmail: settingsRes.supportEmail || "",
+                    maxUploadSize: settingsRes.maxUploadSize || 10485760
+                });
+            }
+
         } catch (error) {
             console.error("Failed to fetch admin data", error);
         } finally {
@@ -86,16 +98,22 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         setUsers(prev => prev.filter(user => user.id !== userId));
     };
 
+    const updateSettings = (newSettings: AdminSettings) => {
+        setSettings(newSettings);
+    };
+
     // Memoize the value to avoid unnecessary re-renders in consumers
     const value = useMemo(() => ({
         users,
         stats,
         recentActivities,
+        settings,
         isLoading,
         refreshData,
         updateLocalUser,
-        removeLocalUser
-    }), [users, stats, recentActivities, isLoading]);
+        removeLocalUser,
+        updateSettings
+    }), [users, stats, recentActivities, settings, isLoading]);
 
     return (
         <AdminContext.Provider value={value}>

@@ -1,8 +1,9 @@
 "use client";
 
-import { apiClient, dashboardService } from "@/app/api/client";
+import { apiClient } from "@/app/api/client";
 import { Button } from "@/components/ui/button";
-import { useUser } from "@/contexts/UserContext";
+import { toast } from "sonner";
+import { useUser, Resume } from "@/contexts/UserContext"; // Import from Context
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import {
   Calendar,
@@ -10,88 +11,31 @@ import {
   Edit3,
   Eye,
   FileText,
-  History,
+  // History,
   MoreVertical,
   Search,
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
-
-interface ResumeCard {
-  id: string;
-  fileName: string;
-  fileUrl: string;
-  createdAt: string;
-  updatedAt: string;
-  version: number;
-  jobTitle?: string;
-  status: "Generated" | "Draft";
-  content?: string;
-}
+import { useEffect, useState, useRef } from "react";
 
 export default function ResumesPage() {
   useAuthGuard("User");
   const router = useRouter();
-  const { user } = useUser();
-  const [resumes, setResumes] = useState<ResumeCard[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [, setError] = useState<string | null>(null);
+
+  // Use Context for Data
+  const { user, resumes, loadingResumes, refreshResumes, removeResume } = useUser();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
 
-  const fetchResumes = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      apiClient.refreshTokenFromCookies();
-
-      // For now, using the dashboard service to fetch user's resume sections as a placeholder
-      // In a real implementation, you'd have an endpoint that returns completed resume files
-      // like /api/resumes/user or similar
-      const response = await dashboardService.postDashboardResumes({
-        requestBody: { userId: user?.id || "" },
-      });
-
-      if (response && Array.isArray(response.data)) {
-        // Map the response to our ResumeCard interface
-        // In a real implementation, you'd have actual file URLs from a completed resumes endpoint
-        const mappedResumes = response.data.map(
-          (item: Record<string, unknown>) => {
-            const fileUrl =
-              (item.resumeurl as string) || (item.fileUrl as string) || "";
-            return {
-              id: (item.id as string) || "",
-              fileName: item.jobTitle
-                ? `${(item.jobTitle as string) || "Resume"}.pdf`
-                : "Resume.pdf",
-              fileUrl: fileUrl,
-              createdAt: (item.createdAt as string) || new Date().toISOString(),
-              updatedAt: (item.updatedAt as string) || new Date().toISOString(),
-              version: (item.version as number) || 1,
-              jobTitle: (item.jobTitle as string) || "",
-              content: item.content as string,
-              status: fileUrl ? ("Generated" as const) : ("Draft" as const),
-            };
-          }
-        );
-        setResumes(mappedResumes);
-      } else {
-        setResumes([]);
-      }
-    } catch (err) {
-      console.error("Failed to fetch resumes:", err);
-      setError("Failed to load your resumes. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
-
+  // Trigger fetch if needed (context handles caching)
   useEffect(() => {
-    fetchResumes();
-  }, [fetchResumes]);
+    if (user?.id) {
+      refreshResumes();
+    }
+  }, [user?.id, refreshResumes]);
 
   const filteredResumes = resumes.filter((resume) => {
     const matchesSearch =
@@ -110,7 +54,7 @@ export default function ResumesPage() {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
-  const handleEditResume = async (resume: ResumeCard) => {
+  const handleEditResume = async (resume: Resume) => {
     try {
       // In a real implementation, you'd fetch the specific resume data
       // For now, we'll just pass the ID to the edit page
@@ -124,11 +68,11 @@ export default function ResumesPage() {
       router.push(`/user/edit?id=${resume.id}`);
     } catch (error) {
       console.error("Error preparing resume for editing:", error);
-      setError("Failed to load resume data for editing");
+      toast.error("Failed to load resume data for editing");
     }
   };
 
-  const handleViewResume = (resume: ResumeCard) => {
+  const handleViewResume = (resume: Resume) => {
     if (resume.fileUrl) {
       window.open(resume.fileUrl, "_blank");
     } else {
@@ -137,7 +81,7 @@ export default function ResumesPage() {
     }
   };
 
-  const handleDownloadResume = (resume: ResumeCard) => {
+  const handleDownloadResume = (resume: Resume) => {
     if (resume.fileUrl) {
       const link = document.createElement("a");
       link.href = resume.fileUrl;
@@ -199,10 +143,10 @@ export default function ResumesPage() {
 
   // Delete handling (confirm modal + toast)
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [confirmResume, setConfirmResume] = useState<ResumeCard | null>(null);
+  const [confirmResume, setConfirmResume] = useState<Resume | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const openDeleteConfirm = (resume: ResumeCard) => {
+  const openDeleteConfirm = (resume: Resume) => {
     setConfirmResume(resume);
     setOpenMenuId(null);
   };
@@ -214,16 +158,18 @@ export default function ResumesPage() {
     const resume = confirmResume;
     setDeletingId(resume.id);
     try {
+      // apiClient usage here is fine for the delete call itself
       apiClient.refreshTokenFromCookies();
       await apiClient.delete(`/resume/${resume.id}`);
 
-      // Remove resume from local state
-      setResumes((prev) => prev.filter((r) => r.id !== resume.id));
+      // Optimistic update using context
+      removeResume(resume.id);
+
       setConfirmResume(null);
       setToastMessage("Resume deleted");
     } catch (err) {
       console.error("Failed to delete resume:", err);
-      setError("Failed to delete resume. Please try again later.");
+      // setError is gone, let's just toast or ignore if no error state
       setToastMessage("Failed to delete resume");
     } finally {
       setDeletingId(null);
@@ -321,36 +267,49 @@ export default function ResumesPage() {
   }, [openMenuId]);
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] pb-24 sm:pb-8">
-      <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#f8f9fa] pb-8 sm:pb-8">
+      <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
-        <div className="mb-6">
-          <div className="flex flex-col gap-1 mb-6">
-            <h1 className="text-3xl font-bold text-[#1a56db]">
-              My Resumes{" "}
-              <span className="text-gray-500 font-normal">
-                ({resumes.length})
-              </span>
-            </h1>
-            <p className="text-gray-500 text-sm">
-              Manage, edit, and download your generated professional resumes.
-            </p>
+        <div className="mb-2">
+          <div className="flex items-start justify-between gap-6 mb-6">
+            <div>
+              <h1 className="text-4xl font-bold text-[var(--primary)] mb-1">
+                My Resumes{" "}
+                <span className="text-slate-500 text-xl">
+                  ({resumes.length})
+                </span>
+              </h1>
+              <p className="text-slate-600">
+                Manage, edit, and download your generated professional resumes.
+              </p>
+            </div>
+            <div className="hidden md:flex items-center">
+              {/* <Button className=" bg-white border border-slate-200 text-[var(--primary)] hover:bg-slate-50 whitespace-nowrap font-medium">
+                Timesheet
+              </Button> */}
+              <Button
+                onClick={() => router.push("/user/upload")}
+                className="ml-3 bg-[var(--primary)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] whitespace-nowrap font-medium"
+              >
+                Create New Resume
+              </Button>
+            </div>
           </div>
 
           {/* Search and Filters Bar */}
-          <div className="space-y-4">
-            <div className="relative w-full">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="relative w-full md:w-110">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search resumes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all"
+                className="w-full pl-12 pr-4 py-2.5 bg-white border border-gray-200 rounded-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all"
               />
             </div>
 
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
               <div className="relative shrink-0">
                 <select
                   value={statusFilter}
@@ -364,7 +323,7 @@ export default function ResumesPage() {
                 <MoreVertical className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 rotate-90 pointer-events-none" />
               </div>
 
-              <div className="relative shrink-0">
+              <div className="shrink-0">
                 <button
                   onClick={() =>
                     (
@@ -388,21 +347,13 @@ export default function ResumesPage() {
                   className="absolute opacity-0 pointer-events-none"
                 />
               </div>
-
-              <Button
-                variant="outline"
-                className="shrink-0 rounded-sm border-gray-200 bg-white text-blue-600 hover:text-blue-700 font-medium px-4 py-2.5 h-auto text-sm shadow-sm flex items-center gap-2"
-              >
-                <History className="w-4 h-4" />
-                Timesheet
-              </Button>
             </div>
           </div>
         </div>
 
         {/* Desktop Table View */}
         <div className="hidden sm:block">
-          {loading ? (
+          {loadingResumes ? (
             <div className="bg-white rounded-sm shadow-sm border border-gray-200 overflow-hidden">
               <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-100 bg-gray-50/50">
                 <div className="col-span-1 text-xs font-bold text-gray-400 uppercase">
@@ -453,7 +404,7 @@ export default function ResumesPage() {
           ) : filteredResumes.length === 0 ? (
             <EmptyState router={router} />
           ) : (
-            <div className="bg-white rounded-sm shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-sm shadow-sm border border-gray-200 overflow-visible">
               <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-100 bg-gray-50/50">
                 <div className="col-span-1 text-xs font-bold text-gray-400 uppercase">
                   Sr No
@@ -527,7 +478,7 @@ export default function ResumesPage() {
 
         {/* Mobile List View */}
         <div className="sm:hidden space-y-4">
-          {loading ? (
+          {loadingResumes ? (
             [...Array(4)].map((_, i) => (
               <div
                 key={i}
@@ -593,11 +544,10 @@ export default function ResumesPage() {
                 <div className="h-px bg-gray-100 -mx-4 my-4" />
                 <div className="flex items-center justify-between">
                   <span
-                    className={`px-2.5 py-1 rounded-sm text-xs font-bold leading-none ${
-                      resume.status === "Generated"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-600"
-                    }`}
+                    className={`px-2.5 py-1 rounded-sm text-xs font-bold leading-none ${resume.status === "Generated"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-600"
+                      }`}
                   >
                     {resume.status}
                   </span>
@@ -630,29 +580,8 @@ export default function ResumesPage() {
           </svg>
         </button>
 
-        {/* Bottom Navigation */}
-        {/* <div className="sm:hidden fixed bottom-0 left-0 right-0 h-20 bg-white border-t border-gray-100 flex items-center justify-around px-2 z-40">
-          <button className="flex flex-col items-center gap-1 group">
-            <FileText className="w-6 h-6 text-blue-600" strokeWidth={2.5} />
-            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
-              Resumes
-            </span>
-          </button>
-          <button className="flex flex-col items-center gap-1 text-gray-400 group">
-            <Briefcase className="w-6 h-6" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">
-              Jobs
-            </span>
-          </button>
-          <button className="flex flex-col items-center gap-1 text-gray-400 group">
-            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-[10px] font-bold text-blue-600">
-              {user?.name?.charAt(0) || user?.email?.charAt(0) || "U"}
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider">
-              Profile
-            </span>
-          </button>
-        </div> */}
+
+
 
         {/* Delete Confirmation Dialog */}
         {confirmResume && (
@@ -743,11 +672,11 @@ function EmptyState({ router }: { router: ReturnType<typeof useRouter> }) {
 }
 
 interface ActionsMenuProps {
-  resume: ResumeCard;
-  handleViewResume: (resume: ResumeCard) => void;
-  handleEditResume: (resume: ResumeCard) => void;
-  handleDownloadResume: (resume: ResumeCard) => void;
-  openDeleteConfirm: (resume: ResumeCard) => void;
+  resume: Resume;
+  handleViewResume: (resume: Resume) => void;
+  handleEditResume: (resume: Resume) => void;
+  handleDownloadResume: (resume: Resume) => void;
+  openDeleteConfirm: (resume: Resume) => void;
   deletingId: string | null;
   menuButtonRefs: React.MutableRefObject<Map<string, HTMLElement>>;
   toggleMenu: (e: React.MouseEvent, id: string) => void;
@@ -787,9 +716,8 @@ function ActionsMenu({
       {openMenuId === resume.id && (
         <div
           id={`resume-menu-${resume.id}`}
-          className={`absolute right-0 ${
-            menuAbove[resume.id] ? "bottom-full mb-2" : "top-full mt-2"
-          } w-48 bg-white border border-gray-100 rounded-sm shadow-xl z-50 py-1 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200`}
+          className={`absolute right-0 ${menuAbove[resume.id] ? "bottom-full mb-2" : "top-full mt-2"
+            } w-48 bg-white border border-gray-100 rounded-sm shadow-xl z-50 py-1 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200`}
           onClick={(e) => e.stopPropagation()}
         >
           {resume.status === "Generated" && (
