@@ -10,8 +10,8 @@ import {
   UserCheck,
   Users,
   MoreHorizontal,
-  ArrowUpRight,
-  Loader2
+  // ArrowUpRight,
+  Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ export default function AdminDashboard() {
       change: "+12.5%",
       icon: Users,
       trend: "up",
-      gradient: "from-indigo-500 to-blue-600",
+      gradient: "bg-indigo-500",
       ring: "ring-indigo-100",
     },
     {
@@ -41,7 +41,7 @@ export default function AdminDashboard() {
       change: "+4.3%",
       icon: UserCheck,
       trend: "up",
-      gradient: "from-emerald-400 to-teal-500",
+      gradient: "bg-emerald-500",
       ring: "ring-emerald-100",
     },
     {
@@ -59,7 +59,7 @@ export default function AdminDashboard() {
       change: "-2.1%",
       icon: TrendingUp,
       trend: "down",
-      gradient: "from-amber-400 to-orange-500",
+      gradient: "bg-orange-500",
       ring: "ring-amber-100",
     },
   ];
@@ -103,7 +103,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-10 p-8">
+    <div className="space-y-10 p-5">
       <div className="flex flex-col gap-4 md:flex-row md:items-end  md:justify-between">
         {/* flex items-end justify-between */}
         <div>
@@ -121,20 +121,20 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {cards.map((card, index) => (
           <motion.div
             key={card.title}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className={`relative overflow-hidden rounded-md bg-white p-6 border border-slate-100 group transition-all duration-300 ring-1 ${card.ring}`}
+            className={`relative overflow-hidden rounded-sm bg-white p-6 border border-slate-100 group transition-all duration-300 ring-1 ${card.ring}`}
           >
-            <div
+            {/* <div
               className={`absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity`}
             >
               <card.icon className="w-32 h-32 transform rotate-12" />
-            </div>
+            </div> */}
 
             <div className="relative">
               <div className="flex items-center justify-between mb-5">
@@ -155,7 +155,7 @@ export default function AdminDashboard() {
                 </h3>
               </div>
 
-              <div className="mt-5 flex items-center text-xs font-bold">
+              {/* <div className="mt-5 flex items-center text-xs font-bold">
                 <span
                   className={`flex items-center gap-1 ${
                     card.trend === "up"
@@ -173,7 +173,7 @@ export default function AdminDashboard() {
                 <span className="text-slate-400 ml-2 font-medium">
                   vs last month
                 </span>
-              </div>
+              </div> */}
             </div>
           </motion.div>
         ))}
