@@ -132,11 +132,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           (item: Record<string, unknown>) => {
             const fileUrl =
               (item.resumeurl as string) || (item.fileUrl as string) || "";
+            // Use fileName from backend if available, otherwise fallback to jobTitle-based name
+            const fileName = (item.fileName as string) || 
+              (item.jobTitle
+                ? `${(item.jobTitle as string) || "Resume"}.pdf`
+                : "Resume.pdf");
             return {
               id: (item.id as string) || "",
-              fileName: item.jobTitle
-                ? `${(item.jobTitle as string) || "Resume"}.pdf`
-                : "Resume.pdf",
+              fileName: fileName,
               fileUrl: fileUrl,
               createdAt: (item.createdAt as string) || new Date().toISOString(),
               updatedAt: (item.updatedAt as string) || new Date().toISOString(),

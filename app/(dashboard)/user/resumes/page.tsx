@@ -14,6 +14,7 @@ import {
   MoreVertical,
   Search,
   Trash2,
+  FileEdit,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useMemo } from "react";
@@ -147,12 +148,56 @@ export default function ResumesPage() {
   const [confirmResume, setConfirmResume] = useState<Resume | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Rename handling
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameResume, setRenameResume] = useState<Resume | null>(null);
+  const [newFileName, setNewFileName] = useState("");
+
   const openDeleteConfirm = (resume: Resume) => {
     setConfirmResume(resume);
     setOpenMenuId(null);
   };
 
   const cancelDelete = () => setConfirmResume(null);
+
+  const openRenameDialog = (resume: Resume) => {
+    setRenameResume(resume);
+    // Remove .pdf extension for editing
+    setNewFileName(resume.fileName.replace(/\.pdf$/i, ""));
+    setOpenMenuId(null);
+  };
+
+  const cancelRename = () => {
+    setRenameResume(null);
+    setNewFileName("");
+  };
+
+  const performRename = async () => {
+    if (!renameResume || !newFileName.trim()) return;
+    
+    setRenamingId(renameResume.id);
+    try {
+      apiClient.refreshTokenFromCookies();
+      
+      // Call the rename API
+      await apiClient.patch("/dashboard/resumes/rename", {
+        resumeId: renameResume.id,
+        fileName: newFileName.trim(),
+      });
+
+      // Refresh resumes to get updated data
+      await refreshResumes(true);
+
+      setRenameResume(null);
+      setNewFileName("");
+      toast.success("Resume renamed successfully");
+    } catch (err) {
+      console.error("Failed to rename resume:", err);
+      toast.error("Failed to rename resume");
+    } finally {
+      setRenamingId(null);
+    }
+  };
 
   const performDelete = async () => {
     if (!confirmResume) return;
@@ -463,6 +508,7 @@ export default function ResumesPage() {
                       handleEditResume={handleEditResume}
                       handleDownloadResume={handleDownloadResume}
                       openDeleteConfirm={openDeleteConfirm}
+                      openRenameDialog={openRenameDialog}
                       deletingId={deletingId}
                       menuButtonRefs={menuButtonRefs}
                       toggleMenu={toggleMenu}
@@ -516,7 +562,7 @@ export default function ResumesPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-gray-900 text-lg mb-1">
-                        {resume.jobTitle || "Resume"}
+                        {resume.fileName.replace(".pdf", "") || resume.jobTitle || "Resume"}
                         {resume.status === "Draft" && " (Draft)"}
                       </h3>
                       <div className="flex items-center gap-2 text-gray-400 text-sm">
@@ -534,6 +580,7 @@ export default function ResumesPage() {
                     handleEditResume={handleEditResume}
                     handleDownloadResume={handleDownloadResume}
                     openDeleteConfirm={openDeleteConfirm}
+                    openRenameDialog={openRenameDialog}
                     deletingId={deletingId}
                     menuButtonRefs={menuButtonRefs}
                     toggleMenu={toggleMenu}
@@ -638,6 +685,64 @@ export default function ResumesPage() {
           </div>
         )}
 
+        {/* Rename Dialog */}
+        {renameResume && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="rename-dialog-title"
+          >
+            <div className="absolute inset-0 bg-black opacity-40" />
+            <div className="relative bg-white rounded-sm p-6 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Rename Resume
+              </h3>
+              <p className="text-gray-500 text-sm mb-4">
+                Enter a new name for{" "}
+                <span className="text-gray-900 font-semibold">
+                  {renameResume.fileName.replace(".pdf", "")}
+                </span>
+              </p>
+              <div className="mb-4">
+                <input
+                  type="text"
+                  value={newFileName}
+                  onChange={(e) => setNewFileName(e.target.value)}
+                  placeholder="Enter new file name"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      performRename();
+                    } else if (e.key === "Escape") {
+                      cancelRename();
+                    }
+                  }}
+                  autoFocus
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  The .pdf extension will be added automatically
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={cancelRename}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-sm border border-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={performRename}
+                  disabled={!newFileName.trim() || renamingId === renameResume.id}
+                  className="flex-1 px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {renamingId === renameResume.id ? "Renaming..." : "Rename"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Toast */}
         {toastMessage && (
           <div className="fixed left-1/2 -translate-x-1/2 bottom-24 z-[70] animate-in slide-in-from-bottom-5">
@@ -678,6 +783,7 @@ interface ActionsMenuProps {
   handleEditResume: (resume: Resume) => void;
   handleDownloadResume: (resume: Resume) => void;
   openDeleteConfirm: (resume: Resume) => void;
+  openRenameDialog: (resume: Resume) => void;
   deletingId: string | null;
   menuButtonRefs: React.MutableRefObject<Map<string, HTMLElement>>;
   toggleMenu: (e: React.MouseEvent, id: string) => void;
@@ -692,6 +798,7 @@ function ActionsMenu({
   handleEditResume,
   handleDownloadResume,
   openDeleteConfirm,
+  openRenameDialog,
   deletingId,
   menuButtonRefs,
   toggleMenu,
@@ -749,6 +856,14 @@ function ActionsMenu({
             className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3 transition-colors"
           >
             <Download className="w-4 h-4" /> Download
+          </button>
+          <button
+            onClick={() => {
+              openRenameDialog(resume);
+            }}
+            className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3 transition-colors"
+          >
+            <FileEdit className="w-4 h-4" /> Rename
           </button>
           <div className="h-px bg-gray-50 mx-2 my-1" />
           <button

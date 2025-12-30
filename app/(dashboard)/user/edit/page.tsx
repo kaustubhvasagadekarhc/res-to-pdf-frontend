@@ -23,8 +23,19 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { useUser } from "@/contexts/UserContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface ResumeData {
+  pdfName: string;
   personal: {
     name: string;
     designation: string;
@@ -89,7 +100,7 @@ const AutoHeightTextarea = ({
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${Math.min(
-        textareaRef.current.scrollHeight,
+        textareaRef.current.scrollHeight
       )}px`;
     }
   }, [value]);
@@ -122,6 +133,11 @@ export default function EditPage() {
   const [projectTechInputs, setProjectTechInputs] = useState<{
     [key: number]: string;
   }>({});
+  const [currentResumeId, setCurrentResumeId] = useState<string | null>(null);
+
+  // PDF Rename State
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [tempPdfName, setTempPdfName] = useState("");
 
   // Analysis State
   const [analyzing, setAnalyzing] = useState(false);
@@ -136,7 +152,7 @@ export default function EditPage() {
     setAnalysisResult(null);
     try {
       const response = await recommendationService.postRecommendationAnalyze({
-        requestBody: resumeData
+        requestBody: resumeData,
       });
 
       interface AnalysisResponse {
@@ -158,14 +174,19 @@ export default function EditPage() {
       const improvements = [
         ...(result.formattingIssues || []),
         ...(result.generalImprovements || []),
-        ...(result.skillsFeedback?.missingCriticalSkills ? [`Missing Skills: ${result.skillsFeedback.missingCriticalSkills.join(", ")}`] : [])
+        ...(result.skillsFeedback?.missingCriticalSkills
+          ? [
+              `Missing Skills: ${result.skillsFeedback.missingCriticalSkills.join(
+                ", "
+              )}`,
+            ]
+          : []),
       ];
 
       setAnalysisResult({
         atsScore: result.atsScore,
-        improvements: improvements.length > 0 ? improvements : undefined
+        improvements: improvements.length > 0 ? improvements : undefined,
       });
-
     } catch (error) {
       console.error("Analysis failed", error);
       toast.error("Failed to analyze resume");
@@ -187,6 +208,11 @@ export default function EditPage() {
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const resumeId = searchParams.get("id");
+    
+    // Store resumeId for later use (e.g., renaming)
+    if (resumeId) {
+      setCurrentResumeId(resumeId);
+    }
 
     const loadResumeData = async () => {
       if (resumeId) {
@@ -303,8 +329,6 @@ export default function EditPage() {
     return Object.keys(errors).length === 0;
   };
 
-
-
   const updatePersonal = (field: string, value: string) => {
     if (!resumeData) return;
     setResumeData({
@@ -398,7 +422,7 @@ export default function EditPage() {
   ) => {
     if (!resumeData) return;
     const updated = [...resumeData.work_experience];
-    updated[index] = { ...updated[index], [field]: value };
+    updated[index] = { ...updated[index], [field]: value };  
 
     if (field === "period_from" || field === "period_to") {
       const from = field === "period_from" ? value : updated[index].period_from;
@@ -694,7 +718,6 @@ export default function EditPage() {
       // 3. Redirect to /user (as requested)
       toast.success("Resume generated and downloaded!");
       router.push("/user");
-
     } catch (error: unknown) {
       console.error("PDF generation failed:", error);
       toast.error(
@@ -709,10 +732,42 @@ export default function EditPage() {
     if (currentStep < STEPS.length) {
       if (currentStep === 1) {
         if (!validatePersonalDetails()) return;
+        // Show rename modal only if pdfName is not already set
+        if (!resumeData?.pdfName || resumeData.pdfName.trim() === "") {
+          setTempPdfName(resumeData?.pdfName || "");
+          setIsRenameModalOpen(true);
+          return; // Stop here, modal will handle the move to next step
+        }
+        // If pdfName already exists, proceed to next step directly
       }
       setCurrentStep((prev) => prev + 1);
       // Removed window.scrollTo because we want internal scroll
     }
+  };
+
+  const handleSavePdfName = async () => {
+    if (resumeData) {
+      setResumeData({ ...resumeData, pdfName: tempPdfName });
+      
+      // If editing an existing resume, call the rename API
+      if (currentResumeId && tempPdfName.trim()) {
+        try {
+          apiClient.refreshTokenFromCookies();
+          await apiClient.patch("/dashboard/resumes/rename", {
+            resumeId: currentResumeId,
+            fileName: tempPdfName.trim(),
+          });
+          toast.success("Resume name updated");
+        } catch (error) {
+          console.error("Failed to rename resume:", error);
+          // Don't show error toast here as it's not critical - the name is saved locally
+          // The rename will happen when the PDF is generated
+        }
+      }
+    }
+    setIsRenameModalOpen(false);
+    setCurrentStep(currentStep + 1);
+    // window.scrollTo(0, 0); // Removed as per existing code style
   };
 
   const handleBack = () => {
@@ -911,10 +966,11 @@ export default function EditPage() {
 
                             updatePersonal("name", formatted);
                           }}
-                          className={`w-full bg-white border rounded-sm ${validationErrors.name
-                            ? "border-rose-500"
-                            : "border-slate-300"
-                            } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          className={`w-full bg-white border rounded-sm ${
+                            validationErrors.name
+                              ? "border-rose-500"
+                              : "border-slate-300"
+                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="John Doe"
                         />
                         {validationErrors.name && (
@@ -948,10 +1004,11 @@ export default function EditPage() {
 
                             updatePersonal("designation", formatted);
                           }}
-                          className={`w-full bg-white border rounded-sm ${validationErrors.designation
-                            ? "border-rose-500"
-                            : "border-slate-300"
-                            } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          className={`w-full bg-white border rounded-sm ${
+                            validationErrors.designation
+                              ? "border-rose-500"
+                              : "border-slate-300"
+                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="Software Engineer"
                         />
                         {validationErrors.designation && (
@@ -969,10 +1026,11 @@ export default function EditPage() {
                           onChange={(e) =>
                             updatePersonal("email", e.target.value)
                           }
-                          className={`w-full bg-white border rounded-sm ${validationErrors.email
-                            ? "border-rose-500"
-                            : "border-slate-300"
-                            } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          className={`w-full bg-white border rounded-sm ${
+                            validationErrors.email
+                              ? "border-rose-500"
+                              : "border-slate-300"
+                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="john@example.com"
                         />
                         {validationErrors.email && (
@@ -1014,10 +1072,11 @@ export default function EditPage() {
 
                             updatePersonal("mobile", val);
                           }}
-                          className={`w-full bg-white border rounded-sm ${validationErrors.mobile
-                            ? "border-rose-500"
-                            : "border-slate-300"
-                            } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          className={`w-full bg-white border rounded-sm ${
+                            validationErrors.mobile
+                              ? "border-rose-500"
+                              : "border-slate-300"
+                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="+91 00000 00000"
                         />
                         {validationErrors.mobile && (
@@ -1041,10 +1100,11 @@ export default function EditPage() {
                             );
                             updatePersonal("location", filtered);
                           }}
-                          className={`w-full bg-white border rounded-sm ${validationErrors.location
-                            ? "border-rose-500"
-                            : "border-slate-300"
-                            } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          className={`w-full bg-white border rounded-sm ${
+                            validationErrors.location
+                              ? "border-rose-500"
+                              : "border-slate-300"
+                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="New York, USA"
                         />
                         {validationErrors.location && (
@@ -1133,7 +1193,6 @@ export default function EditPage() {
                           </div>
                         </div>
                       </div>
-
                     </div>
                   )}
 
@@ -1394,7 +1453,7 @@ export default function EditPage() {
                                 <span className="text-rose-500">*</span>
                               </label>
                               <input
-                                value={edu.field}
+                                value={edu.field || ""}
                                 onChange={(e) =>
                                   updateEducation(
                                     index,
@@ -1536,15 +1595,12 @@ export default function EditPage() {
 
                   {currentStep === 7 && (
                     <div className="flex flex-col items-center justify-center h-full py-0 text-center">
-
-
                       {!isFormComplete && (
                         <div className="bg-rose-50 text-rose-600 px-4 py-0 rounded-sm border border-rose-100 text-sm font-bold flex items-center gap-2 mb-4">
                           <AlertCircle className="w-4 h-4" />
                           Some required fields are missing. Please check.
                         </div>
                       )}
-
 
                       {/* Analysis Section */}
                       <div className="w-full max-w-4xl mx-auto mb-6">
@@ -1555,29 +1611,43 @@ export default function EditPage() {
                                 {analysisResult.atsScore || 0}%
                               </div>
                               <div>
-                                <h3 className="text-xl font-bold text-slate-800">Resume Analysis Score</h3>
-                                <p className="text-slate-500 text-sm">Based on industry standards and ATS compatibility</p>
+                                <h3 className="text-xl font-bold text-slate-800">
+                                  Resume Analysis Score
+                                </h3>
+                                <p className="text-slate-500 text-sm">
+                                  Based on industry standards and ATS
+                                  compatibility
+                                </p>
                               </div>
                             </div>
 
-                            {analysisResult.improvements && analysisResult.improvements.length > 0 ? (
+                            {analysisResult.improvements &&
+                            analysisResult.improvements.length > 0 ? (
                               <div className="space-y-3">
                                 <h4 className="font-semibold text-slate-700 flex items-center gap-2">
                                   <AlertCircle className="w-4 h-4 text-amber-500" />
                                   Areas for Improvement
                                 </h4>
                                 <ul className="space-y-2">
-                                  {analysisResult.improvements.map((point, i) => (
-                                    <li key={i} className="flex items-start gap-2 text-slate-600 text-sm bg-slate-50 p-2.5 rounded-sm">
-                                      <span className="text-amber-500 mt-0.5">•</span>
-                                      {point}
-                                    </li>
-                                  ))}
+                                  {analysisResult.improvements.map(
+                                    (point, i) => (
+                                      <li
+                                        key={i}
+                                        className="flex items-start gap-2 text-slate-600 text-sm bg-slate-50 p-2.5 rounded-sm"
+                                      >
+                                        <span className="text-amber-500 mt-0.5">
+                                          •
+                                        </span>
+                                        {point}
+                                      </li>
+                                    )
+                                  )}
                                 </ul>
                               </div>
                             ) : (
                               <div className="text-slate-500 text-sm italic">
-                                No specific improvements detected. Your resume looks good!
+                                No specific improvements detected. Your resume
+                                looks good!
                               </div>
                             )}
                           </div>
@@ -1587,7 +1657,6 @@ export default function EditPage() {
                       {/* Finalize Action Card */}
                       <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center py-12 bg-white border-2 border-dashed border-slate-200 rounded-xl shadow-sm">
                         <div className="text-center space-y-6 max-w-lg w-full px-6">
-
                           {/* 1. Pre-Analysis Action (Only show if not analyzed yet) */}
                           {!analysisResult && (
                             <div className="animate-in fade-in slide-in-from-bottom-2">
@@ -1598,15 +1667,21 @@ export default function EditPage() {
                                   disabled={analyzing}
                                   className="w-full bg-white text-indigo-600 border-2 border-indigo-200 px-6 py-4 rounded-sm font-bold hover:bg-indigo-50 hover:border-indigo-300 transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-sm"
                                 >
-                                  {analyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
-                                  {analyzing ? "Analyzing..." : "Analyze Resume"}
+                                  {analyzing ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                  ) : null}
+                                  {analyzing
+                                    ? "Analyzing..."
+                                    : "Analyze Resume"}
                                 </button>
                               </div>
 
                               {/* Styled Divider */}
                               <div className="relative flex items-center py-2">
                                 <div className="flex-grow border-t border-slate-200"></div>
-                                <span className="flex-shrink-0 mx-4 text-slate-400 text-xs font-bold uppercase tracking-widest">or skip to finalization</span>
+                                <span className="flex-shrink-0 mx-4 text-slate-400 text-xs font-bold uppercase tracking-widest">
+                                  or skip to finalization
+                                </span>
                                 <div className="flex-grow border-t border-slate-200"></div>
                               </div>
                             </div>
@@ -1615,7 +1690,9 @@ export default function EditPage() {
                           {/* 2. Final Generation Action */}
                           <div className="space-y-4">
                             {!analysisResult && (
-                              <h2 className="text-xl font-bold text-slate-700">Ready to Download?</h2>
+                              <h2 className="text-xl font-bold text-slate-700">
+                                Ready to Download?
+                              </h2>
                             )}
                             {analysisResult && (
                               <div className="w-16 h-16 bg-emerald-100 rounded-md flex items-center justify-center mx-auto text-emerald-600 mb-4 shadow-sm animate-in zoom-in">
@@ -1632,29 +1709,32 @@ export default function EditPage() {
                             <button
                               onClick={handleGenerate}
                               disabled={generating || !isFormComplete}
-                              className={`w-full sm:w-auto mx-auto px-12 py-4 rounded-md text-lg font-bold transition-all  active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-75 disabled:cursor-not-allowed ${analysisResult
-                                ? "bg-[var(--primary)] hover:bg-indigo-600 text-white"
-                                : "bg-slate-800 hover:bg-slate-900 text-white"
-                                } bb `}
+                              className={`w-full sm:w-auto mx-auto px-12 py-4 rounded-md text-lg font-bold transition-all  active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-75 disabled:cursor-not-allowed ${
+                                analysisResult
+                                  ? "bg-[var(--primary)] hover:bg-indigo-600 text-white"
+                                  : "bg-slate-800 hover:bg-slate-900 text-white"
+                              } bb `}
                             >
                               {generating ? (
                                 <>
-                                  <Loader2 className="w-6 h-6 animate-spin" /> Generating...
+                                  <Loader2 className="w-6 h-6 animate-spin" />{" "}
+                                  Generating...
                                 </>
                               ) : (
                                 <>
-                                  Generate Resume <ArrowRight className="w-6 h-6" />
+                                  Generate Resume{" "}
+                                  <ArrowRight className="w-6 h-6" />
                                 </>
                               )}
                             </button>
 
                             {!isFormComplete && (
                               <p className="text-rose-500 text-sm font-medium mt-4 bg-rose-50 p-2 rounded-lg inline-block">
-                                Please complete all required fields before generating.
+                                Please complete all required fields before
+                                generating.
                               </p>
                             )}
                           </div>
-
                         </div>
                       </div>
                     </div>
@@ -1683,10 +1763,11 @@ export default function EditPage() {
             <button
               onClick={handleBack}
               disabled={currentStep === 1}
-              className={`px-8 py-2.5 rounded-sm font-bold border transition-all flex items-center gap-2 ${currentStep === 1
-                ? "opacity-0 pointer-events-none"
-                : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400"
-                }`}
+              className={`px-8 py-2.5 rounded-sm font-bold border transition-all flex items-center gap-2 ${
+                currentStep === 1
+                  ? "opacity-0 pointer-events-none"
+                  : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400"
+              }`}
             >
               Back
             </button>
@@ -1714,6 +1795,55 @@ export default function EditPage() {
           </div>
         </div>
       </div>
+
+      {/* PDF Rename Modal */}
+      <Dialog open={isRenameModalOpen} onOpenChange={setIsRenameModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Rename Your PDF</DialogTitle>
+            <DialogDescription>
+              Give your resume a name. This will be the file name when you
+              download the generated PDF.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right font-medium">
+                Name
+              </Label>
+              <Input
+                id="name"
+                value={tempPdfName}
+                onChange={(e) => setTempPdfName(e.target.value)}
+                placeholder="e.g. My_Resume_2024"
+                className="col-span-3 h-10 border-slate-200 focus:ring-[var(--primary)]"
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <button
+              onClick={() => {
+                // Save tempPdfName even when skipping (preserves any partial input)
+                if (resumeData) {
+                  setResumeData({ ...resumeData, pdfName: tempPdfName });
+                }
+                setIsRenameModalOpen(false);
+                setCurrentStep(currentStep + 1);
+                // Removed window.scrollTo as per existing code style
+              }}
+              className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-sm border border-slate-200 transition-colors"
+            >
+              Skip
+            </button>
+            <button
+              onClick={handleSavePdfName}
+              className="px-4 py-2 text-sm font-bold text-white bg-[var(--primary)] hover:bg-[var(--primary-700)] rounded-sm transition-colors"
+            >
+              Save & Continue
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
