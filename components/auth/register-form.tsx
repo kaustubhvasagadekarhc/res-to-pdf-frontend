@@ -14,9 +14,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-// import { authService as tokenService } from '@/services/auth.services';
+import { useVetllySSO } from "@/hooks/use-vetlly-sso";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Loader2, Lock, Mail, User } from "lucide-react";
+import { AlertCircle, Globe, Loader2, Lock, Mail, User } from "lucide-react";
 import Link from "next/link";
 
 /**
@@ -32,6 +32,7 @@ interface RegisterFormProps {
 export function RegisterForm({ onLoginClick }: RegisterFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { openVetllySSO, isPopupOpen, isProcessing } = useVetllySSO();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
@@ -121,7 +122,7 @@ export function RegisterForm({ onLoginClick }: RegisterFormProps) {
       transition={{ duration: 0.3 }}
     >
       <Card className="w-full max-w-md mx-auto border border-slate-50 bg-white rounded-sm overflow-hidden">
-        <CardHeader className="text-center pb-2 pt-8">
+        <CardHeader className="text-center pb-1 pt-4">
           <CardTitle className="text-3xl font-extrabold text-slate-800">
             Create Account
           </CardTitle>
@@ -236,6 +237,32 @@ export function RegisterForm({ onLoginClick }: RegisterFormProps) {
               ) : (
                 "Create Account"
               )}
+            </Button>
+
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200"></div>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-slate-500 font-medium">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-slate-200 hover:bg-slate-50 hover:text-[var(--primary)] text-slate-700 font-bold py-6 rounded-sm transition-all active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={openVetllySSO}
+              disabled={isPopupOpen || isProcessing || loading}
+            >
+              {isPopupOpen || isProcessing ? (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              ) : (
+                <Globe className="mr-2 h-5 w-5" />
+              )}
+              {isPopupOpen || isProcessing ? "Authenticating..." : "Sign up with Vetlly"}
             </Button>
           </form>
         </CardContent>
