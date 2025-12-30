@@ -564,7 +564,7 @@ export default function ResumesPage() {
         {/* Floating Action Button for Mobile */}
         <button
           onClick={() => router.push("/user/upload")}
-          className="sm:hidden fixed right-6 bottom-24 w-14 h-14 bg-blue-600 rounded-full shadow-lg shadow-blue-200 flex items-center justify-center text-white z-50 hover:bg-blue-700 transition-colors active:scale-95"
+          className="sm:hidden fixed right-6 bottom-10 w-14 h-14 bg-blue-600 rounded-full shadow-lg shadow-blue-200 flex items-center justify-center text-white z-50 hover:bg-blue-700 transition-colors active:scale-95"
         >
           <svg
             className="w-8 h-8"

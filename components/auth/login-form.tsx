@@ -13,8 +13,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authService as tokenService } from "@/services/auth.services";
+import { useVetllySSO } from "@/hooks/use-vetlly-sso";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Loader2, Lock, Mail } from "lucide-react";
+import { AlertCircle, Globe, Loader2, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -31,6 +32,7 @@ interface LoginFormProps {
 
 export function LoginForm({ onRegisterClick }: LoginFormProps) {
   const router = useRouter();
+  const { openVetllySSO, isPopupOpen, isProcessing } = useVetllySSO();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
@@ -107,28 +109,32 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
       const response = await authService.postAuthLogin({
         requestBody: formData,
       });
+      console.log("Login response:", response);
 
       const token = extractTokenFromResponse(response);
       const user = extractUserFromResponse(response);
       const message = extractMessageFromResponse(response) ?? "";
+      console.log("Extracted token:", token ? "Found" : "Not found");
+      console.log("Extracted user:", user);
 
       if (token) {
+        // Set token in cookie (backend also sets httpOnly cookie, but we set a readable one too)
         tokenService.setToken(token);
         apiClient.refreshTokenFromCookies(); // Refresh API client with new token
 
+        // Determine redirect path based on user type
+        let redirectPath = "/user";
         if (user) {
           const userType =
             (user.type as string) || (user.userType as string) || "user";
-
+          console.log("User type:", userType);
           if (userType === "admin" || userType === "ADMIN") {
-            router.push("/admin");
-          } else {
-            router.push("/user");
+            redirectPath = "/admin";
           }
-        } else {
-          router.push("/user");
         }
+        router.replace(redirectPath);
       } else {
+        console.error("No token in response:", response);
         setError(message || "Login failed. No token received.");
       }
     } catch (err: unknown) {
@@ -268,6 +274,32 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
               ) : (
                 "Sign In"
               )}
+            </Button>
+
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200"></div>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-slate-500 font-medium">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-slate-200 hover:bg-slate-50 hover:text-[var(--primary)] text-slate-700 font-bold py-6 rounded-sm transition-all active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={openVetllySSO}
+              disabled={isPopupOpen || isProcessing || loading}
+            >
+              {isPopupOpen || isProcessing ? (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              ) : (
+                <Globe className="mr-2 h-5 w-5" />
+              )}
+              {isPopupOpen || isProcessing ? "Authenticating..." : "Sign in with Vetlly"}
             </Button>
           </form>
         </CardContent>

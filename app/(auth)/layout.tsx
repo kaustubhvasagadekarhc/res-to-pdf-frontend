@@ -26,7 +26,7 @@ export default function AuthLayout({
         <div className="bg-white flex items-center justify-center overflow-y-auto relative">
           {/* Mobile background decor/fallback */}
           <div className="lg:hidden absolute inset-0 z-0 bg-gradient-to-b from-[var(--primary-50)] to-white opacity-40 pointer-events-none" />
-          <div className="w-full max-w-[440px] mx-auto px-8 py-12 relative z-10">
+          <div className="w-full max-w-[440px] mx-auto px-8 py-4 relative z-10">
             {children}
           </div>
         </div>
