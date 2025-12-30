@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { authService as tokenService } from "@/services/auth.services";
+import { apiClient } from "@/app/api/client";
 
-function VetllyCallbackContent() {
+function VettlyCallbackContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -14,17 +17,8 @@ function VetllyCallbackContent() {
     const state = searchParams.get("state");
 
     if (error) {
-      // Send error to parent window
-      if (window.opener) {
-        window.opener.postMessage(
-          {
-            type: "VETLLY_SSO_ERROR",
-            error: error,
-          },
-          window.location.origin
-        );
-      }
-      window.close();
+      // Redirect to login with error
+      router.replace(`/login?error=${encodeURIComponent(error)}`);
       return;
     }
 
@@ -32,10 +26,19 @@ function VetllyCallbackContent() {
       // Exchange code for token via backend
       handleSSOCallback(code, state);
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   const handleSSOCallback = async (code: string, state: string | null) => {
     try {
+      // Verify state if stored
+      if (typeof window !== "undefined") {
+        const storedState = sessionStorage.getItem("vetlly_sso_state");
+        if (storedState && state && storedState !== state) {
+          throw new Error("Invalid state parameter. Possible CSRF attack.");
+        }
+        sessionStorage.removeItem("vetlly_sso_state");
+      }
+
       // Call backend to exchange code for token
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
       const response = await fetch(
@@ -64,40 +67,33 @@ function VetllyCallbackContent() {
         throw new Error("No token received from SSO callback");
       }
 
-      // Send success message to parent window
-      if (window.opener && !window.opener.closed) {
-        window.opener.postMessage(
-          {
-            type: "VETLLY_SSO_SUCCESS",
-            token: token,
-            user: user,
-          },
-          window.location.origin
-        );
+      // Set token in cookie
+      tokenService.setToken(token);
+      apiClient.refreshTokenFromCookies();
+
+      // Get return URL from sessionStorage or default to /user
+      const returnUrl = typeof window !== "undefined" 
+        ? sessionStorage.getItem("vetlly_sso_return_url") || "/user"
+        : "/user";
+
+      // Clear sessionStorage
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("vetlly_sso_return_url");
       }
 
-      // Small delay before closing to ensure message is sent
-      setTimeout(() => {
-        window.close();
-      }, 100);
+      // Redirect based on user type or return URL
+      const userType = user?.userType || user?.type || "user";
+      if (userType === "admin" || userType === "ADMIN") {
+        router.replace("/admin");
+      } else {
+        router.replace(returnUrl);
+      }
     } catch (error) {
       console.error("SSO callback error:", error);
       
-      // Send error to parent window
-      if (window.opener && !window.opener.closed) {
-        window.opener.postMessage(
-          {
-            type: "VETLLY_SSO_ERROR",
-            error: error instanceof Error ? error.message : "Unknown error",
-          },
-          window.location.origin
-        );
-      }
-      
-      // Close popup after a delay
-      setTimeout(() => {
-        window.close();
-      }, 100);
+      // Redirect to login with error
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      router.replace(`/login?error=${encodeURIComponent(errorMessage)}`);
     }
   };
 
@@ -111,7 +107,7 @@ function VetllyCallbackContent() {
   );
 }
 
-export default function VetllyCallbackPage() {
+export default function VettlyCallbackPage() {
   return (
     <Suspense
       fallback={
@@ -123,7 +119,7 @@ export default function VetllyCallbackPage() {
         </div>
       }
     >
-      <VetllyCallbackContent />
+      <VettlyCallbackContent />
     </Suspense>
   );
 }

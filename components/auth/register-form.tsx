@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useVetllySSO } from "@/hooks/use-vetlly-sso";
+import { useVettlySSO } from "@/hooks/use-vetlly-sso";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, Globe, Loader2, Lock, Mail, User } from "lucide-react";
 import Link from "next/link";
@@ -32,7 +32,7 @@ interface RegisterFormProps {
 export function RegisterForm({ onLoginClick }: RegisterFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { openVetllySSO, isPopupOpen, isProcessing } = useVetllySSO();
+  const { openVettlySSO, isPopupOpen, isProcessing } = useVettlySSO();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
@@ -254,7 +254,7 @@ export function RegisterForm({ onLoginClick }: RegisterFormProps) {
               type="button"
               variant="outline"
               className="w-full border-slate-200 hover:bg-slate-50 hover:text-[var(--primary)] text-slate-700 font-bold py-6 rounded-sm transition-all active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={openVetllySSO}
+              onClick={() => openVettlySSO()}
               disabled={isPopupOpen || isProcessing || loading}
             >
               {isPopupOpen || isProcessing ? (
@@ -262,7 +262,7 @@ export function RegisterForm({ onLoginClick }: RegisterFormProps) {
               ) : (
                 <Globe className="mr-2 h-5 w-5" />
               )}
-              {isPopupOpen || isProcessing ? "Authenticating..." : "Sign up with Vetlly"}
+              {isPopupOpen || isProcessing ? "Authenticating..." : "Sign up with Vettly"}
             </Button>
           </form>
         </CardContent>
