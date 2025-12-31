@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, Suspense } from "react";
+import { useEffect, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { authService as tokenService } from "@/services/auth.services";
@@ -10,25 +10,7 @@ function VettlyCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  useEffect(() => {
-    // Get the authorization code from URL
-    const code = searchParams.get("code");
-    const error = searchParams.get("error");
-    const state = searchParams.get("state");
-
-    if (error) {
-      // Redirect to login with error
-      router.replace(`/login?error=${encodeURIComponent(error)}`);
-      return;
-    }
-
-    if (code) {
-      // Exchange code for token via backend
-      handleSSOCallback(code, state);
-    }
-  }, [searchParams, router]);
-
-  const handleSSOCallback = async (code: string, state: string | null) => {
+  const handleSSOCallback = useCallback(async (code: string, state: string | null) => {
     try {
       // Verify state if stored
       if (typeof window !== "undefined") {
@@ -72,7 +54,7 @@ function VettlyCallbackContent() {
       apiClient.refreshTokenFromCookies();
 
       // Get return URL from sessionStorage or default to /user
-      const returnUrl = typeof window !== "undefined" 
+      const returnUrl = typeof window !== "undefined"
         ? sessionStorage.getItem("vetlly_sso_return_url") || "/user"
         : "/user";
 
@@ -90,12 +72,31 @@ function VettlyCallbackContent() {
       }
     } catch (error) {
       console.error("SSO callback error:", error);
-      
+
       // Redirect to login with error
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       router.replace(`/login?error=${encodeURIComponent(errorMessage)}`);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    // Get the authorization code from URL
+    const code = searchParams.get("code");
+    const error = searchParams.get("error");
+    const state = searchParams.get("state");
+
+    if (error) {
+      // Redirect to login with error
+      router.replace(`/login?error=${encodeURIComponent(error)}`);
+      return;
+    }
+
+    if (code) {
+      // Exchange code for token via backend
+      handleSSOCallback(code, state);
+    }
+  }, [searchParams, router, handleSSOCallback]);
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white">
