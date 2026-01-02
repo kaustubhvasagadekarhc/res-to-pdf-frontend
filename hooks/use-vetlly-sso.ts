@@ -6,6 +6,7 @@ import { MouseEvent } from "react";
 
 interface VettlySSOOptions {
   returnUrl?: string; // Where to redirect after successful SSO
+  mode?: "signin" | "signup"; // SSO mode: signin or signup
 }
 
 export function useVettlySSO() {
@@ -17,15 +18,18 @@ export function useVettlySSO() {
     optionsOrEvent?: VettlySSOOptions | MouseEvent<HTMLButtonElement>
   ) => {
     let returnUrl = "/user";
+    let ssoMode: "signin" | "signup" = "signin"; // Default to signin
     
-    // Check if it's an options object (has returnUrl property)
+    // Check if it's an options object (has returnUrl or mode property)
     if (optionsOrEvent && typeof optionsOrEvent === 'object' && 'returnUrl' in optionsOrEvent) {
-      returnUrl = (optionsOrEvent as VettlySSOOptions).returnUrl || "/user";
+      const options = optionsOrEvent as VettlySSOOptions;
+      returnUrl = options.returnUrl || "/user";
+      ssoMode = options.mode || "signin";
     }
-    // Otherwise, it's a mouse event or undefined - use default returnUrl
+    // Otherwise, it's a mouse event or undefined - use defaults
     
-    // Redirect to SSO route with return URL
-    router.push(`/auth/vetlly?returnUrl=${encodeURIComponent(returnUrl)}`);
+    // Redirect to SSO route with return URL and mode
+    router.push(`/auth/vetlly?returnUrl=${encodeURIComponent(returnUrl)}&mode=${ssoMode}`);
   }, [router]);
 
   return {

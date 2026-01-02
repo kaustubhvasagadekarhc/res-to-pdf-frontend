@@ -13,18 +13,29 @@ function VettlyCallbackContent() {
   const handleSSOCallback = useCallback(async (code: string, state: string | null) => {
     try {
       // Verify state if stored
+      let ssoSecret: string | null = null;
       if (typeof window !== "undefined") {
         const storedState = sessionStorage.getItem("vetlly_sso_state");
         if (storedState && state && storedState !== state) {
           throw new Error("Invalid state parameter. Possible CSRF attack.");
         }
         sessionStorage.removeItem("vetlly_sso_state");
+        
+        // Retrieve sso_user_secret from sessionStorage
+        ssoSecret = sessionStorage.getItem("vetlly_sso_secret");
+        if (ssoSecret) {
+          sessionStorage.removeItem("vetlly_sso_secret");
+        }
       }
 
-      // Call backend to exchange code for token
+      if (!ssoSecret) {
+        throw new Error("SSO secret not found. Please try again.");
+      }
+
+      // Call backend to verify candidate with sso_code and sso_secret
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
       const response = await fetch(
-        `${apiUrl}/auth/vetlly/callback?code=${encodeURIComponent(code)}${state ? `&state=${encodeURIComponent(state)}` : ""}`,
+        `${apiUrl}/auth/vetlly/callback?sso_code=${encodeURIComponent(code)}&sso_secret=${encodeURIComponent(ssoSecret)}${state ? `&state=${encodeURIComponent(state)}` : ""}`,
         {
           method: "GET",
           credentials: "include", // Include cookies
@@ -80,8 +91,8 @@ function VettlyCallbackContent() {
   }, [router]);
 
   useEffect(() => {
-    // Get the authorization code from URL
-    const code = searchParams.get("code");
+    // Get the SSO code from URL (Vettly sends sso_code, not code)
+    const ssoCode = searchParams.get("sso_code") || searchParams.get("code"); // Fallback to 'code' for compatibility
     const error = searchParams.get("error");
     const state = searchParams.get("state");
 
@@ -91,9 +102,9 @@ function VettlyCallbackContent() {
       return;
     }
 
-    if (code) {
-      // Exchange code for token via backend
-      handleSSOCallback(code, state);
+    if (ssoCode) {
+      // Verify candidate with sso_code and sso_secret via backend
+      handleSSOCallback(ssoCode, state);
     }
   }, [searchParams, router, handleSSOCallback]);
 

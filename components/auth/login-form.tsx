@@ -297,7 +297,7 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
               type="button"
               variant="outline"
               className="w-full border-slate-200 hover:bg-slate-50 hover:text-[var(--primary)] text-slate-700 font-bold py-6 rounded-sm transition-all active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={openVettlySSO}
+              onClick={() => openVettlySSO({ mode: "signin" })}
               disabled={isPopupOpen || isProcessing || loading}
             >
               {isPopupOpen || isProcessing ? (
