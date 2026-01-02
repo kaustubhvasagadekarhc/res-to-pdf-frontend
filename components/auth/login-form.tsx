@@ -15,8 +15,9 @@ import { Label } from "@/components/ui/label";
 import { authService as tokenService } from "@/services/auth.services";
 import { useVettlySSO } from "@/hooks/use-vetlly-sso";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Globe, Loader2, Lock, Mail } from "lucide-react";
+import { AlertCircle, Loader2, Lock, Mail } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -303,7 +304,7 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
               {isPopupOpen || isProcessing ? (
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               ) : (
-                <Globe className="mr-2 h-5 w-5" />
+                <Image src="/vettly-sso-icon.png" alt="Vettly" width={18} height={18} className="mr-2" />
               )}
               {isPopupOpen || isProcessing ? "Authenticating..." : "Sign in with Vettly"}
             </Button>
