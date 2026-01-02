@@ -17,7 +17,7 @@ export interface ApiConfiguration {
 
 // Get base URL from environment
 const getBaseURL = (): string => {
-  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
 };
 
 // Create default configuration
