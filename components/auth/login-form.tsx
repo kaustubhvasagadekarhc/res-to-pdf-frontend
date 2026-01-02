@@ -234,6 +234,12 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
                 >
                   Password
                 </Label>
+                <Link
+                  href="/forgot-password"
+                  className="text-sm font-bold text-[var(--primary)] hover:text-[var(--primary-700)] transition-colors"
+                >
+                  Forgot Password?
+                </Link>
               </div>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-[var(--primary)] transition-colors" />
@@ -291,7 +297,7 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
               type="button"
               variant="outline"
               className="w-full border-slate-200 hover:bg-slate-50 hover:text-[var(--primary)] text-slate-700 font-bold py-6 rounded-sm transition-all active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={openVettlySSO}
+              onClick={() => openVettlySSO({ mode: "signin" })}
               disabled={isPopupOpen || isProcessing || loading}
             >
               {isPopupOpen || isProcessing ? (

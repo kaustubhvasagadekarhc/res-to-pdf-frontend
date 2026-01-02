@@ -14,20 +14,49 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Mail } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import axiosInstance from "@/lib/axiosInstance";
+
+interface AxiosError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
 
 export function ForgotPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    setError("");
+
+    try {
+      const response = await axiosInstance.post("/auth/forgot-password", {
+        email,
+      });
+
+      if (response.data.status === "success") {
+        setSubmitted(true);
+      } else {
+        setError(response.data.message || "Failed to send reset code");
+      }
+    } catch (err: unknown) {
+      console.error("Forgot password error:", err);
+      const axiosError = err as AxiosError;
+      const errorMessage =
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        "Failed to send reset code. Please try again.";
+      setError(errorMessage);
+    } finally {
       setLoading(false);
-      setSubmitted(true);
-    }, 1500);
+    }
   };
 
   if (submitted) {
@@ -38,13 +67,22 @@ export function ForgotPasswordForm() {
             Check your email 
           </CardTitle>
           <CardDescription className="text-slate-500 font-medium mt-2">
-            We have sent a password reset link to <span className="font-bold text-[var(--primary)]">{email}</span>
+            We have sent a password reset code to <span className="font-bold text-[var(--primary)]">{email}</span>
+          </CardDescription>
+          <CardDescription className="text-slate-500 text-sm mt-4">
+            Please check your email and enter the 6-digit code on the reset password page.
           </CardDescription>
         </CardHeader>
-        <CardFooter className="flex justify-center border-t border-slate-100 py-6 bg-slate-50 mt-4">
+        <CardFooter className="flex flex-col gap-4 border-t border-slate-100 py-6 bg-slate-50 mt-4">
+          <Link
+            href={`/reset-password?email=${encodeURIComponent(email)}`}
+            className="font-bold text-[var(--primary)] hover:text-[var(--primary-700)] transition-colors"
+          >
+            Enter Reset Code
+          </Link>
           <Link
             href="/login"
-            className="font-bold text-[var(--primary)] hover:text-[var(--primary-700)] transition-colors"
+            className="text-sm text-slate-600 hover:text-slate-800 transition-colors"
           >
             Back to Login
           </Link>
@@ -63,6 +101,11 @@ export function ForgotPasswordForm() {
       </CardHeader>
       <CardContent className="px-6 py-6">
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-sm text-sm">
+              {error}
+            </div>
+          )}
           <div className="space-y-1">
             <Label htmlFor="email" className="text-md px-2 font-semibold text-slate-700">Email Address</Label>
             <div className="relative group">
@@ -86,7 +129,7 @@ export function ForgotPasswordForm() {
             {loading ? (
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
             ) : (
-              "Send Reset Link"
+              "Send Reset Code"
             )}
           </Button>
         </form>

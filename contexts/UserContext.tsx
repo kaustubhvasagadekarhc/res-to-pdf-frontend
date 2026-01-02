@@ -1,7 +1,7 @@
 "use client";
 
 import { authService, apiClient, dashboardService } from "@/app/api/client";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import {
   createContext,
   useContext,
@@ -42,13 +42,10 @@ interface UserContextType {
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
-const logoutUtil = () => {
-  Cookies.remove("auth-token", { path: "/" });
-};
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const router = useRouter();
+  // const router = useRouter();
   const [loading, setLoading] = useState(true);
 
   // Resume State
@@ -123,7 +120,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, []);
 
   const refreshResumes = useCallback(async (force = false) => {
     if (!user?.id) return;
