@@ -3,7 +3,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Login - ResToPDF",
-  description: "Login to your account",
+  description: "Sign in to your ResToPDF account to access your resume builder and download professional PDF resumes",
 };
 
 export default function LoginPage() {

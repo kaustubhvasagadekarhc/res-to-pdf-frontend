@@ -4,7 +4,7 @@ import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Register - ResToPDF",
-  description: "Create a new account",
+  description: "Create your ResToPDF account to start building professional resumes and convert them to PDF format",
 };
 
 export default function RegisterPage() {
