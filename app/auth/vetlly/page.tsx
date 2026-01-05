@@ -9,8 +9,9 @@ function VettlySSOContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Get return URL from query params (where to redirect after SSO)
+    // Get return URL and mode from query params (where to redirect after SSO)
     const returnUrl = searchParams.get("returnUrl") || "/user";
+    const mode = searchParams.get("mode") || "signin"; // Default to signin
     
     // Generate state for CSRF protection (browser-compatible)
     const state = Array.from(crypto.getRandomValues(new Uint8Array(16)))
@@ -23,14 +24,24 @@ function VettlySSOContent() {
       sessionStorage.setItem("vetlly_sso_return_url", returnUrl);
     }
 
-    // Build Vettly SSO URL
-    const vettlyAuthUrl = process.env.NEXT_PUBLIC_VETLLY_AUTH_URL || "https://auth.vetlly.com/en/signin/candidate";
+    // Build Vettly SSO URL based on mode (signin or signup)
+    const vettlyBaseUrl = process.env.NEXT_PUBLIC_VETLLY_BASE_URL || "http://localhost:3000";
+    const authPath = mode === "signup" ? "/en/auth/signup/candidate" : "/en/auth/signin/candidate";
+    const vettlyAuthUrl = `${vettlyBaseUrl}${authPath}`;
     const redirectUri = `${window.location.origin}/auth/vetlly/callback`;
     
     // Generate SSO user secret (browser-compatible)
     const sso_user_secret = Array.from(crypto.getRandomValues(new Uint8Array(8)))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
+    
+    // Store sso_user_secret in sessionStorage for callback retrieval
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("vetlly_sso_secret", sso_user_secret);
+    }
+    
+    // Get SECRET_KEY from environment variable
+    const secretKey = process.env.NEXT_PUBLIC_VETLLY_SECRET_KEY || "";
     
     // Build SSO URL with parameters
     const params = new URLSearchParams({
@@ -40,6 +51,11 @@ function VettlySSOContent() {
       scope: "openid profile email",
       state: state,
     });
+    
+    // Add SECRET_KEY to URL if provided
+    if (secretKey) {
+      params.append("SECRET_KEY", secretKey);
+    }
 
     const ssoUrl = `${vettlyAuthUrl}?${params.toString()}`;
 

@@ -7,6 +7,7 @@ import { useUser, Resume } from "@/contexts/UserContext"; // Import from Context
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import {
   Calendar,
+  ChevronDown,
   Download,
   Edit3,
   Eye,
@@ -174,11 +175,11 @@ export default function ResumesPage() {
 
   const performRename = async () => {
     if (!renameResume || !newFileName.trim()) return;
-    
+
     setRenamingId(renameResume.id);
     try {
       apiClient.refreshTokenFromCookies();
-      
+
       // Call the rename API
       await apiClient.patch("/dashboard/resumes/rename", {
         resumeId: renameResume.id,
@@ -319,7 +320,7 @@ export default function ResumesPage() {
         <div className="mb-2">
           <div className="flex items-start justify-between gap-6 mb-6">
             <div>
-              <h1 className="text-4xl font-bold text-[var(--primary)] mb-1">
+              <h1 className="text-4xl font-bold text-slate-900 mb-1">
                 My Resumes{" "}
                 <span className="text-slate-500 text-xl">
                   ({resumes.length})
@@ -342,56 +343,72 @@ export default function ResumesPage() {
             </div>
           </div>
 
-          {/* Search and Filters Bar */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="relative w-full md:w-110">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search resumes..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-2.5 bg-white border border-gray-200 rounded-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm transition-all"
-              />
-            </div>
-
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
-              <div className="relative shrink-0">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="appearance-none bg-white border border-gray-200 rounded-sm px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer"
-                >
-                  <option value="all">All Status</option>
-                  <option value="Generated">Generated</option>
-                  <option value="Draft">Draft</option>
-                </select>
-                <MoreVertical className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 rotate-90 pointer-events-none" />
+          {/* Search and Filters Bar - Combined Component */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 ">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-0 w-full">
+              {/* Search Bar - Left Side (60-70% width) */}
+              <div className="relative flex-[3] min-w-0 w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search resumes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10  py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
               </div>
 
-              <div className="shrink-0">
-                <button
-                  onClick={() =>
-                    (
-                      document.getElementById("date-filter") as HTMLInputElement
-                    ).showPicker()
-                  }
-                  className="flex items-center gap-2 bg-white border border-gray-200 rounded-sm px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
-                >
-                  <Calendar className="w-4 h-4 text-gray-500" />
-                  <span>
-                    {dateFilter
-                      ? new Date(dateFilter).toLocaleDateString()
-                      : "Date"}
-                  </span>
-                </button>
-                <input
-                  id="date-filter"
-                  type="date"
-                  value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
-                  className="absolute opacity-0 pointer-events-none"
-                />
+              {/* Filters - Right Side (extends to end) */}
+              <div className="flex  gap-3 flex-1 sm:justify-end w-full">
+                {/* Status Filter */}
+                <div className="relative flex-1 sm:flex-initial">
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className={`appearance-none bg-white border rounded-lg px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-colors w-full sm:min-w-[130px] ${statusFilter !== "all"
+                      ? "border-blue-400"
+                      : "border-gray-300 hover:border-gray-300"
+                      }`}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="Generated">Generated</option>
+                    <option value="Draft">Draft</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+
+                {/* Date Filter */}
+                <div className="relative flex-1 sm:flex-initial">
+                  <button
+                    onClick={() =>
+                      (
+                        document.getElementById("date-filter") as HTMLInputElement
+                      ).showPicker()
+                    }
+                    className={`flex items-center justify-between gap-2 bg-white border rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors w-full sm:min-w-[130px] ${dateFilter
+                      ? "border-blue-400"
+                      : "border-gray-300 hover:border-gray-300"
+                      }`}
+                  >
+                    <span>
+                      {dateFilter
+                        ? new Date(dateFilter).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                        : "All Dates"}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 pointer-events-none" />
+                  </button>
+                  <input
+                    id="date-filter"
+                    type="date"
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="absolute opacity-0 pointer-events-none"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -414,11 +431,14 @@ export default function ResumesPage() {
                 <div className="col-span-1 text-xs font-bold text-gray-400 uppercase">
                   Version
                 </div>
-                <div className="col-span-2 text-xs font-bold text-gray-400 uppercase">
+                <div className="col-span-1 text-xs font-bold text-gray-400 uppercase">
                   Created
                 </div>
                 <div className="col-span-2 text-right text-xs font-bold text-gray-400 uppercase">
                   Status
+                </div>
+                <div className="col-span-2 text-right text-xs font-bold text-gray-400 uppercase pr-8">
+                  Actions
                 </div>
               </div>
               {[...Array(6)].map((_, index) => (
@@ -455,7 +475,7 @@ export default function ResumesPage() {
                 <div className="col-span-1 text-xs font-bold text-gray-400 uppercase">
                   Sr No
                 </div>
-                <div className="col-span-4 text-xs font-bold text-gray-400 uppercase">
+                <div className="col-span-3 text-xs font-bold text-gray-400 uppercase">
                   File Name
                 </div>
                 <div className="col-span-2 text-xs font-bold text-gray-400 uppercase">
@@ -467,7 +487,10 @@ export default function ResumesPage() {
                 <div className="col-span-2 text-xs font-bold text-gray-400 uppercase">
                   Created
                 </div>
-                <div className="col-span-2 text-right text-xs font-bold text-gray-400 uppercase pr-8">
+                <div className="col-span-2 text-center text-xs font-bold text-gray-400 uppercase">
+                  Status
+                </div>
+                <div className="col-span-1 text-right text-xs font-bold text-gray-400 uppercase pr-8">
                   Actions
                 </div>
               </div>
@@ -479,7 +502,7 @@ export default function ResumesPage() {
                   <div className="col-span-1 text-sm font-semibold text-gray-600">
                     {index + 1}
                   </div>
-                  <div className="col-span-4 flex items-center gap-3">
+                  <div className="col-span-3 flex items-center gap-3">
                     <div className="p-2 bg-blue-50 rounded-sm">
                       <FileText className="w-5 h-5 text-blue-500" />
                     </div>
@@ -498,24 +521,28 @@ export default function ResumesPage() {
                   <div className="col-span-2 text-sm text-gray-500">
                     {formatDateFull(resume.createdAt)}
                   </div>
-                  <div className="col-span-2 flex items-center justify-end gap-3 pr-4">
+                  <div className="col-span-2 flex items-center justify-center gap-3 ">
                     <div className={getStatusBadgeClass(resume.status)}>
                       {resume.status}
                     </div>
-                    <ActionsMenu
-                      resume={resume}
-                      handleViewResume={handleViewResume}
-                      handleEditResume={handleEditResume}
-                      handleDownloadResume={handleDownloadResume}
-                      openDeleteConfirm={openDeleteConfirm}
-                      openRenameDialog={openRenameDialog}
-                      deletingId={deletingId}
-                      menuButtonRefs={menuButtonRefs}
-                      toggleMenu={toggleMenu}
-                      openMenuId={openMenuId}
-                      menuAbove={menuAbove}
-                      setOpenMenuId={setOpenMenuId}
-                    />
+                  </div>
+                  <div className="col-span-1 flex items-center justify-end gap-3 pr-4">
+                 
+                      <ActionsMenu
+                        resume={resume}
+                        handleViewResume={handleViewResume}
+                        handleEditResume={handleEditResume}
+                        handleDownloadResume={handleDownloadResume}
+                        openDeleteConfirm={openDeleteConfirm}
+                        openRenameDialog={openRenameDialog}
+                        deletingId={deletingId}
+                        menuButtonRefs={menuButtonRefs}
+                        toggleMenu={toggleMenu}
+                        openMenuId={openMenuId}
+                        menuAbove={menuAbove}
+                        setOpenMenuId={setOpenMenuId}
+                      />
+                   
                   </div>
                 </div>
               ))}
@@ -834,9 +861,9 @@ function ActionsMenu({
                 handleViewResume(resume);
                 setOpenMenuId(null);
               }}
-              className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3 transition-colors"
+              className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3 transition-colors group"
             >
-              <Eye className="w-4 h-4" /> View
+              <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" /> View
             </button>
           )}
           <button
@@ -844,34 +871,34 @@ function ActionsMenu({
               handleEditResume(resume);
               setOpenMenuId(null);
             }}
-            className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3 transition-colors"
+            className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3 transition-colors group"
           >
-            <Edit3 className="w-4 h-4" /> Edit
+            <Edit3 className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" /> Edit
           </button>
           <button
             onClick={() => {
               handleDownloadResume(resume);
               setOpenMenuId(null);
             }}
-            className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3 transition-colors"
+            className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 flex items-center gap-3 transition-colors group"
           >
-            <Download className="w-4 h-4" /> Download
+            <Download className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 transition-colors" /> Download
           </button>
           <button
             onClick={() => {
               openRenameDialog(resume);
             }}
-            className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-3 transition-colors"
+            className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-purple-50 hover:text-purple-600 flex items-center gap-3 transition-colors group"
           >
-            <FileEdit className="w-4 h-4" /> Rename
+            <FileEdit className="w-4 h-4 text-gray-400 group-hover:text-purple-600 transition-colors" /> Rename
           </button>
           <div className="h-px bg-gray-50 mx-2 my-1" />
           <button
             onClick={() => openDeleteConfirm(resume)}
             disabled={deletingId === resume.id}
-            className="w-full text-left px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+            className="w-full text-left px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors group disabled:opacity-50"
           >
-            <Trash2 className="w-4 h-4 text-red-600" />{" "}
+            <Trash2 className="w-4 h-4 text-red-400 group-hover:text-red-600 transition-colors" />{" "}
             {deletingId === resume.id ? "Deleting..." : "Delete"}
           </button>
         </div>

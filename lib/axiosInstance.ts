@@ -4,7 +4,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 
 const API = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001",
   withCredentials: true, // ensure cookies (httpOnly or not) are sent for auth
 });
 
