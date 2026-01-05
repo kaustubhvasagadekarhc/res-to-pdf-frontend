@@ -269,6 +269,9 @@ export default function EditPage() {
   const [validationErrors, setValidationErrors] = useState<{
     [key: string]: string;
   }>({});
+  const [workExpDateErrors, setWorkExpDateErrors] = useState<{
+    [key: string]: string;
+  }>({});
 
   const validatePersonalDetails = (): boolean => {
     if (!resumeData) return false;
@@ -409,10 +412,156 @@ export default function EditPage() {
     setResumeData({ ...resumeData, education: updated });
   };
 
+  // Helper function to convert "month - yyyy" to "YYYY-MM" format for month input
+  const formatToMonthInput = (value: string): string => {
+    if (!value || value.toLowerCase() === "present") return "";
+    
+    // Try to parse "month - yyyy" or "month yyyy" format
+    const match = value.match(/^([a-zA-Z]+)\s*-\s*(\d{4})$|^([a-zA-Z]+)\s+(\d{4})$/);
+    if (match) {
+      const monthName = (match[1] || match[3]).toLowerCase();
+      const year = match[2] || match[4];
+      
+      const monthMap: { [key: string]: number } = {
+        'january': 1, 'jan': 1,
+        'february': 2, 'feb': 2,
+        'march': 3, 'mar': 3,
+        'april': 4, 'apr': 4,
+        'may': 5,
+        'june': 6, 'jun': 6,
+        'july': 7, 'jul': 7,
+        'august': 8, 'aug': 8,
+        'september': 9, 'sep': 9, 'sept': 9,
+        'october': 10, 'oct': 10,
+        'november': 11, 'nov': 11,
+        'december': 12, 'dec': 12,
+      };
+      
+      const monthNum = monthMap[monthName];
+      if (monthNum && year) {
+        return `${year}-${String(monthNum).padStart(2, '0')}`;
+      }
+    }
+    
+    // If already in YYYY-MM format, return as-is
+    if (/^\d{4}-\d{2}$/.test(value)) {
+      return value;
+    }
+    
+    return "";
+  };
+
+  // Helper function to convert "YYYY-MM" to "month - yyyy" format
+  const formatFromMonthInput = (value: string): string => {
+    if (!value) return "";
+    
+    // Parse YYYY-MM format
+    const match = value.match(/^(\d{4})-(\d{2})$/);
+    if (match) {
+      const year = match[1];
+      const monthNum = parseInt(match[2], 10);
+      
+      const monthNames = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ];
+      
+      if (monthNum >= 1 && monthNum <= 12) {
+        return `${monthNames[monthNum - 1]} - ${year}`;
+      }
+    }
+    
+    return value;
+  };
+
+  // Helper function to parse "month - yyyy" format to Date object
+  const parseDateFromFormat = (value: string): Date | null => {
+    if (!value || value.toLowerCase() === "present") return null;
+    
+    const match = value.match(/^([a-zA-Z]+)\s*-\s*(\d{4})$/);
+    if (match) {
+      const monthName = match[1].toLowerCase();
+      const year = parseInt(match[2], 10);
+      
+      const monthMap: { [key: string]: number } = {
+        'january': 0, 'jan': 0,
+        'february': 1, 'feb': 1,
+        'march': 2, 'mar': 2,
+        'april': 3, 'apr': 3,
+        'may': 4,
+        'june': 5, 'jun': 5,
+        'july': 6, 'jul': 6,
+        'august': 7, 'aug': 7,
+        'september': 8, 'sep': 8, 'sept': 8,
+        'october': 9, 'oct': 9,
+        'november': 10, 'nov': 10,
+        'december': 11, 'dec': 11,
+      };
+      
+      const monthIndex = monthMap[monthName];
+      if (monthIndex !== undefined && !isNaN(year)) {
+        return new Date(year, monthIndex, 1);
+      }
+    }
+    
+    return null;
+  };
+
+  // Date validation function for work experience
+  const validateWorkExperienceDates = (
+    index: number,
+    periodFrom: string,
+    periodTo: string
+  ): string | null => {
+    if (!periodFrom) {
+      return null; // Start date is optional, no error
+    }
+
+    if (periodTo.toLowerCase() === "present") {
+      return null; // Present is always valid
+    }
+
+    if (!periodTo) {
+      return null; // End date is optional, no error
+    }
+
+    const startDate = parseDateFromFormat(periodFrom);
+    const endDate = parseDateFromFormat(periodTo);
+
+    if (!startDate) {
+      return `Start date is invalid`;
+    }
+
+    if (!endDate) {
+      return `End date is invalid`;
+    }
+
+    // Check if end date is before start date
+    if (endDate < startDate) {
+      return `End date cannot be before start date`;
+    }
+
+    // Check if dates are in the future (optional validation)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (startDate > today) {
+      return `Start date cannot be in the future`;
+    }
+
+    if (endDate > today && periodTo.toLowerCase() !== "present") {
+      return `End date cannot be in the future. Use "Present" for current positions`;
+    }
+
+    return null; // No errors
+  };
+
   const calculateDuration = (from: string, to: string): string => {
     if (!from) return "";
-    const fromYear = from.split("-")[0];
-    const toYear = to ? to.split("-")[0] : "Present";
+    // Extract year from month name format (e.g., "Jan 2020" -> "2020")
+    const fromYearMatch = from.match(/\d{4}/);
+    const toYearMatch = to ? to.match(/\d{4}/) : null;
+    const fromYear = fromYearMatch ? fromYearMatch[0] : from;
+    const toYear = to ? (toYearMatch ? toYearMatch[0] : to === "Present" ? "Present" : to) : "Present";
     return `${fromYear}-${toYear}`;
   };
 
@@ -429,6 +578,20 @@ export default function EditPage() {
       const from = field === "period_from" ? value : updated[index].period_from;
       const to = field === "period_to" ? value : updated[index].period_to;
       updated[index].duration = calculateDuration(from, to);
+
+      // Validate dates
+      const errorKey = `workExp_${index}_dates`;
+      const dateError = validateWorkExperienceDates(index, from, to);
+      
+      setWorkExpDateErrors((prev) => {
+        const newErrors = { ...prev };
+        if (dateError) {
+          newErrors[errorKey] = dateError;
+        } else {
+          delete newErrors[errorKey];
+        }
+        return newErrors;
+      });
     }
 
     setResumeData({ ...resumeData, work_experience: updated });
@@ -436,6 +599,7 @@ export default function EditPage() {
 
   const addWorkExperience = () => {
     if (!resumeData) return;
+    const newIndex = resumeData.work_experience.length;
     setResumeData({
       ...resumeData,
       work_experience: [
@@ -449,6 +613,12 @@ export default function EditPage() {
           projects: [],
         },
       ],
+    });
+    // Clear any existing error for this new entry
+    setWorkExpDateErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[`workExp_${newIndex}_dates`];
+      return newErrors;
     });
   };
 
@@ -805,7 +975,7 @@ export default function EditPage() {
           !resumeData.education ||
           resumeData.education.length === 0 ||
           resumeData.education.some(
-            (edu) => !edu.institution || !edu.degree || !edu.field
+            (edu) => !edu.institution || !edu.degree
           )
         );
       // Experience and Projects are optional, so they are always "valid" for navigation purposes
@@ -1259,35 +1429,74 @@ export default function EditPage() {
                                 Start Date
                               </label>
                               <input
-                                type="date"
-                                value={exp.period_from}
-                                onChange={(e) =>
+                                type="month"
+                                value={formatToMonthInput(exp.period_from)}
+                                onChange={(e) => {
+                                  const monthValue = e.target.value;
+                                  const formattedValue = formatFromMonthInput(monthValue);
                                   updateWorkExperience(
                                     index,
                                     "period_from",
-                                    e.target.value
-                                  )
-                                }
-                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] text-slate-700"
+                                    formattedValue
+                                  );
+                                }}
+                                className={`w-full bg-white border rounded-sm px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 text-slate-700 ${
+                                  workExpDateErrors[`workExp_${index}_dates`]
+                                    ? "border-rose-500 focus:border-rose-500"
+                                    : "border-slate-300 focus:border-[var(--primary)]"
+                                }`}
                               />
                             </div>
                             <div className="space-y-1">
                               <label className="text-md px-2 font-semibold text-slate-700">
                                 End Date
                               </label>
-                              <input
-                                type="date"
-                                value={exp.period_to}
-                                onChange={(e) =>
-                                  updateWorkExperience(
-                                    index,
-                                    "period_to",
-                                    e.target.value
-                                  )
-                                }
-                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] text-slate-700"
-                              />
+                              <div className="flex gap-2">
+                                <input
+                                  type="month"
+                                  value={exp.period_to.toLowerCase() === "present" ? "" : formatToMonthInput(exp.period_to)}
+                                  onChange={(e) => {
+                                    const monthValue = e.target.value;
+                                    const formattedValue = formatFromMonthInput(monthValue);
+                                    updateWorkExperience(
+                                      index,
+                                      "period_to",
+                                      formattedValue
+                                    );
+                                  }}
+                                  disabled={exp.period_to.toLowerCase() === "present"}
+                                  className={`flex-1 bg-white border rounded-sm px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    workExpDateErrors[`workExp_${index}_dates`]
+                                      ? "border-rose-500 focus:border-rose-500"
+                                      : "border-slate-300 focus:border-[var(--primary)]"
+                                  }`}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (exp.period_to.toLowerCase() === "present") {
+                                      updateWorkExperience(index, "period_to", "");
+                                    } else {
+                                      updateWorkExperience(index, "period_to", "Present");
+                                    }
+                                  }}
+                                  className={`px-4 py-3 border rounded-sm border-slate-300 transition-all duration-200 text-sm font-medium ${
+                                    exp.period_to.toLowerCase() === "present"
+                                      ? "bg-[var(--primary)] text-white border-[var(--primary)]"
+                                      : "bg-white text-slate-700 hover:bg-slate-50"
+                                  }`}
+                                >
+                                  Present
+                                </button>
+                              </div>
                             </div>
+                            {workExpDateErrors[`workExp_${index}_dates`] && (
+                              <div className="col-span-2">
+                                <p className="text-xs text-rose-500 px-2 mt-1">
+                                  {workExpDateErrors[`workExp_${index}_dates`]}
+                                </p>
+                              </div>
+                            )}
                           </div>
                           <div className="mt-4 pt-4 border-t border-slate-100">
                             <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">
@@ -1425,7 +1634,8 @@ export default function EditPage() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-1">
                               <label className="text-md px-2 font-semibold text-slate-700">
-                                Institution
+                                Institution{" "}
+                                <span className="text-rose-500">*</span>
                               </label>
                               <input
                                 value={edu.institution}
@@ -1442,7 +1652,8 @@ export default function EditPage() {
                             </div>
                             <div className="space-y-1">
                               <label className="text-md px-2 font-semibold text-slate-700">
-                                Degree
+                                Degree{" "}
+                                <span className="text-rose-500">*</span>
                               </label>
                               <input
                                 value={edu.degree}
@@ -1459,8 +1670,7 @@ export default function EditPage() {
                             </div>
                             <div className="space-y-1">
                               <label className="text-md px-2 font-semibold text-slate-700">
-                                Field of Study{" "}
-                                <span className="text-rose-500">*</span>
+                                Field of Study
                               </label>
                               <input
                                 value={edu.field || ""}
@@ -1480,15 +1690,17 @@ export default function EditPage() {
                                 Graduation Date
                               </label>
                               <input
-                                type="date"
-                                value={edu.graduation_year}
-                                onChange={(e) =>
+                                type="month"
+                                value={formatToMonthInput(edu.graduation_year)}
+                                onChange={(e) => {
+                                  const monthValue = e.target.value;
+                                  const formattedValue = formatFromMonthInput(monthValue);
                                   updateEducation(
                                     index,
                                     "graduation_year",
-                                    e.target.value
-                                  )
-                                }
+                                    formattedValue
+                                  );
+                                }}
                                 className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] text-slate-700"
                               />
                             </div>
