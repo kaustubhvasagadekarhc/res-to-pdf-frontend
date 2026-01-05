@@ -30,7 +30,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className="h-20 flex items-center justify-between px-4  md:px-10 bg-white/70 backdrop-blur-xl sticky top-0 z-50 border-b border-[var(--border)] transition-all  duration-300 shadow-sm">
+    <header className="h-16 flex items-center justify-between px-4  md:px-10 bg-white/70 backdrop-blur-xl sticky top-0 z-50 border-b border-[var(--border)] transition-all  duration-300 shadow-sm">
       <div className="flex items-center gap-3">
         {user?.userType === "ADMIN" && (
           <Button
@@ -54,15 +54,15 @@ export function Header({ onMenuClick }: HeaderProps) {
           }}
         >
            <div className="mb-8 flex items-center pt-8  gap-2">
-           <div className="bg-[var(--primary)] rounded-md p-2">  
+           <div className=" ">  
              <Image
                src="/upload.png"
                alt="careercanva"
-               width={40}
-               height={40}
-               className="brightness-0  invert"
+               width={36}
+               height={36}
+               className="shadow-sm  shadow-primary-600  bg-blue-200 rounded-md"
              /></div>
-               <span className="text- text-4xl text-[var(--primary)] font-bold">CareerCanva</span>
+               {/* <span className="text- text-4xl text-[var(--primary)] font-bold">CareerCanva</span> */}
            </div>
         </div>
       </div>

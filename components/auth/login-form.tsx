@@ -15,8 +15,9 @@ import { Label } from "@/components/ui/label";
 import { authService as tokenService } from "@/services/auth.services";
 import { useVettlySSO } from "@/hooks/use-vetlly-sso";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Globe, Loader2, Lock, Mail, Eye, EyeOff, ArrowRight, Languages } from "lucide-react";
+import { AlertCircle, Loader2, Lock, Mail, Eye, EyeOff, ArrowRight, Languages } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -207,10 +208,10 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
       </div> */}
 
       {/* Welcome Tag */}
-      <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full w-fit" style={{ backgroundColor: '#f0f9ff' }}>
+      {/* <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full w-fit" style={{ backgroundColor: '#f0f9ff' }}>
         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#0ea5e9' }} />
         <span className="text-sm font-medium" style={{ color: '#0284c7' }}>Welcome Back</span>
-      </div>  
+      </div>   */}
 
       <Card className="w-full border-0 bg-transparent shadow-none">
         <CardHeader className="text-left pb-2 pt-0 px-0">
@@ -302,7 +303,7 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
 
             <Button
               type="submit"
-              className="w-full text-white font-semibold py-3.5 rounded-xl transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg hover:shadow-xl h-14 text-base"
+              className="w-full text-white font-semibold py-3.5 rounded-xl transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm hover:shadow-md h-14 text-base"
               style={{ backgroundColor: loading ? '#9ca3af' : '#38bdf8' }}
               onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#0ea5e9'; }}
               onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#38bdf8'; }}
@@ -335,7 +336,7 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
             <Button
               type="button"
               variant="outline"
-              className="w-full border-2 border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-3.5 rounded-xl transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed h-14 text-base"
+              className="w-full border-2 border-gray-200 hover:bg-gray-50 text-gray-700 shadow-sm hover:shadow-md  font-semibold py-3.5 rounded-xl transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed h-14 text-base"
               onClick={() => openVettlySSO({ mode: "signin" })}
               disabled={isPopupOpen || isProcessing || loading}
             >

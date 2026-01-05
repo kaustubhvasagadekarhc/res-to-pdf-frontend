@@ -175,11 +175,11 @@ export default function ResumesPage() {
 
   const performRename = async () => {
     if (!renameResume || !newFileName.trim()) return;
-    
+
     setRenamingId(renameResume.id);
     try {
       apiClient.refreshTokenFromCookies();
-      
+
       // Call the rename API
       await apiClient.patch("/dashboard/resumes/rename", {
         resumeId: renameResume.id,
@@ -344,32 +344,31 @@ export default function ResumesPage() {
           </div>
 
           {/* Search and Filters Bar - Combined Component */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 ">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-0 w-full">
               {/* Search Bar - Left Side (60-70% width) */}
-              <div className="relative flex-[3] w-full">
+              <div className="relative flex-[3] min-w-0 w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="Search resumes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10  py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full pl-10  py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
               </div>
 
               {/* Filters - Right Side (extends to end) */}
-              <div className="flex items-center gap-3 flex-1 justify-end w-full">
+              <div className="flex  gap-3 flex-1 sm:justify-end w-full">
                 {/* Status Filter */}
-                <div className="relative">
+                <div className="relative flex-1 sm:flex-initial">
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className={`appearance-none bg-white border rounded-lg px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-colors min-w-[130px] ${
-                      statusFilter !== "all" 
-                        ? "border-blue-400" 
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
+                    className={`appearance-none bg-white border rounded-lg px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-colors w-full sm:min-w-[130px] ${statusFilter !== "all"
+                      ? "border-blue-400"
+                      : "border-gray-300 hover:border-gray-300"
+                      }`}
                   >
                     <option value="all">All Status</option>
                     <option value="Generated">Generated</option>
@@ -379,26 +378,25 @@ export default function ResumesPage() {
                 </div>
 
                 {/* Date Filter */}
-                <div className="relative">
+                <div className="relative flex-1 sm:flex-initial">
                   <button
                     onClick={() =>
                       (
                         document.getElementById("date-filter") as HTMLInputElement
                       ).showPicker()
                     }
-                    className={`flex items-center justify-between gap-2 bg-white border rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors min-w-[130px] ${
-                      dateFilter 
-                        ? "border-blue-400" 
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
+                    className={`flex items-center justify-between gap-2 bg-white border rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors w-full sm:min-w-[130px] ${dateFilter
+                      ? "border-blue-400"
+                      : "border-gray-300 hover:border-gray-300"
+                      }`}
                   >
                     <span>
                       {dateFilter
                         ? new Date(dateFilter).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
                         : "All Dates"}
                     </span>
                     <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 pointer-events-none" />
@@ -433,11 +431,14 @@ export default function ResumesPage() {
                 <div className="col-span-1 text-xs font-bold text-gray-400 uppercase">
                   Version
                 </div>
-                <div className="col-span-2 text-xs font-bold text-gray-400 uppercase">
+                <div className="col-span-1 text-xs font-bold text-gray-400 uppercase">
                   Created
                 </div>
                 <div className="col-span-2 text-right text-xs font-bold text-gray-400 uppercase">
                   Status
+                </div>
+                <div className="col-span-2 text-right text-xs font-bold text-gray-400 uppercase pr-8">
+                  Actions
                 </div>
               </div>
               {[...Array(6)].map((_, index) => (
@@ -474,7 +475,7 @@ export default function ResumesPage() {
                 <div className="col-span-1 text-xs font-bold text-gray-400 uppercase">
                   Sr No
                 </div>
-                <div className="col-span-4 text-xs font-bold text-gray-400 uppercase">
+                <div className="col-span-3 text-xs font-bold text-gray-400 uppercase">
                   File Name
                 </div>
                 <div className="col-span-2 text-xs font-bold text-gray-400 uppercase">
@@ -486,7 +487,10 @@ export default function ResumesPage() {
                 <div className="col-span-2 text-xs font-bold text-gray-400 uppercase">
                   Created
                 </div>
-                <div className="col-span-2 text-right text-xs font-bold text-gray-400 uppercase pr-8">
+                <div className="col-span-2 text-center text-xs font-bold text-gray-400 uppercase">
+                  Status
+                </div>
+                <div className="col-span-1 text-right text-xs font-bold text-gray-400 uppercase pr-8">
                   Actions
                 </div>
               </div>
@@ -498,7 +502,7 @@ export default function ResumesPage() {
                   <div className="col-span-1 text-sm font-semibold text-gray-600">
                     {index + 1}
                   </div>
-                  <div className="col-span-4 flex items-center gap-3">
+                  <div className="col-span-3 flex items-center gap-3">
                     <div className="p-2 bg-blue-50 rounded-sm">
                       <FileText className="w-5 h-5 text-blue-500" />
                     </div>
@@ -517,24 +521,28 @@ export default function ResumesPage() {
                   <div className="col-span-2 text-sm text-gray-500">
                     {formatDateFull(resume.createdAt)}
                   </div>
-                  <div className="col-span-2 flex items-center justify-end gap-3 pr-4">
+                  <div className="col-span-2 flex items-center justify-center gap-3 ">
                     <div className={getStatusBadgeClass(resume.status)}>
                       {resume.status}
                     </div>
-                    <ActionsMenu
-                      resume={resume}
-                      handleViewResume={handleViewResume}
-                      handleEditResume={handleEditResume}
-                      handleDownloadResume={handleDownloadResume}
-                      openDeleteConfirm={openDeleteConfirm}
-                      openRenameDialog={openRenameDialog}
-                      deletingId={deletingId}
-                      menuButtonRefs={menuButtonRefs}
-                      toggleMenu={toggleMenu}
-                      openMenuId={openMenuId}
-                      menuAbove={menuAbove}
-                      setOpenMenuId={setOpenMenuId}
-                    />
+                  </div>
+                  <div className="col-span-1 flex items-center justify-end gap-3 pr-4">
+                 
+                      <ActionsMenu
+                        resume={resume}
+                        handleViewResume={handleViewResume}
+                        handleEditResume={handleEditResume}
+                        handleDownloadResume={handleDownloadResume}
+                        openDeleteConfirm={openDeleteConfirm}
+                        openRenameDialog={openRenameDialog}
+                        deletingId={deletingId}
+                        menuButtonRefs={menuButtonRefs}
+                        toggleMenu={toggleMenu}
+                        openMenuId={openMenuId}
+                        menuAbove={menuAbove}
+                        setOpenMenuId={setOpenMenuId}
+                      />
+                   
                   </div>
                 </div>
               ))}
