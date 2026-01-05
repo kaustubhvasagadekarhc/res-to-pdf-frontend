@@ -135,12 +135,13 @@ export default function EditPage() {
   }>({});
   const [currentResumeId, setCurrentResumeId] = useState<string | null>(null);
 
-  // PDF Rename State
-  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  // PDF Rename State`
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(true);
   const [tempPdfName, setTempPdfName] = useState("");
 
   // Analysis State
   const [analyzing, setAnalyzing] = useState(false);
+  const [isRenameClicked, setIsRenameClicked] = useState<boolean>(false);
   const [analysisResult, setAnalysisResult] = useState<{
     atsScore?: number;
     improvements?: string[];
@@ -746,6 +747,13 @@ export default function EditPage() {
   };
 
   const handleSavePdfName = async () => {
+    if(tempPdfName?.trim()?.length === 0) {
+      toast.error("Please enter a valid name");
+      return;
+    }
+    
+    setIsRenameClicked(true);
+    
     if (resumeData) {
       setResumeData({ ...resumeData, pdfName: tempPdfName });
       
@@ -765,7 +773,9 @@ export default function EditPage() {
         }
       }
     }
+   
     setIsRenameModalOpen(false);
+    setIsRenameClicked(false);
     setCurrentStep(currentStep + 1);
     // window.scrollTo(0, 0); // Removed as per existing code style
   };
@@ -1837,7 +1847,8 @@ export default function EditPage() {
             </button>
             <button
               onClick={handleSavePdfName}
-              className="px-4 py-2 text-sm font-bold text-white bg-[var(--primary)] hover:bg-[var(--primary-700)] rounded-sm transition-colors"
+              disabled={isRenameClicked || tempPdfName.trim().length === 0}
+              className="px-4 py-2 text-sm font-bold text-white bg-[var(--primary)] hover:bg-[var(--primary-700)] rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[var(--primary)]"
             >
               Save & Continue
             </button>

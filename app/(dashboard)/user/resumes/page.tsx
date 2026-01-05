@@ -174,7 +174,17 @@ export default function ResumesPage() {
   };
 
   const performRename = async () => {
-    if (!renameResume || !newFileName.trim()) return;
+    // Prevent submission if input is blank or already renaming
+    if (!renameResume || !newFileName.trim() || renamingId === renameResume.id) {
+      return;
+    }
+
+    // Prevent submission if name hasn't changed
+    const originalName = renameResume.fileName.replace(/\.pdf$/i, "");
+    if (newFileName.trim() === originalName) {
+      toast.error("Please enter a different name");
+      return;
+    }
 
     setRenamingId(renameResume.id);
     try {
@@ -737,9 +747,10 @@ export default function ResumesPage() {
                   value={newFileName}
                   onChange={(e) => setNewFileName(e.target.value)}
                   placeholder="Enter new file name"
-                  className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={renamingId === renameResume.id}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
+                    if (e.key === "Enter" && newFileName.trim() && renamingId !== renameResume.id) {
                       performRename();
                     } else if (e.key === "Escape") {
                       cancelRename();
@@ -760,7 +771,7 @@ export default function ResumesPage() {
                 </button>
                 <button
                   onClick={performRename}
-                  disabled={!newFileName.trim() || renamingId === renameResume.id}
+                  disabled={renamingId === renameResume?.id || (newFileName?.trim()?.length ?? 0) < 1}
                   className="flex-1 px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {renamingId === renameResume.id ? "Renaming..." : "Rename"}
