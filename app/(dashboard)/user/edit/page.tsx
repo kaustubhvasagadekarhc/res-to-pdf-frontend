@@ -2041,34 +2041,29 @@ export default function EditPage() {
                       </div>
 
                       {/* Finalize Action Card */}
-                      <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center py-12 bg-white border-2 border-dashed border-slate-200 rounded-xl shadow-sm">
+                      <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center py-12 bg-white border-2 border-dashed border-gray-200 rounded-xl">
                         <div className="text-center space-y-6 max-w-lg w-full px-6">
                           {/* 1. Pre-Analysis Action (Only show if not analyzed yet) */}
                           {!analysisResult && (
                             <div className="animate-in fade-in slide-in-from-bottom-2">
-                              <div className="bg-indigo-50/50 rounded-xl p-6 border border-indigo-100 mb-6">
-                                {/* <h3 className="text-sm font-bold text-indigo-900 mb-3 uppercase tracking-wider">Recommended Step</h3> */}
-                                <button
-                                  onClick={handleAnalyze}
-                                  disabled={analyzing}
-                                  className="w-full bg-white text-indigo-600 border-2 border-indigo-200 px-6 py-4 rounded-sm font-bold hover:bg-indigo-50 hover:border-indigo-300 transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-sm"
-                                >
-                                  {analyzing ? (
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                  ) : null}
-                                  {analyzing
-                                    ? "Analyzing..."
-                                    : "Analyze Resume"}
-                                </button>
-                              </div>
+                              <button
+                                onClick={handleAnalyze}
+                                disabled={analyzing}
+                                className="w-full bg-white text-blue-600 border border-blue-300 px-6 py-4 rounded-lg font-semibold hover:bg-blue-50 hover:border-blue-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                              >
+                                {analyzing ? (
+                                  <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : null}
+                                {analyzing ? "Analyzing..." : "Analyze Resume"}
+                              </button>
 
                               {/* Styled Divider */}
-                              <div className="relative flex items-center py-2">
-                                <div className="flex-grow border-t border-slate-200"></div>
-                                <span className="flex-shrink-0 mx-4 text-slate-400 text-xs font-bold uppercase tracking-widest">
-                                  or skip to finalization
+                              <div className="relative flex items-center py-4">
+                                <div className="flex-grow border-t border-gray-300"></div>
+                                <span className="flex-shrink-0 mx-4 text-gray-600 text-xs font-bold uppercase tracking-wider">
+                                  OR SKIP TO FINALIZATION
                                 </span>
-                                <div className="flex-grow border-t border-slate-200"></div>
+                                <div className="flex-grow border-t border-gray-300"></div>
                               </div>
                             </div>
                           )}
@@ -2076,7 +2071,7 @@ export default function EditPage() {
                           {/* 2. Final Generation Action */}
                           <div className="space-y-4">
                             {!analysisResult && (
-                              <h2 className="text-xl font-bold text-slate-700">
+                              <h2 className="text-2xl font-bold text-gray-800">
                                 Ready to Download?
                               </h2>
                             )}
@@ -2086,7 +2081,7 @@ export default function EditPage() {
                               </div>
                             )}
 
-                            <p className="text-slate-500 text-sm leading-relaxed">
+                            <p className="text-gray-600 text-sm leading-relaxed">
                               {analysisResult
                                 ? "Great! Your resume has been analyzed and is ready for export."
                                 : "You can generate your PDF now, but we recommend analyzing it first."}
@@ -2095,20 +2090,17 @@ export default function EditPage() {
                             <button
                               onClick={handleGenerate}
                               disabled={generating || !isFormComplete}
-                              className={`w-full sm:w-auto mx-auto px-12 py-4 rounded-md text-lg font-bold transition-all  active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-75 disabled:cursor-not-allowed ${analysisResult
-                                ? "bg-[var(--primary)] hover:bg-indigo-600 text-white"
-                                : "bg-slate-800 hover:bg-slate-900 text-white"
-                                } bb `}
+                              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-base font-semibold transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed shadow-sm"
                             >
                               {generating ? (
                                 <>
-                                  <Loader2 className="w-6 h-6 animate-spin" />{" "}
+                                  <Loader2 className="w-5 h-5 animate-spin" />
                                   Generating...
                                 </>
                               ) : (
                                 <>
-                                  Generate Resume{" "}
-                                  <ArrowRight className="w-6 h-6" />
+                                  Generate Resume
+                                  <ArrowRight className="w-5 h-5" />
                                 </>
                               )}
                             </button>
