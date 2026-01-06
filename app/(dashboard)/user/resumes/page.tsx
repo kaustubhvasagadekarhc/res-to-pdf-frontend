@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useUser, Resume } from "@/contexts/UserContext"; // Import from Context
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import {
-  Calendar,
+
   ChevronDown,
   Download,
   Edit3,

@@ -213,11 +213,11 @@ export default function UserManagementPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto py-4 px-4">
         <div className="mb-8">
           <div className="flex items-start justify-between gap-6 mb-6">
             <div>
-              <h1 className="text-4xl font-bold text-[var(--primary)] mb-1">
+              <h1 className="text-3xl font-bold text-[var(--primary)] mb-1">
                 User Management
               </h1>
               <p className="text-slate-600">

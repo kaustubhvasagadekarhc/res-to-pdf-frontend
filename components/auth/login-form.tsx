@@ -15,11 +15,12 @@ import { Label } from "@/components/ui/label";
 import { authService as tokenService } from "@/services/auth.services";
 import { useVettlySSO } from "@/hooks/use-vetlly-sso";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Loader2, Lock, Mail, Eye, EyeOff, ArrowRight, Languages } from "lucide-react";
+import { AlertCircle, Loader2, Lock, Mail, Eye, EyeOff, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Image from "next/image";
 
 /**
  * Props for the LoginForm component.
@@ -363,7 +364,7 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
                 </>
               ) : (
                 <>
-               <img src="/favicon.png" alt="Vettly Logo" className="w-5 h-5" />
+               <Image src="/favicon.png" alt="Vettly Logo" className="w-5 h-5" />
                   Sign in with Vettly
                 </>
               )}

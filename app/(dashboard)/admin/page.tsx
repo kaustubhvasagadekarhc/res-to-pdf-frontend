@@ -107,7 +107,7 @@ export default function AdminDashboard() {
       <div className="flex flex-col gap-4 md:flex-row md:items-end  md:justify-between">
         {/* flex items-end justify-between */}
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800">
+          <h1 className="text-3xl font-extrabold tracking-tight text-[var(--primary)]">
             Admin Overview
           </h1>
           <p className="text-slate-500 mt-1 font-medium">

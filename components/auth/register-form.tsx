@@ -9,7 +9,7 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
+
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,8 +17,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useVettlySSO } from "@/hooks/use-vetlly-sso";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Globe, Loader2, Lock, Mail, User, X, Eye, EyeOff, ArrowRight, Languages } from "lucide-react";
+import { AlertCircle, Loader2, Lock, Mail, User, X, Eye, EyeOff, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 /**
  * Props for the RegisterForm component.
@@ -71,11 +72,11 @@ export function RegisterForm({ onLoginClick }: RegisterFormProps) {
     }
   }, [showOTPModal, timer]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  // const formatTime = (seconds: number) => {
+  //   const mins = Math.floor(seconds / 60);
+  //   const secs = seconds % 60;
+  //   return `${mins}:${secs.toString().padStart(2, '0')}`;
+  // };
 
   const handleOTPInputChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const value = e.target.value.replace(/\D/g, "");
@@ -442,7 +443,7 @@ export function RegisterForm({ onLoginClick }: RegisterFormProps) {
                   </>
                 ) : (
                   <>
-                    <img src="/favicon.png" alt="Vettly Logo" className="w-5 h-5" />
+                    <Image src="/favicon.png" alt="Vettly Logo" className="w-5 h-5" />
                     Sign up with Vettly
                   </>
                 )}
