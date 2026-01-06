@@ -40,8 +40,6 @@ function VettlySSOContent() {
       sessionStorage.setItem("vetlly_sso_secret", sso_user_secret);
     }
     
-    // Get SECRET_KEY from environment variable
-    const secretKey = process.env.NEXT_PUBLIC_VETLLY_SECRET_KEY || "";
     
     // Build SSO URL with parameters
     const params = new URLSearchParams({
@@ -53,9 +51,7 @@ function VettlySSOContent() {
     });
     
     // Add SECRET_KEY to URL if provided
-    if (secretKey) {
-      params.append("SECRET_KEY", secretKey);
-    }
+  
 
     const ssoUrl = `${vettlyAuthUrl}?${params.toString()}`;
 
