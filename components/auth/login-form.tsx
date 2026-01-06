@@ -144,14 +144,28 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
 
       let errorMessage = "Login failed";
 
-      // Extract error message from different possible structures
+      // Check for network errors first
       if (err && typeof err === "object") {
         const error = err as {
           body?: { message?: string; error?: string };
           message?: string;
           status?: number;
+          code?: string;
+          request?: unknown;
         };
-        if (error.body?.message) {
+
+        // Network error detection
+        if (error.code === "ECONNREFUSED" || error.code === "ERR_NETWORK") {
+          errorMessage = "Cannot connect to server.";
+        } else if (error.code === "ETIMEDOUT" || error.code === "ECONNABORTED") {
+          errorMessage = "Connection timeout. Please check your internet connection.";
+        } else if (error.message?.includes("Network Error") || error.message?.includes("Failed to fetch")) {
+          errorMessage = "Network error. Please check your connection";
+        } else if (error.status === 404) {
+          errorMessage = "Login endpoint not found.";
+        } else if (error.status === 0) {
+          errorMessage = "Cannot reach server.";
+        } else if (error.body?.message) {
           errorMessage = error.body.message;
         } else if (error.message) {
           errorMessage = error.message;
@@ -161,6 +175,8 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
           errorMessage = "Invalid email or password";
         } else if (error.status === 401) {
           errorMessage = "Invalid credentials";
+        } else if (error.status === 500) {
+          errorMessage = "Server error. Please try again later.";
         }
       }
 

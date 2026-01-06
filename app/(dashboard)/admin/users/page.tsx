@@ -17,6 +17,7 @@ import {
   Mail,
   Loader2,
   User as UserIcon,
+  ChevronDown,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
@@ -38,6 +39,8 @@ export default function UserManagementPage() {
   const { users, isLoading: ctxLoading, refreshData, updateLocalUser } = useAdmin();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteFile, setInviteFile] = useState<File | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -168,11 +171,29 @@ export default function UserManagementPage() {
     }
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
+  // Calculate KPI metrics
+  const totalUsers = users.length;
+  const adminCount = users.filter((user) => user.userType === "ADMIN").length;
+  const verifiedCount = users.filter((user) => user.isVerified).length;
+  const unverifiedCount = users.filter((user) => !user.isVerified).length;
+
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
       user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      user.email?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesRole =
+      roleFilter === "all" ||
+      (roleFilter === "admin" && user.userType === "ADMIN") ||
+      (roleFilter === "user" && user.userType === "USER");
+    
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "verified" && user.isVerified) ||
+      (statusFilter === "unverified" && !user.isVerified);
+    
+    return matchesSearch && matchesRole && matchesStatus;
+  });
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -326,15 +347,115 @@ export default function UserManagementPage() {
             </Dialog>
           </div>
 
-          <div className="relative max-w-2xl">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-[var(--primary)] transition-colors" />
-            <input
-              type="text"
-              placeholder="Search by name or email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-lg bg-white text-slate-700 placeholder-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-50)] focus:border-[var(--primary)] transition-all"
-            />
+          {/* KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Total Members */}
+            <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Total Members</p>
+                  <p className="text-2xl font-bold text-gray-900">{totalUsers}</p>
+                </div>
+                <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <UserIcon className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </div>
+
+            {/* Admin Count */}
+            <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Admin</p>
+                  <p className="text-2xl font-bold text-gray-900">{adminCount}</p>
+                </div>
+                <div className="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center">
+                  <ShieldAlert className="w-6 h-6 text-indigo-600" />
+                </div>
+              </div>
+            </div>
+
+            {/* Verified Count */}
+            <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Verified</p>
+                  <p className="text-2xl font-bold text-emerald-600">{verifiedCount}</p>
+                </div>
+                <div className="w-12 h-12 bg-emerald-50 rounded-lg flex items-center justify-center">
+                  <Check className="w-6 h-6 text-emerald-600" />
+                </div>
+              </div>
+            </div>
+
+            {/* Unverified Count */}
+            <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Unverified</p>
+                  <p className="text-2xl font-bold text-orange-700">{unverifiedCount}</p>
+                </div>
+                <div className="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center">
+                  <X className="w-6 h-6 text-amber-600" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Search and Filters Bar - Combined Component */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-0 w-full">
+              {/* Search Bar - Left Side (60-70% width) */}
+              <div className="relative flex-[3] min-w-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search by email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+              </div>
+
+              {/* Filters - Right Side */}
+              <div className="flex items-center gap-3 flex-1 sm:justify-end">
+                {/* Role Filter */}
+                <div className="relative flex-1 sm:flex-initial">
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    className={`appearance-none bg-white border rounded-lg px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-colors w-full sm:min-w-[130px] ${
+                      roleFilter !== "all" 
+                        ? "border-blue-400" 
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="user">User</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+
+                {/* Status Filter */}
+                <div className="relative flex-1 sm:flex-initial">
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className={`appearance-none bg-white border rounded-lg px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer transition-colors w-full sm:min-w-[130px] ${
+                      statusFilter !== "all" 
+                        ? "border-blue-400" 
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="verified">Verified</option>
+                    <option value="unverified">Unverified</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -349,10 +470,10 @@ export default function UserManagementPage() {
               <div className="col-span-3 text-xs font-bold text-slate-500 uppercase tracking-wider">
                 Access Level
               </div>
-              <div className="col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <div className="col-span-2 text-xs font-bold text-slate-500 pl-4 uppercase tracking-wider">
                 Status
               </div>
-              <div className="col-span-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <div className="col-span-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider pr-12">
                 Actions
               </div>
             </div>
@@ -409,7 +530,7 @@ export default function UserManagementPage() {
                     )}
                   </span>
                 </div>
-                <div className="col-span-3 flex justify-end gap-1">
+                <div className="col-span-3 flex justify-end gap-1 pr-4">
                   <Button
                     variant="ghost"
                     size="icon"

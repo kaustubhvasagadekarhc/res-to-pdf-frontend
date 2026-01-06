@@ -447,7 +447,7 @@ export default function ResumesPage() {
                 <div className="col-span-2 text-right text-xs font-bold text-gray-400 uppercase">
                   Status
                 </div>
-                <div className="col-span-2 text-right text-xs font-bold text-gray-400 uppercase pr-8">
+                <div className="col-span-2 text-left text-xs font-bold text-gray-400 uppercase pr-8">
                   Actions
                 </div>
               </div>
@@ -500,7 +500,7 @@ export default function ResumesPage() {
                 <div className="col-span-2 text-center text-xs font-bold text-gray-400 uppercase">
                   Status
                 </div>
-                <div className="col-span-1 text-right text-xs font-bold text-gray-400 uppercase pr-8">
+                <div className="col-span-1 text-xs font-bold text-gray-400 uppercase ">
                   Actions
                 </div>
               </div>
@@ -531,12 +531,12 @@ export default function ResumesPage() {
                   <div className="col-span-2 text-sm text-gray-500">
                     {formatDateFull(resume.createdAt)}
                   </div>
-                  <div className="col-span-2 flex items-center justify-center gap-3 ">
+                  <div className="col-span-2 flex items-center  justify-center gap-3 ">
                     <div className={getStatusBadgeClass(resume.status)}>
                       {resume.status}
                     </div>
                   </div>
-                  <div className="col-span-1 flex items-center justify-end gap-3 pr-4">
+                  <div className="col-span-1 flex items-start justify-start gap-3 pr-4">
                  
                       <ActionsMenu
                         resume={resume}
