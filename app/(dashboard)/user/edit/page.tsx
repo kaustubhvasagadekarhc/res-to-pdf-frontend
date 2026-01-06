@@ -143,7 +143,14 @@ export default function EditPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<{
     atsScore?: number;
-    improvements?: string[];
+    overallReview?: string;
+    sectionImprovements?: {
+      summary?: string;
+      skills?: string;
+      experience?: string;
+      education?: string;
+      projects?: string;
+    };
   } | null>(null);
 
   const handleAnalyze = async () => {
@@ -157,11 +164,14 @@ export default function EditPage() {
 
       interface AnalysisResponse {
         atsScore?: number;
-        formattingIssues?: string[];
-        generalImprovements?: string[];
-        // We can add other fields if we want to use them later
-        summaryFeedback?: { feedback: string; status: string };
-        skillsFeedback?: { feedback: string; missingCriticalSkills: string[] };
+        overallReview?: string;
+        sectionImprovements?: {
+          summary?: string;
+          skills?: string;
+          experience?: string;
+          education?: string;
+          projects?: string;
+        };
       }
 
       let result: AnalysisResponse = {};
@@ -170,22 +180,10 @@ export default function EditPage() {
         result = response.data as unknown as AnalysisResponse;
       }
 
-      // Combine relevant feedback into a single list for the simple UI
-      const improvements = [
-        ...(result.formattingIssues || []),
-        ...(result.generalImprovements || []),
-        ...(result.skillsFeedback?.missingCriticalSkills
-          ? [
-              `Missing Skills: ${result.skillsFeedback.missingCriticalSkills.join(
-                ", "
-              )}`,
-            ]
-          : []),
-      ];
-
       setAnalysisResult({
         atsScore: result.atsScore,
-        improvements: improvements.length > 0 ? improvements : undefined,
+        overallReview: result.overallReview,
+        sectionImprovements: result.sectionImprovements,
       });
     } catch (error) {
       console.error("Analysis failed", error);
@@ -208,7 +206,7 @@ export default function EditPage() {
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const resumeId = searchParams.get("id");
-    
+
     // Store resumeId for later use (e.g., renaming)
     if (resumeId) {
       setCurrentResumeId(resumeId);
@@ -422,7 +420,7 @@ export default function EditPage() {
   ) => {
     if (!resumeData) return;
     const updated = [...resumeData.work_experience];
-    updated[index] = { ...updated[index], [field]: value };  
+    updated[index] = { ...updated[index], [field]: value };
 
     if (field === "period_from" || field === "period_to") {
       const from = field === "period_from" ? value : updated[index].period_from;
@@ -748,7 +746,7 @@ export default function EditPage() {
   const handleSavePdfName = async () => {
     if (resumeData) {
       setResumeData({ ...resumeData, pdfName: tempPdfName });
-      
+
       // If editing an existing resume, call the rename API
       if (currentResumeId && tempPdfName.trim()) {
         try {
@@ -966,11 +964,10 @@ export default function EditPage() {
 
                             updatePersonal("name", formatted);
                           }}
-                          className={`w-full bg-white border rounded-sm ${
-                            validationErrors.name
-                              ? "border-rose-500"
-                              : "border-slate-300"
-                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          className={`w-full bg-white border rounded-sm ${validationErrors.name
+                            ? "border-rose-500"
+                            : "border-slate-300"
+                            } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="John Doe"
                         />
                         {validationErrors.name && (
@@ -1004,11 +1001,10 @@ export default function EditPage() {
 
                             updatePersonal("designation", formatted);
                           }}
-                          className={`w-full bg-white border rounded-sm ${
-                            validationErrors.designation
-                              ? "border-rose-500"
-                              : "border-slate-300"
-                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          className={`w-full bg-white border rounded-sm ${validationErrors.designation
+                            ? "border-rose-500"
+                            : "border-slate-300"
+                            } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="Software Engineer"
                         />
                         {validationErrors.designation && (
@@ -1026,11 +1022,10 @@ export default function EditPage() {
                           onChange={(e) =>
                             updatePersonal("email", e.target.value)
                           }
-                          className={`w-full bg-white border rounded-sm ${
-                            validationErrors.email
-                              ? "border-rose-500"
-                              : "border-slate-300"
-                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          className={`w-full bg-white border rounded-sm ${validationErrors.email
+                            ? "border-rose-500"
+                            : "border-slate-300"
+                            } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="john@example.com"
                         />
                         {validationErrors.email && (
@@ -1072,11 +1067,10 @@ export default function EditPage() {
 
                             updatePersonal("mobile", val);
                           }}
-                          className={`w-full bg-white border rounded-sm ${
-                            validationErrors.mobile
-                              ? "border-rose-500"
-                              : "border-slate-300"
-                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          className={`w-full bg-white border rounded-sm ${validationErrors.mobile
+                            ? "border-rose-500"
+                            : "border-slate-300"
+                            } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="+91 00000 00000"
                         />
                         {validationErrors.mobile && (
@@ -1100,11 +1094,10 @@ export default function EditPage() {
                             );
                             updatePersonal("location", filtered);
                           }}
-                          className={`w-full bg-white border rounded-sm ${
-                            validationErrors.location
-                              ? "border-rose-500"
-                              : "border-slate-300"
-                          } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
+                          className={`w-full bg-white border rounded-sm ${validationErrors.location
+                            ? "border-rose-500"
+                            : "border-slate-300"
+                            } px-4 py-3 border-b border-gray-300 transition-colors duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300`}
                           placeholder="New York, USA"
                         />
                         {validationErrors.location && (
@@ -1606,43 +1599,214 @@ export default function EditPage() {
                       <div className="w-full max-w-4xl mx-auto mb-6">
                         {analysisResult && (
                           <div className="bg-white border-2 border-indigo-100 rounded-sm p-6 shadow-sm mb-6 animate-in slide-in-from-top-2">
-                            <div className="flex items-center gap-4 mb-4 border-b border-indigo-50 pb-4">
-                              <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center border-4 border-indigo-100 text-xl font-bold text-indigo-700">
-                                {analysisResult.atsScore || 0}%
+                            {/* ATS Score Display */}
+                            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-6 pb-6 border-b border-indigo-50">
+                              <div className="flex-shrink-0 relative">
+                                <div className="relative h-24 w-24 flex items-center justify-center">
+                                  {/* Circular Progress Ring */}
+                                  <svg
+                                    className="absolute inset-0 h-full w-full -rotate-90 transform"
+                                    viewBox="0 0 36 36"
+                                  >
+                                    {/* Background Circle */}
+                                    <path
+                                      className="text-indigo-100"
+                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2.5"
+                                    />
+                                    {/* Progress Circle */}
+                                    <path
+                                      className={
+                                        (analysisResult.atsScore || 0) >= 70
+                                          ? "text-emerald-500"
+                                          : (analysisResult.atsScore || 0) >= 50
+                                          ? "text-amber-500"
+                                          : "text-rose-500"
+                                      }
+                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeDasharray={`${(analysisResult.atsScore || 0)}, 100`}
+                                      strokeLinecap="round"
+                                      strokeWidth="2.5"
+                                    />
+                                  </svg>
+                                  {/* Score Text */}
+                                  <div className="relative z-10 flex flex-col items-center justify-center">
+                                    <span
+                                      className={`text-2xl font-bold ${
+                                        (analysisResult.atsScore || 0) >= 70
+                                          ? "text-emerald-600"
+                                          : (analysisResult.atsScore || 0) >= 50
+                                          ? "text-amber-600"
+                                          : "text-rose-600"
+                                      }`}
+                                    >
+                                      {analysisResult.atsScore || 0}
+                                    </span>
+                                    <span className="text-xs font-medium text-slate-500 -mt-1">
+                                      %
+                                    </span>
+                                  </div>
+                                  {/* Outer Ring */}
+                                  <div className="absolute inset-0 rounded-full ring-4 ring-indigo-50" />
+                                </div>
                               </div>
-                              <div>
-                                <h3 className="text-xl font-bold text-slate-800">
+                              <div className="text-center sm:text-left flex-1">
+                                <h3 className="text-xl font-bold text-slate-800 mb-1">
                                   Resume Analysis Score
-                                </h3>
+                                </h3>           
                                 <p className="text-slate-500 text-sm">
                                   Based on industry standards and ATS
                                   compatibility
                                 </p>
+                                {/* Score Label */}
+                                <div className="mt-2">
+                                  <span
+                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                      (analysisResult.atsScore || 0) >= 70
+                                        ? "bg-emerald-100 text-emerald-700"
+                                        : (analysisResult.atsScore || 0) >= 50
+                                        ? "bg-amber-100 text-amber-700"
+                                        : "bg-rose-100 text-rose-700"
+                                    }`}
+                                  >
+                                    {(analysisResult.atsScore || 0) >= 70
+                                      ? "Excellent"
+                                      : (analysisResult.atsScore || 0) >= 50
+                                      ? "Good"
+                                      : "Needs Improvement"}
+                                  </span>
+                                </div>
                               </div>
                             </div>
 
-                            {analysisResult.improvements &&
-                            analysisResult.improvements.length > 0 ? (
-                              <div className="space-y-3">
-                                <h4 className="font-semibold text-slate-700 flex items-center gap-2">
-                                  <AlertCircle className="w-4 h-4 text-amber-500" />
-                                  Areas for Improvement
-                                </h4>
-                                <ul className="space-y-2">
-                                  {analysisResult.improvements.map(
-                                    (point, i) => (
-                                      <li
-                                        key={i}
-                                        className="flex items-start gap-2 text-slate-600 text-sm bg-slate-50 p-2.5 rounded-sm"
-                                      >
-                                        <span className="text-amber-500 mt-0.5">
-                                          •
-                                        </span>
-                                        {point}
-                                      </li>
-                                    )
+                            {/* Overall Review Section */}
+                            {analysisResult.overallReview && (
+                              <div className="mb-6 p-4 bg-indigo-50/50 border border-indigo-100 rounded-sm">
+                                <div className="flex items-start gap-3">
+                                  {(analysisResult.atsScore || 0) >= 70 ? (
+                                    <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                                  ) : (
+                                    <AlertCircle className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
                                   )}
-                                </ul>
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-slate-800 mb-2">
+                                      Overall Review
+                                    </h4>
+                                    <p className="text-slate-700 text-sm leading-relaxed text-left whitespace-pre-line">
+                                      {analysisResult.overallReview}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Section Improvements */}
+                            {analysisResult.sectionImprovements &&
+                              Object.keys(analysisResult.sectionImprovements).length > 0 ? (
+                              <div className="space-y-4">
+                                <h4 className="font-semibold text-slate-700 flex items-center gap-2 mb-3">
+                                 
+                                  Section-Specific Improvements
+                                </h4>
+
+                                {/* Summary Section */}
+                                {analysisResult.sectionImprovements.summary && (
+                                  <div className="bg-slate-50 border border-slate-200 rounded-sm p-4 hover:bg-slate-100 cursor-pointer hover:shadow-xl transition-all duration-200" 
+                                  onClick={() => { setCurrentStep(2) }}
+                                  title="Click to edit summary">
+                                    <div className="flex items-start gap-3">
+                                      <FileText className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                                      <div className="flex-1">
+                                        <h5 className="font-semibold text-slate-800 mb-2">
+                                          Summary Section
+                                        </h5>
+                                        <p className="text-slate-600 text-sm leading-relaxed text-left whitespace-pre-line">
+                                          {analysisResult.sectionImprovements.summary}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Skills Section */}
+                                {analysisResult.sectionImprovements.skills && (
+                                  <div className="bg-slate-50 border border-slate-200 rounded-sm p-4 hover:bg-slate-100 cursor-pointer hover:shadow-xl transition-all duration-200" 
+                                  onClick={() => { setCurrentStep(3) }}
+                                  title="Click to edit skills">
+                                    <div className="flex items-start gap-3">
+                                      <Code className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                                      <div className="flex-1">
+                                        <h5 className="font-semibold text-slate-800 mb-2">
+                                          Skills Section
+                                        </h5>
+                                        <p className="text-slate-600 text-sm leading-relaxed text-left whitespace-pre-line">
+                                          {analysisResult.sectionImprovements.skills}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Experience Section */}
+                                {analysisResult.sectionImprovements.experience && (
+                                  <div className="bg-slate-50 border border-slate-200 rounded-sm p-4 hover:bg-slate-100 cursor-pointer hover:shadow-xl transition-all duration-200" 
+                                  onClick={() => { setCurrentStep(4) }}
+                                  title="Click to edit work experience">
+                                    <div className="flex items-start gap-3">
+                                      <Briefcase className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                                      <div className="flex-1">
+                                        <h5 className="font-semibold text-slate-800 mb-2">
+                                          Work Experience
+                                        </h5>
+                                        <p className="text-slate-600 text-sm leading-relaxed text-left whitespace-pre-line">
+                                          {analysisResult.sectionImprovements.experience}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Education Section */}
+                                {analysisResult.sectionImprovements.education && (
+                                  <div className="bg-slate-50 border border-slate-200 rounded-sm p-4 hover:bg-slate-100 cursor-pointer hover:shadow-xl transition-all duration-200" 
+                                  onClick={() => { setCurrentStep(5) }}
+                                  title="Click to edit education">
+                                    <div className="flex items-start gap-3">
+                                      <GraduationCap className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                                      <div className="flex-1">
+                                        <h5 className="font-semibold text-slate-800 mb-2">
+                                          Education
+                                        </h5>
+                                        <p className="text-slate-600 text-sm leading-relaxed text-left whitespace-pre-line">
+                                          {analysisResult.sectionImprovements.education}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Projects Section */}
+                                {analysisResult.sectionImprovements.projects && (
+                                  <div className="bg-slate-50 border border-slate-200 rounded-sm p-4 hover:bg-slate-100 cursor-pointer hover:shadow-xl transition-all duration-200" 
+                                  onClick={() => { setCurrentStep(6) }}
+                                  title="Click to edit projects">
+                                    <div className="flex items-start gap-3">
+                                      <Code className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                                      <div className="flex-1">
+                                        <h5 className="font-semibold text-slate-800 mb-2">
+                                          Projects
+                                        </h5>
+                                        <p className="text-slate-600 text-sm leading-relaxed text-left whitespace-pre-line">
+                                          {analysisResult.sectionImprovements.projects}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               <div className="text-slate-500 text-sm italic">
@@ -1709,11 +1873,10 @@ export default function EditPage() {
                             <button
                               onClick={handleGenerate}
                               disabled={generating || !isFormComplete}
-                              className={`w-full sm:w-auto mx-auto px-12 py-4 rounded-md text-lg font-bold transition-all  active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-75 disabled:cursor-not-allowed ${
-                                analysisResult
-                                  ? "bg-[var(--primary)] hover:bg-indigo-600 text-white"
-                                  : "bg-slate-800 hover:bg-slate-900 text-white"
-                              } bb `}
+                              className={`w-full sm:w-auto mx-auto px-12 py-4 rounded-md text-lg font-bold transition-all  active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-75 disabled:cursor-not-allowed ${analysisResult
+                                ? "bg-[var(--primary)] hover:bg-indigo-600 text-white"
+                                : "bg-slate-800 hover:bg-slate-900 text-white"
+                                } bb `}
                             >
                               {generating ? (
                                 <>
@@ -1763,11 +1926,10 @@ export default function EditPage() {
             <button
               onClick={handleBack}
               disabled={currentStep === 1}
-              className={`px-8 py-2.5 rounded-sm font-bold border transition-all flex items-center gap-2 ${
-                currentStep === 1
-                  ? "opacity-0 pointer-events-none"
-                  : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400"
-              }`}
+              className={`px-8 py-2.5 rounded-sm font-bold border transition-all flex items-center gap-2 ${currentStep === 1
+                ? "opacity-0 pointer-events-none"
+                : "border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400"
+                }`}
             >
               Back
             </button>
