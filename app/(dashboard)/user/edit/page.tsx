@@ -1657,7 +1657,7 @@ export default function EditPage() {
                               <div className="text-center sm:text-left flex-1">
                                 <h3 className="text-xl font-bold text-slate-800 mb-1">
                                   Resume Analysis Score
-                                </h3>
+                                </h3>           
                                 <p className="text-slate-500 text-sm">
                                   Based on industry standards and ATS
                                   compatibility
