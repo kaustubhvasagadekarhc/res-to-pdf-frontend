@@ -18,6 +18,8 @@ import {
   Loader2,
   User as UserIcon,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
@@ -41,6 +43,8 @@ export default function UserManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteFile, setInviteFile] = useState<File | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -194,6 +198,18 @@ export default function UserManagementPage() {
     
     return matchesSearch && matchesRole && matchesStatus;
   });
+
+  // Pagination calculations
+  const totalFilteredUsers = filteredUsers.length;
+  const totalPages = Math.ceil(totalFilteredUsers / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, roleFilter, statusFilter]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -354,7 +370,7 @@ export default function UserManagementPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Total Members</p>
-                  <p className="text-2xl font-bold text-gray-900">{totalUsers}</p>
+                  <p className="text-2xl font-bold text-slate-600">{totalUsers}</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
                   <UserIcon className="w-6 h-6 text-blue-600" />
@@ -367,7 +383,7 @@ export default function UserManagementPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Admin</p>
-                  <p className="text-2xl font-bold text-gray-900">{adminCount}</p>
+                  <p className="text-2xl font-bold text-slate-600">{adminCount}</p>
                 </div>
                 <div className="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center">
                   <ShieldAlert className="w-6 h-6 text-indigo-600" />
@@ -477,7 +493,7 @@ export default function UserManagementPage() {
                 Actions
               </div>
             </div>
-            {filteredUsers.map((user) => (
+            {paginatedUsers.map((user) => (
               <div
                 key={user.id}
                 className="grid grid-cols-12 gap-4 px-6 py-5 border-b border-slate-100 last:border-b-0 items-center hover:bg-slate-50/80 transition-all group"
@@ -570,6 +586,92 @@ export default function UserManagementPage() {
                 </div>
               </div>
             ))}
+
+            {/* Pagination */}
+            {filteredUsers.length > 0 && (
+              <div className="bg-white border-t border-gray-200 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* Results Count */}
+                <div className="text-sm text-gray-600">
+                  Showing <span className="font-semibold">{startIndex + 1}</span> to{" "}
+                  <span className="font-semibold">
+                    {Math.min(endIndex, totalFilteredUsers)}
+                  </span>{" "}
+                  of <span className="font-semibold">{totalFilteredUsers}</span> results
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="flex items-center gap-3">
+                  {/* Items Per Page Dropdown */}
+                  <div className="relative">
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer hover:border-gray-300 transition-colors"
+                    >
+                      <option value="10">10 per page</option>
+                      <option value="20">20 per page</option>
+                      <option value="50">50 per page</option>
+                      <option value="100">100 per page</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
+
+                  {/* Page Navigation */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Previous page"
+                    >
+                      <ChevronLeft className="w-4 h-4 text-gray-600" />
+                    </button>
+
+                    {/* Page Numbers */}
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            currentPage === pageNum
+                              ? "bg-blue-600 text-white"
+                              : "border border-gray-200 hover:bg-gray-50 text-gray-700"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                      className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Next page"
+                    >
+                      <ChevronRight className="w-4 h-4 text-gray-600" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
