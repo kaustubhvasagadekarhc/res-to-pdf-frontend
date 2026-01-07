@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { authService as tokenService } from "@/services/auth.services";
 import { useVettlySSO } from "@/hooks/use-vetlly-sso";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Loader2, Lock, Mail, Eye, EyeOff, ArrowRight, Languages } from "lucide-react";
+import { AlertCircle, Loader2, Lock, Mail, Eye, EyeOff, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -347,7 +347,13 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
                 </>
               ) : (
                 <>
-               <img src="/favicon.png" alt="Vettly Logo" className="w-5 h-5" />
+                  <Image
+                    src="/favicon.png"
+                    alt="Vettly Logo"
+                    className="w-5 h-5"
+                    width={20}
+                    height={20}
+                  />
                   Sign in with Vettly
                 </>
               )}
@@ -389,9 +395,9 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
               Sign in as employer
             </Link>
           </p> */}
-          <p className="text-xs text-gray-400 text-center ">
+          {/* <p className="text-xs text-gray-400 text-center ">
             © 2026 Vettly. All rights reserved.
-          </p>
+          </p> */}
         </CardFooter>
       </Card>
     </motion.div>

@@ -25,8 +25,8 @@ function VettlySSOContent() {
     }
 
     // Build Vettly SSO URL based on mode (signin or signup)
-    const vettlyBaseUrl = process.env.NEXT_PUBLIC_VETLLY_BASE_URL || "http://localhost:3000";
-    const authPath = mode === "signup" ? "/en/auth/signup/candidate" : "/en/auth/signin/candidate";
+    const vettlyBaseUrl = process.env.NEXT_PUBLIC_VETLLY_BASE_URL;
+    const authPath = mode === "signup" ? "/en/auth/signin/candidate" : "/en/auth/signin/candidate";
     const vettlyAuthUrl = `${vettlyBaseUrl}${authPath}`;
     const redirectUri = `${window.location.origin}/auth/vetlly/callback`;
     
