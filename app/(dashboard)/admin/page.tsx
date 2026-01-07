@@ -12,6 +12,13 @@ import {
   MoreHorizontal,
   // ArrowUpRight,
   Loader2,
+  Clock,
+  Trash2,
+  UserX,
+  Edit,
+  ShieldCheck,
+  ArrowRight,
+  Play,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -19,6 +26,50 @@ import { useAdmin } from "@/app/context/admin-context";
 
 // import { adminService } from "@/app/api/client";
 // import { ActivityLog } from "../../../types/api";
+
+// Helper to get icon and color based on action type - elegant rounded square style
+const getActionIcon = (action: string) => {
+  const actionLower = action.toLowerCase();
+  if (actionLower.includes("delete") || actionLower.includes("deleted")) {
+    return { icon: Trash2, bgColor: "bg-red-50", iconColor: "text-red-600" };
+  }
+  if (actionLower.includes("trigger") || actionLower.includes("triggered")) {
+    return { icon: Play, bgColor: "bg-orange-50", iconColor: "text-orange-600" };
+  }
+  if (actionLower.includes("patch") || actionLower.includes("patched") || actionLower.includes("edit") || actionLower.includes("updated")) {
+    return { icon: Edit, bgColor: "bg-blue-50", iconColor: "text-blue-600" };
+  }
+  if (actionLower.includes("verify") || actionLower.includes("verified")) {
+    return { icon: ShieldCheck, bgColor: "bg-green-50", iconColor: "text-green-600" };
+  }
+  return { icon: Activity, bgColor: "bg-indigo-50", iconColor: "text-indigo-600" };
+};
+
+// Helper to extract action code/details from activity
+const getActionDetails = (activity: { action: string; description?: string; details?: unknown }) => {
+  const actionUpper = activity.action.toUpperCase();
+  const details = activity.details;
+  
+  // Check if details has endpoint or action code
+  if (details && typeof details === "object" && details !== null) {
+    const detailsObj = details as Record<string, unknown>;
+    if ("endpoint" in detailsObj && typeof detailsObj.endpoint === "string") {
+      return detailsObj.endpoint;
+    }
+    if ("actionCode" in detailsObj && typeof detailsObj.actionCode === "string") {
+      return detailsObj.actionCode;
+    }
+  }
+  
+  // Try to extract from description
+  if (activity.description) {
+    const match = activity.description.match(/([A-Z_]+)/);
+    if (match) return match[1];
+  }
+  
+  // Generate from action
+  return actionUpper.replace(/\s+/g, "_");
+};
 
 export default function AdminDashboard() {
   useAuthGuard("Admin");
@@ -120,105 +171,165 @@ export default function AdminDashboard() {
         </div> */}
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid - KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {cards.map((card, index) => (
-          <motion.div
-            key={card.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className={`relative overflow-hidden rounded-sm bg-white p-6 border border-slate-100 group transition-all duration-300 ring-1 ${card.ring}`}
-          >
-            {/* <div
-              className={`absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity`}
+        {cards.map((card, index) => {
+          // Map gradients to pastel colors for icon backgrounds
+          const iconBgMap: { [key: string]: { bg: string; icon: string } } = {
+            "bg-indigo-500": { bg: "bg-blue-50", icon: "text-blue-600" },
+            "bg-emerald-500": { bg: "bg-green-50", icon: "text-green-600" },
+            "from-violet-500 to-purple-600": { bg: "bg-purple-50", icon: "text-purple-600" },
+            "bg-orange-500": { bg: "bg-orange-50", icon: "text-orange-600" },
+          };
+          
+          const iconStyle = iconBgMap[card.gradient] || { bg: "bg-indigo-50", icon: "text-indigo-600" };
+
+          return (
+            <motion.div
+              key={card.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="relative overflow-hidden rounded-lg bg-white p-6 border border-slate-200 shadow-sm group transition-all duration-300 hover:shadow-md"
             >
-              <card.icon className="w-32 h-32 transform rotate-12" />
-            </div> */}
-
-            <div className="relative">
-              <div className="flex items-center justify-between mb-5">
-                <div
-                  className={`p-3 rounded-md bg-gradient-to-br ${card.gradient} text-white`}
-                >
-                  <card.icon className="w-6 h-6" />
+              {/* Icon in top right corner with rounded square background */}
+              <div className="absolute top-4 right-4">
+                <div className={`${iconStyle.bg} rounded-lg p-2.5`}>
+                  <card.icon className={`w-5 h-5 ${iconStyle.icon}`} strokeWidth={2} />
                 </div>
-                {/* Tiny sparkline placeholder or similar could go here */}
               </div>
 
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider text-[11px]">
-                  {card.title}
-                </p>
-                <h3 className="text-3xl font-bold text-slate-800 tracking-tight">
-                  {card.value}
-                </h3>
+              {/* Content */}
+              <div className="relative pr-16">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-600">
+                    {card.title}
+                  </p>
+                  <h3 className="text-3xl font-bold text-slate-800 tracking-tight">
+                    {card.value}
+                  </h3>
+                </div>
               </div>
-
-              {/* <div className="mt-5 flex items-center text-xs font-bold">
-                <span
-                  className={`flex items-center gap-1 ${
-                    card.trend === "up"
-                      ? "text-emerald-600 bg-emerald-50"
-                      : "text-rose-600 bg-rose-50"
-                  } px-2.5 py-1 rounded-md`}
-                >
-                  {card.trend === "up" ? (
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  ) : (
-                    <TrendingUp className="w-3.5 h-3.5 rotate-180" />
-                  )}
-                  {card.change}
-                </span>
-                <span className="text-slate-400 ml-2 font-medium">
-                  vs last month
-                </span>
-              </div> */}
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent Activity */}
-        <div className="lg:col-span-2 bg-white rounded-md border border-slate-100 p-8">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-bold text-slate-800">
-              Recent Activity
-            </h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 font-medium"
+        <div className="lg:col-span-2 bg-white rounded-lg border border-slate-200 shadow-sm p-10">
+          {/* Header */}
+          <div className="flex items-start justify-between mb-10">
+            <div className="flex items-start gap-4">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100/50">
+                <Clock className="w-5 h-5 text-blue-600" strokeWidth={2} />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 mb-1.5 tracking-tight">
+                  Recent Activity
+                </h2>
+                <p className="text-sm text-slate-500 font-medium">
+                  Monitoring user actions & system logs
+                </p>
+              </div>
+            </div>
+            <button
               onClick={() => router.push("/admin/activities")}
+              className="text-indigo-600 hover:text-indigo-700 font-semibold text-sm flex items-center gap-1.5 transition-all hover:gap-2 px-3 py-1.5 rounded-lg hover:bg-indigo-50"
             >
-              View All
-            </Button>
+              View All <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
-          <div className="relative border-l-2 border-indigo-50 ml-3 space-y-8">
+
+          {/* Activity List */}
+          <div className="relative">
             {recentActivities.length === 0 ? (
-              <p className="text-slate-500 pl-8">No recent activities.</p>
+              <div className="pl-14 py-12">
+                <p className="text-slate-400 text-sm font-medium">No recent activities.</p>
+              </div>
             ) : (
-              recentActivities.map((activity) => (
-                <div key={activity.id} className="relative pl-8 group">
-                  <span className="absolute -left-[9px] top-1.5 h-4 w-4 rounded-md border-4 border-white bg-indigo-200 group-hover:bg-indigo-500 transition-colors" />
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 -m-3 rounded-md hover:bg-slate-50 transition-colors">
-                    <div>
-                      <p className="text-sm text-slate-600 font-medium">
-                        <span className="font-bold text-slate-800">
-                          {activity.user?.email || "System"}
-                        </span>{" "}
-                        {activity.action}
-                      </p>
-                      <span className="text-xs text-slate-400 font-medium">
-                        {activity.createdAt
-                          ? new Date(activity.createdAt).toLocaleString()
-                          : "-"}
-                      </span>
-                    </div>
-                  </div>
+              <div className="relative">
+                {/* Elegant subtle timeline */}
+                <div className="absolute left-5 top-0 bottom-0 w-[1px] bg-gradient-to-b from-slate-200 via-slate-200 to-transparent"></div>
+                
+                <div className="space-y-10">
+                  {recentActivities.slice(0, 5).map((activity, index) => {
+                    const { icon: ActionIcon, bgColor, iconColor } = getActionIcon(activity.action);
+                    const actionDetails = getActionDetails(activity);
+                    const userName = activity.user?.email || "System";
+                    const timestamp = activity.createdAt
+                      ? new Date(activity.createdAt).toLocaleString("en-US", {
+                          month: "2-digit",
+                          day: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                        })
+                      : "-";
+
+                    return (
+                      <div key={activity.id} className="relative pl-14 group">
+                        {/* Elegant rounded square icon with soft pastel background */}
+                        <div className={`absolute left-0 top-0 h-9 w-9 rounded-lg ${bgColor} flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-200`}>
+                          <ActionIcon className={`w-4 h-4 ${iconColor}`} strokeWidth={2} />
+                        </div>
+
+                        {/* Content with professional spacing */}
+                        <div className="space-y-2.5">
+                          <div className="flex items-start justify-between gap-8">
+                            <div className="flex-1 space-y-2.5 min-w-0">
+                              {/* User and Action */}
+                              <p className="text-sm leading-relaxed text-slate-700">
+                                <span className="font-semibold text-slate-900">
+                                  {userName}
+                                </span>{" "}
+                                <span className="text-slate-600">
+                                  {activity.description || activity.action}
+                                </span>
+                              </p>
+                              
+                              {/* Action Details - elegant styling */}
+                              {actionDetails && (
+                                <div className="flex items-center gap-2 pt-0.5">
+                                  {activity.action.toLowerCase().includes("trigger") && (
+                                    <span className="text-orange-500 text-[10px] font-bold leading-none">▲</span>
+                                  )}
+                                  {activity.action.toLowerCase().includes("verify") && (
+                                    <span className="text-green-500 text-[10px] font-bold leading-none">●</span>
+                                  )}
+                                  <span className="text-[11px] text-slate-500 font-mono tracking-wide">
+                                    {actionDetails}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Timestamp - elegantly positioned */}
+                            <div className="flex-shrink-0 pt-0.5">
+                              <span className="text-xs text-slate-500 font-medium whitespace-nowrap">
+                                {timestamp}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))
+              </div>
+            )}
+
+            {/* Footer */}
+            {recentActivities.length > 5 && (
+              <div className="mt-8 text-center">
+                <button
+                  onClick={() => router.push("/admin/activities")}
+                  className="text-sm text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  Load earlier activity
+                </button>
+              </div>
             )}
           </div>
         </div>
