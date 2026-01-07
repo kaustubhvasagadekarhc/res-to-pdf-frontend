@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { FileText, Download, FileCheck, Zap, Palette, Share2 } from "lucide-react";
+import { FileText, Download} from "lucide-react";
 
 export default function AuthLayout({
   children,
@@ -11,7 +11,7 @@ export default function AuthLayout({
 }) {
   const pathname = usePathname();
   const isLogin = pathname === "/login";
-  const isRegister = pathname === "/register";
+  // const isRegister = pathname === "/register";
 
   return (
     <div className="h-screen w-full overflow-hidden bg-white">

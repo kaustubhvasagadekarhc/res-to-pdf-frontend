@@ -135,12 +135,13 @@ export default function EditPage() {
   }>({});
   const [currentResumeId, setCurrentResumeId] = useState<string | null>(null);
 
-  // PDF Rename State
-  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  // PDF Rename State`
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(true);
   const [tempPdfName, setTempPdfName] = useState("");
 
   // Analysis State
   const [analyzing, setAnalyzing] = useState(false);
+  const [isRenameClicked, setIsRenameClicked] = useState<boolean>(false);
   const [analysisResult, setAnalysisResult] = useState<{
     atsScore?: number;
     overallReview?: string;
@@ -264,6 +265,9 @@ export default function EditPage() {
 
   // const [previewError, setPreviewError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<{
+    [key: string]: string;
+  }>({});
+  const [workExpDateErrors, setWorkExpDateErrors] = useState<{
     [key: string]: string;
   }>({});
 
@@ -406,10 +410,156 @@ export default function EditPage() {
     setResumeData({ ...resumeData, education: updated });
   };
 
+  // Helper function to convert "month - yyyy" to "YYYY-MM" format for month input
+  const formatToMonthInput = (value: string): string => {
+    if (!value || value.toLowerCase() === "present") return "";
+    
+    // Try to parse "month - yyyy" or "month yyyy" format
+    const match = value.match(/^([a-zA-Z]+)\s*-\s*(\d{4})$|^([a-zA-Z]+)\s+(\d{4})$/);
+    if (match) {
+      const monthName = (match[1] || match[3]).toLowerCase();
+      const year = match[2] || match[4];
+      
+      const monthMap: { [key: string]: number } = {
+        'january': 1, 'jan': 1,
+        'february': 2, 'feb': 2,
+        'march': 3, 'mar': 3,
+        'april': 4, 'apr': 4,
+        'may': 5,
+        'june': 6, 'jun': 6,
+        'july': 7, 'jul': 7,
+        'august': 8, 'aug': 8,
+        'september': 9, 'sep': 9, 'sept': 9,
+        'october': 10, 'oct': 10,
+        'november': 11, 'nov': 11,
+        'december': 12, 'dec': 12,
+      };
+      
+      const monthNum = monthMap[monthName];
+      if (monthNum && year) {
+        return `${year}-${String(monthNum).padStart(2, '0')}`;
+      }
+    }
+    
+    // If already in YYYY-MM format, return as-is
+    if (/^\d{4}-\d{2}$/.test(value)) {
+      return value;
+    }
+    
+    return "";
+  };
+
+  // Helper function to convert "YYYY-MM" to "month - yyyy" format
+  const formatFromMonthInput = (value: string): string => {
+    if (!value) return "";
+    
+    // Parse YYYY-MM format
+    const match = value.match(/^(\d{4})-(\d{2})$/);
+    if (match) {
+      const year = match[1];
+      const monthNum = parseInt(match[2], 10);
+      
+      const monthNames = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ];
+      
+      if (monthNum >= 1 && monthNum <= 12) {
+        return `${monthNames[monthNum - 1]} - ${year}`;
+      }
+    }
+    
+    return value;
+  };
+
+  // Helper function to parse "month - yyyy" format to Date object
+  const parseDateFromFormat = (value: string): Date | null => {
+    if (!value || value.toLowerCase() === "present") return null;
+    
+    const match = value.match(/^([a-zA-Z]+)\s*-\s*(\d{4})$/);
+    if (match) {
+      const monthName = match[1].toLowerCase();
+      const year = parseInt(match[2], 10);
+      
+      const monthMap: { [key: string]: number } = {
+        'january': 0, 'jan': 0,
+        'february': 1, 'feb': 1,
+        'march': 2, 'mar': 2,
+        'april': 3, 'apr': 3,
+        'may': 4,
+        'june': 5, 'jun': 5,
+        'july': 6, 'jul': 6,
+        'august': 7, 'aug': 7,
+        'september': 8, 'sep': 8, 'sept': 8,
+        'october': 9, 'oct': 9,
+        'november': 10, 'nov': 10,
+        'december': 11, 'dec': 11,
+      };
+      
+      const monthIndex = monthMap[monthName];
+      if (monthIndex !== undefined && !isNaN(year)) {
+        return new Date(year, monthIndex, 1);
+      }
+    }
+    
+    return null;
+  };
+
+  // Date validation function for work experience
+  const validateWorkExperienceDates = (
+    index: number,
+    periodFrom: string,
+    periodTo: string
+  ): string | null => {
+    if (!periodFrom) {
+      return null; // Start date is optional, no error
+    }
+
+    if (periodTo.toLowerCase() === "present") {
+      return null; // Present is always valid
+    }
+
+    if (!periodTo) {
+      return null; // End date is optional, no error
+    }
+
+    const startDate = parseDateFromFormat(periodFrom);
+    const endDate = parseDateFromFormat(periodTo);
+
+    if (!startDate) {
+      return `Start date is invalid`;
+    }
+
+    if (!endDate) {
+      return `End date is invalid`;
+    }
+
+    // Check if end date is before start date
+    if (endDate < startDate) {
+      return `End date cannot be before start date`;
+    }
+
+    // Check if dates are in the future (optional validation)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (startDate > today) {
+      return `Start date cannot be in the future`;
+    }
+
+    if (endDate > today && periodTo.toLowerCase() !== "present") {
+      return `End date cannot be in the future. Use "Present" for current positions`;
+    }
+
+    return null; // No errors
+  };
+
   const calculateDuration = (from: string, to: string): string => {
     if (!from) return "";
-    const fromYear = from.split("-")[0];
-    const toYear = to ? to.split("-")[0] : "Present";
+    // Extract year from month name format (e.g., "Jan 2020" -> "2020")
+    const fromYearMatch = from.match(/\d{4}/);
+    const toYearMatch = to ? to.match(/\d{4}/) : null;
+    const fromYear = fromYearMatch ? fromYearMatch[0] : from;
+    const toYear = to ? (toYearMatch ? toYearMatch[0] : to === "Present" ? "Present" : to) : "Present";
     return `${fromYear}-${toYear}`;
   };
 
@@ -426,6 +576,20 @@ export default function EditPage() {
       const from = field === "period_from" ? value : updated[index].period_from;
       const to = field === "period_to" ? value : updated[index].period_to;
       updated[index].duration = calculateDuration(from, to);
+
+      // Validate dates
+      const errorKey = `workExp_${index}_dates`;
+      const dateError = validateWorkExperienceDates(index, from, to);
+      
+      setWorkExpDateErrors((prev) => {
+        const newErrors = { ...prev };
+        if (dateError) {
+          newErrors[errorKey] = dateError;
+        } else {
+          delete newErrors[errorKey];
+        }
+        return newErrors;
+      });
     }
 
     setResumeData({ ...resumeData, work_experience: updated });
@@ -433,6 +597,7 @@ export default function EditPage() {
 
   const addWorkExperience = () => {
     if (!resumeData) return;
+    const newIndex = resumeData.work_experience.length;
     setResumeData({
       ...resumeData,
       work_experience: [
@@ -446,6 +611,12 @@ export default function EditPage() {
           projects: [],
         },
       ],
+    });
+    // Clear any existing error for this new entry
+    setWorkExpDateErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[`workExp_${newIndex}_dates`];
+      return newErrors;
     });
   };
 
@@ -744,6 +915,13 @@ export default function EditPage() {
   };
 
   const handleSavePdfName = async () => {
+    if(tempPdfName?.trim()?.length === 0) {
+      toast.error("Please enter a valid name");
+      return;
+    }
+    
+    setIsRenameClicked(true);
+    
     if (resumeData) {
       setResumeData({ ...resumeData, pdfName: tempPdfName });
 
@@ -763,7 +941,9 @@ export default function EditPage() {
         }
       }
     }
+   
     setIsRenameModalOpen(false);
+    setIsRenameClicked(false);
     setCurrentStep(currentStep + 1);
     // window.scrollTo(0, 0); // Removed as per existing code style
   };
@@ -793,7 +973,7 @@ export default function EditPage() {
           !resumeData.education ||
           resumeData.education.length === 0 ||
           resumeData.education.some(
-            (edu) => !edu.institution || !edu.degree || !edu.field
+            (edu) => !edu.institution || !edu.degree
           )
         );
       // Experience and Projects are optional, so they are always "valid" for navigation purposes
@@ -1242,35 +1422,74 @@ export default function EditPage() {
                                 Start Date
                               </label>
                               <input
-                                type="date"
-                                value={exp.period_from}
-                                onChange={(e) =>
+                                type="month"
+                                value={formatToMonthInput(exp.period_from)}
+                                onChange={(e) => {
+                                  const monthValue = e.target.value;
+                                  const formattedValue = formatFromMonthInput(monthValue);
                                   updateWorkExperience(
                                     index,
                                     "period_from",
-                                    e.target.value
-                                  )
-                                }
-                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] text-slate-700"
+                                    formattedValue
+                                  );
+                                }}
+                                className={`w-full bg-white border rounded-sm px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 text-slate-700 ${
+                                  workExpDateErrors[`workExp_${index}_dates`]
+                                    ? "border-rose-500 focus:border-rose-500"
+                                    : "border-slate-300 focus:border-[var(--primary)]"
+                                }`}
                               />
                             </div>
                             <div className="space-y-1">
                               <label className="text-md px-2 font-semibold text-slate-700">
                                 End Date
                               </label>
-                              <input
-                                type="date"
-                                value={exp.period_to}
-                                onChange={(e) =>
-                                  updateWorkExperience(
-                                    index,
-                                    "period_to",
-                                    e.target.value
-                                  )
-                                }
-                                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] text-slate-700"
-                              />
+                              <div className="flex gap-2">
+                                <input
+                                  type="month"
+                                  value={exp.period_to.toLowerCase() === "present" ? "" : formatToMonthInput(exp.period_to)}
+                                  onChange={(e) => {
+                                    const monthValue = e.target.value;
+                                    const formattedValue = formatFromMonthInput(monthValue);
+                                    updateWorkExperience(
+                                      index,
+                                      "period_to",
+                                      formattedValue
+                                    );
+                                  }}
+                                  disabled={exp.period_to.toLowerCase() === "present"}
+                                  className={`flex-1 bg-white border rounded-sm px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    workExpDateErrors[`workExp_${index}_dates`]
+                                      ? "border-rose-500 focus:border-rose-500"
+                                      : "border-slate-300 focus:border-[var(--primary)]"
+                                  }`}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (exp.period_to.toLowerCase() === "present") {
+                                      updateWorkExperience(index, "period_to", "");
+                                    } else {
+                                      updateWorkExperience(index, "period_to", "Present");
+                                    }
+                                  }}
+                                  className={`px-4 py-3 border rounded-sm border-slate-300 transition-all duration-200 text-sm font-medium ${
+                                    exp.period_to.toLowerCase() === "present"
+                                      ? "bg-[var(--primary)] text-white border-[var(--primary)]"
+                                      : "bg-white text-slate-700 hover:bg-slate-50"
+                                  }`}
+                                >
+                                  Present
+                                </button>
+                              </div>
                             </div>
+                            {workExpDateErrors[`workExp_${index}_dates`] && (
+                              <div className="col-span-2">
+                                <p className="text-xs text-rose-500 px-2 mt-1">
+                                  {workExpDateErrors[`workExp_${index}_dates`]}
+                                </p>
+                              </div>
+                            )}
                           </div>
                           <div className="mt-4 pt-4 border-t border-slate-100">
                             <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">
@@ -1408,7 +1627,8 @@ export default function EditPage() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-1">
                               <label className="text-md px-2 font-semibold text-slate-700">
-                                Institution
+                                Institution{" "}
+                                <span className="text-rose-500">*</span>
                               </label>
                               <input
                                 value={edu.institution}
@@ -1425,7 +1645,8 @@ export default function EditPage() {
                             </div>
                             <div className="space-y-1">
                               <label className="text-md px-2 font-semibold text-slate-700">
-                                Degree
+                                Degree{" "}
+                                <span className="text-rose-500">*</span>
                               </label>
                               <input
                                 value={edu.degree}
@@ -1442,8 +1663,7 @@ export default function EditPage() {
                             </div>
                             <div className="space-y-1">
                               <label className="text-md px-2 font-semibold text-slate-700">
-                                Field of Study{" "}
-                                <span className="text-rose-500">*</span>
+                                Field of Study
                               </label>
                               <input
                                 value={edu.field || ""}
@@ -1463,15 +1683,17 @@ export default function EditPage() {
                                 Graduation Date
                               </label>
                               <input
-                                type="date"
-                                value={edu.graduation_year}
-                                onChange={(e) =>
+                                type="month"
+                                value={formatToMonthInput(edu.graduation_year)}
+                                onChange={(e) => {
+                                  const monthValue = e.target.value;
+                                  const formattedValue = formatFromMonthInput(monthValue);
                                   updateEducation(
                                     index,
                                     "graduation_year",
-                                    e.target.value
-                                  )
-                                }
+                                    formattedValue
+                                  );
+                                }}
                                 className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] text-slate-700"
                               />
                             </div>
@@ -1819,34 +2041,29 @@ export default function EditPage() {
                       </div>
 
                       {/* Finalize Action Card */}
-                      <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center py-12 bg-white border-2 border-dashed border-slate-200 rounded-xl shadow-sm">
+                      <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center py-12 bg-white border-2 border-dashed border-gray-200 rounded-xl">
                         <div className="text-center space-y-6 max-w-lg w-full px-6">
                           {/* 1. Pre-Analysis Action (Only show if not analyzed yet) */}
                           {!analysisResult && (
                             <div className="animate-in fade-in slide-in-from-bottom-2">
-                              <div className="bg-indigo-50/50 rounded-xl p-6 border border-indigo-100 mb-6">
-                                {/* <h3 className="text-sm font-bold text-indigo-900 mb-3 uppercase tracking-wider">Recommended Step</h3> */}
-                                <button
-                                  onClick={handleAnalyze}
-                                  disabled={analyzing}
-                                  className="w-full bg-white text-indigo-600 border-2 border-indigo-200 px-6 py-4 rounded-sm font-bold hover:bg-indigo-50 hover:border-indigo-300 transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-sm"
-                                >
-                                  {analyzing ? (
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                  ) : null}
-                                  {analyzing
-                                    ? "Analyzing..."
-                                    : "Analyze Resume"}
-                                </button>
-                              </div>
+                              <button
+                                onClick={handleAnalyze}
+                                disabled={analyzing}
+                                className="w-full bg-white text-blue-600 border border-blue-300 px-6 py-4 rounded-lg font-semibold hover:bg-blue-50 hover:border-blue-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                              >
+                                {analyzing ? (
+                                  <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : null}
+                                {analyzing ? "Analyzing..." : "Analyze Resume"}
+                              </button>
 
                               {/* Styled Divider */}
-                              <div className="relative flex items-center py-2">
-                                <div className="flex-grow border-t border-slate-200"></div>
-                                <span className="flex-shrink-0 mx-4 text-slate-400 text-xs font-bold uppercase tracking-widest">
-                                  or skip to finalization
+                              <div className="relative flex items-center py-4">
+                                <div className="flex-grow border-t border-gray-300"></div>
+                                <span className="flex-shrink-0 mx-4 text-gray-600 text-xs font-bold uppercase tracking-wider">
+                                  OR SKIP TO FINALIZATION
                                 </span>
-                                <div className="flex-grow border-t border-slate-200"></div>
+                                <div className="flex-grow border-t border-gray-300"></div>
                               </div>
                             </div>
                           )}
@@ -1854,7 +2071,7 @@ export default function EditPage() {
                           {/* 2. Final Generation Action */}
                           <div className="space-y-4">
                             {!analysisResult && (
-                              <h2 className="text-xl font-bold text-slate-700">
+                              <h2 className="text-2xl font-bold text-gray-800">
                                 Ready to Download?
                               </h2>
                             )}
@@ -1864,7 +2081,7 @@ export default function EditPage() {
                               </div>
                             )}
 
-                            <p className="text-slate-500 text-sm leading-relaxed">
+                            <p className="text-gray-600 text-sm leading-relaxed">
                               {analysisResult
                                 ? "Great! Your resume has been analyzed and is ready for export."
                                 : "You can generate your PDF now, but we recommend analyzing it first."}
@@ -1873,20 +2090,17 @@ export default function EditPage() {
                             <button
                               onClick={handleGenerate}
                               disabled={generating || !isFormComplete}
-                              className={`w-full sm:w-auto mx-auto px-12 py-4 rounded-md text-lg font-bold transition-all  active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-75 disabled:cursor-not-allowed ${analysisResult
-                                ? "bg-[var(--primary)] hover:bg-indigo-600 text-white"
-                                : "bg-slate-800 hover:bg-slate-900 text-white"
-                                } bb `}
+                              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-base font-semibold transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed shadow-sm"
                             >
                               {generating ? (
                                 <>
-                                  <Loader2 className="w-6 h-6 animate-spin" />{" "}
+                                  <Loader2 className="w-5 h-5 animate-spin" />
                                   Generating...
                                 </>
                               ) : (
                                 <>
-                                  Generate Resume{" "}
-                                  <ArrowRight className="w-6 h-6" />
+                                  Generate Resume
+                                  <ArrowRight className="w-5 h-5" />
                                 </>
                               )}
                             </button>
@@ -1999,7 +2213,8 @@ export default function EditPage() {
             </button>
             <button
               onClick={handleSavePdfName}
-              className="px-4 py-2 text-sm font-bold text-white bg-[var(--primary)] hover:bg-[var(--primary-700)] rounded-sm transition-colors"
+              disabled={isRenameClicked || tempPdfName.trim().length === 0}
+              className="px-4 py-2 text-sm font-bold text-white bg-[var(--primary)] hover:bg-[var(--primary-700)] rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[var(--primary)]"
             >
               Save & Continue
             </button>
