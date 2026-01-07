@@ -22,7 +22,7 @@ export class ApiClient {
     headers?: Record<string, string>
   ) {
     this.axios = axios;
-    this.baseURL = baseURL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+    this.baseURL = baseURL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
     this.defaultHeaders = {
       "Content-Type": "application/json",
@@ -158,7 +158,7 @@ export class ApiClientWithServices extends ApiClient {
 export const apiClient = new ApiClientWithServices(axiosInstance);
 
 // Ensure OpenAPI.BASE is set immediately (double-check)
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 OpenAPI.BASE = baseURL;
 OpenAPI.WITH_CREDENTIALS = true;
 OpenAPI.CREDENTIALS = "include";

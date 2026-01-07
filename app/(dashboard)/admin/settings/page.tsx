@@ -1,18 +1,49 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { adminService } from "@/app/api/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+// import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Mail, Check } from "lucide-react";
+import * as SwitchPrimitives from "@radix-ui/react-switch";
+import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 
 import { useAdmin } from "@/app/context/admin-context";
 import { AdminSettings } from "@/types/api";
+
+// Custom Toggle Switch with Checkmark
+const ToggleSwitch = React.forwardRef<
+    React.ElementRef<typeof SwitchPrimitives.Root>,
+    React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
+>(({ className, checked, ...props }, ref) => (
+    <SwitchPrimitives.Root
+        ref={ref}
+        checked={checked}
+        className={cn(
+            "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+            checked ? "bg-blue-600" : "bg-gray-300",
+            className
+        )}
+        {...props}
+    >
+        <SwitchPrimitives.Thumb
+            className={cn(
+                "pointer-events-none relative flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform",
+                checked ? "translate-x-5" : "translate-x-0"
+            )}
+        >
+            {checked && (
+                <Check className="h-3.5 w-3.5 text-blue-600 stroke-[3]" />
+            )}
+        </SwitchPrimitives.Thumb>
+    </SwitchPrimitives.Root>
+));
+ToggleSwitch.displayName = "ToggleSwitch";
 
 export default function SettingsPage() {
     const { settings: ctxSettings, isLoading: ctxLoading, updateSettings, refreshData } = useAdmin();
@@ -67,118 +98,151 @@ export default function SettingsPage() {
         )
     }
 
+    // Convert bytes to MB for display
+    const maxUploadSizeMB = Math.round(settings.maxUploadSize / 1024 / 1024);
+    const handleMaxUploadSizeChange = (mb: number) => {
+        setSettings(s => ({ ...s, maxUploadSize: mb * 1024 * 1024 }));
+    };
+
     return (
-        <div className="p-8 space-y-6 max-w-4xl mx-auto">
-            <div>
-                <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700">
-                    System Settings
-                </h1>
-                <p className="text-slate-500 mt-1">
-                    Configure global application settings and preferences
-                </p>
-            </div>
-
-            <div className="grid gap-6">
-                {/* General Settings */}
-                <Card className="rounded-sm border-slate-100 shadow-sm overflow-hidden">
-                    <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
-                        <CardTitle className="text-lg text-slate-800">General Configuration</CardTitle>
-                        <CardDescription>Control access and general behavior</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-6 space-y-6">
-
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                                <Label className="text-base font-medium text-slate-800">Allow Registration</Label>
-                                <p className="text-sm text-slate-500">
-                                    Allow new users to sign up independently
-                                </p>
-                            </div>
-                            <Switch
-                                checked={settings.allowRegistration}
-                                onCheckedChange={(c) => setSettings(s => ({ ...s, allowRegistration: c }))}
-                            />
-                        </div>
-
-                        <Separator className="bg-slate-100" />
-
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                                <Label className="text-base font-medium text-slate-800">Maintenance Mode</Label>
-                                <p className="text-sm text-slate-500">
-                                    Disable access for non-admin users temporarily
-                                </p>
-                            </div>
-                            <Switch
-                                checked={settings.maintenanceMode}
-                                onCheckedChange={(c) => setSettings(s => ({ ...s, maintenanceMode: c }))}
-                            />
-                        </div>
-
-                    </CardContent>
-                </Card>
-
-                {/* Support Settings */}
-                <Card className="rounded-sm border-slate-100 shadow-sm overflow-hidden">
-                    <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
-                        <CardTitle className="text-lg text-slate-800">Support & Limits</CardTitle>
-                        <CardDescription>Contact information and upload limits</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-6 space-y-6">
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="email" className="font-medium text-slate-700">Support Email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                value={settings.supportEmail}
-                                onChange={(e) => setSettings(s => ({ ...s, supportEmail: e.target.value }))}
-                                placeholder="support@example.com"
-                                className="max-w-md rounded-sm border-slate-200"
-                            />
-                            <p className="text-sm text-slate-500">Displayed to users when they encounter issues</p>
-                        </div>
-
-                        <Separator className="bg-slate-100" />
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="size" className="font-medium text-slate-700">Max Upload Size (Bytes)</Label>
-                            <Input
-                                id="size"
-                                type="number"
-                                value={settings.maxUploadSize}
-                                onChange={(e) => setSettings(s => ({ ...s, maxUploadSize: parseInt(e.target.value) || 0 }))}
-                                className="max-w-md rounded-sm border-slate-200"
-                            />
-                            <p className="text-sm text-slate-500">
-                                Current limit: {(settings.maxUploadSize / 1024 / 1024).toFixed(2)} MB
-                            </p>
-                        </div>
-
-                    </CardContent>
-                </Card>
-
-                <div className="flex justify-end">
-                    <Button
-                        size="lg"
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm px-8 shadow-lg shadow-indigo-200"
-                    >
-                        {saving ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Saving Changes...
-                            </>
-                        ) : (
-                            <>
-                                <Save className="mr-2 h-4 w-4" />
-                                Save Configuration
-                            </>
-                        )}
-                    </Button>
+        <div className="min-h-screen bg-slate-50">
+            <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-6xl">
+                {/* Header */}
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-[var(--primary)] mb-2">
+                        System Settings
+                    </h1>
+                    <p className="text-slate-600">
+                        Configure global application settings and preferences for your workspace.
+                    </p>
                 </div>
 
+                <div className="space-y-6">
+                    {/* General Settings */}
+                    <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden shadow-md">
+                        <CardHeader className="bg-white border-b border-slate-100 pb-4 px-6 pt-6">
+                            <CardTitle className="text-lg font-semibold text-slate-800">General Configuration</CardTitle>
+                            <CardDescription className="text-sm text-slate-600 mt-1">
+                                Control access and general behavior of the application.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-6 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-1 flex-1">
+                                    <Label className="text-base font-medium text-slate-800">Allow Registration</Label>
+                                    <p className="text-sm text-slate-600">
+                                        Allow new users to sign up independently via the public registration page.
+                                    </p>
+                                </div>
+                                <ToggleSwitch
+                                    checked={settings.allowRegistration}
+                                    onCheckedChange={(c) => setSettings(s => ({ ...s, allowRegistration: c }))}
+                                />
+                            </div>
+
+                            <Separator className="bg-slate-200" />
+
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-1 flex-1">
+                                    <Label className="text-base font-medium text-slate-800">Maintenance Mode</Label>
+                                    <p className="text-sm text-slate-600">
+                                        Disable access for non-admin users temporarily. Useful during upgrades.
+                                    </p>
+                                </div>
+                                <ToggleSwitch
+                                    checked={settings.maintenanceMode}
+                                    onCheckedChange={(c) => setSettings(s => ({ ...s, maintenanceMode: c }))}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Support Settings */}
+                    <Card className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <CardHeader className="bg-white border-b border-slate-100 pb-4 px-6 pt-6">
+                            <CardTitle className="text-lg font-semibold text-slate-800">Support & Limits</CardTitle>
+                            <CardDescription className="text-sm text-slate-600 mt-1">
+                                Manage contact information and system upload limits.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-6 space-y-6">
+                            <div className="grid gap-2">
+                                <Label htmlFor="email" className="text-base font-medium text-slate-800">Support Email</Label>
+                                <div className="relative max-w-md">
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        value={settings.supportEmail}
+                                        onChange={(e) => setSettings(s => ({ ...s, supportEmail: e.target.value }))}
+                                        placeholder="support@example.com"
+                                        className="pl-10 rounded-lg border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                    />
+                                </div>
+                                <p className="text-sm text-slate-600">
+                                    This email address will be displayed to users when they encounter system errors.
+                                </p>
+                            </div>
+
+                            <Separator className="bg-slate-200" />
+
+                            <div className="grid gap-3">
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="size" className="text-base font-medium text-slate-800">Max Upload Size</Label>
+                                    <span className="text-base font-medium text-blue-600">{maxUploadSizeMB} MB</span>
+                                </div>
+                                <div className="max-w-md space-y-2">
+                                    <input
+                                        id="size"
+                                        type="range"
+                                        min="1"
+                                        max="100"
+                                        value={maxUploadSizeMB}
+                                        onChange={(e) => handleMaxUploadSizeChange(parseInt(e.target.value))}
+                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                        style={{
+                                            background: `linear-gradient(to right, rgb(37, 99, 235) 0%, rgb(37, 99, 235) ${((maxUploadSizeMB - 1) / 99) * 100}%, rgb(229, 231, 235) ${((maxUploadSizeMB - 1) / 99) * 100}%, rgb(229, 231, 235) 100%)`
+                                        }}
+                                    />
+                                    <div className="flex justify-between text-xs text-slate-500">
+                                        <span>1 MB</span>
+                                        <span>100 MB</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                if (ctxSettings) {
+                                    setSettings(ctxSettings);
+                                }
+                            }}
+                            disabled={saving}
+                            className="px-6 py-2 border-gray-200 hover:bg-gray-50 text-gray-700"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                            {saving ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                "Save Changes"
+                            )}
+                        </Button>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -15,11 +15,12 @@ import { Label } from "@/components/ui/label";
 import { authService as tokenService } from "@/services/auth.services";
 import { useVettlySSO } from "@/hooks/use-vetlly-sso";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Loader2, Lock, Mail, Eye, EyeOff, ArrowRight, Languages } from "lucide-react";
+import { AlertCircle, Loader2, Lock, Mail, Eye, EyeOff, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Image from "next/image";
 
 /**
  * Props for the LoginForm component.
@@ -144,14 +145,28 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
 
       let errorMessage = "Login failed";
 
-      // Extract error message from different possible structures
+      // Check for network errors first
       if (err && typeof err === "object") {
         const error = err as {
           body?: { message?: string; error?: string };
           message?: string;
           status?: number;
+          code?: string;
+          request?: unknown;
         };
-        if (error.body?.message) {
+
+        // Network error detection
+        if (error.code === "ECONNREFUSED" || error.code === "ERR_NETWORK") {
+          errorMessage = "Cannot connect to server.";
+        } else if (error.code === "ETIMEDOUT" || error.code === "ECONNABORTED") {
+          errorMessage = "Connection timeout. Please check your internet connection.";
+        } else if (error.message?.includes("Network Error") || error.message?.includes("Failed to fetch")) {
+          errorMessage = "Network error. Please check your connection";
+        } else if (error.status === 404) {
+          errorMessage = "Login endpoint not found.";
+        } else if (error.status === 0) {
+          errorMessage = "Cannot reach server.";
+        } else if (error.body?.message) {
           errorMessage = error.body.message;
         } else if (error.message) {
           errorMessage = error.message;
@@ -161,6 +176,8 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
           errorMessage = "Invalid email or password";
         } else if (error.status === 401) {
           errorMessage = "Invalid credentials";
+        } else if (error.status === 500) {
+          errorMessage = "Server error. Please try again later.";
         }
       }
 
@@ -347,7 +364,7 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
                 </>
               ) : (
                 <>
-               <img src="/favicon.png" alt="Vettly Logo" className="w-5 h-5" />
+               <Image src="/favicon.png" alt="Vettly Logo" className="w-5 h-5" />
                   Sign in with Vettly
                 </>
               )}
