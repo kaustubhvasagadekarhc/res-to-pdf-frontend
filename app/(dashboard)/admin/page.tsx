@@ -14,14 +14,14 @@ import {
   Loader2,
   Clock,
   Trash2,
-  UserX,
+
   Edit,
   ShieldCheck,
   ArrowRight,
   Play,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+
 import { useAdmin } from "@/app/context/admin-context";
 
 // import { adminService } from "@/app/api/client";
@@ -31,18 +31,18 @@ import { useAdmin } from "@/app/context/admin-context";
 const getActionIcon = (action: string) => {
   const actionLower = action.toLowerCase();
   if (actionLower.includes("delete") || actionLower.includes("deleted")) {
-    return { icon: Trash2, bgColor: "bg-red-50", iconColor: "text-red-600" };
+    return { icon: Trash2, bgColor: "bg-white", iconColor: "text-red-600" };
   }
   if (actionLower.includes("trigger") || actionLower.includes("triggered")) {
-    return { icon: Play, bgColor: "bg-orange-50", iconColor: "text-orange-600" };
+    return { icon: Play, bgColor: "bg-white", iconColor: "text-orange-600" };
   }
   if (actionLower.includes("patch") || actionLower.includes("patched") || actionLower.includes("edit") || actionLower.includes("updated")) {
-    return { icon: Edit, bgColor: "bg-blue-50", iconColor: "text-blue-600" };
+    return { icon: Edit, bgColor: "bg-white", iconColor: "text-blue-600" };
   }
   if (actionLower.includes("verify") || actionLower.includes("verified")) {
-    return { icon: ShieldCheck, bgColor: "bg-green-50", iconColor: "text-green-600" };
+    return { icon: ShieldCheck, bgColor: "bg-white", iconColor: "text-green-600" };
   }
-  return { icon: Activity, bgColor: "bg-indigo-50", iconColor: "text-indigo-600" };
+  return { icon: Activity, bgColor: "bg-white", iconColor: "text-indigo-600" };
 };
 
 // Helper to extract action code/details from activity
@@ -257,21 +257,24 @@ export default function AdminDashboard() {
                     const { icon: ActionIcon, bgColor, iconColor } = getActionIcon(activity.action);
                     const actionDetails = getActionDetails(activity);
                     const userName = activity.user?.email || "System";
-                    const timestamp = activity.createdAt
-                      ? new Date(activity.createdAt).toLocaleString("en-US", {
-                          month: "2-digit",
-                          day: "2-digit",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          second: "2-digit",
-                        })
-                      : "-";
+                     const timestamp = activity.createdAt
+                       ? (() => {
+                           const date = new Date(activity.createdAt);
+                           const day = String(date.getDate()).padStart(2, '0');
+                           const month = String(date.getMonth() + 1).padStart(2, '0');
+                           const year = String(date.getFullYear()).slice(-2);
+                           const hours = date.getHours();
+                           const minutes = String(date.getMinutes()).padStart(2, '0');
+                           const ampm = hours >= 12 ? 'pm' : 'am';
+                           const displayHours = hours % 12 || 12;
+                           return `${day}/${month}/${year} ${String(displayHours).padStart(2, '0')}:${minutes} ${ampm}`;
+                         })()
+                       : "-";
 
                     return (
                       <div key={activity.id} className="relative pl-14 group">
                         {/* Elegant rounded square icon with soft pastel background */}
-                        <div className={`absolute left-0 top-0 h-9 w-9 rounded-lg ${bgColor} flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-200`}>
+                        <div className={`absolute left-0 top-0 h-9 w-9 pl-1 rounded-lg ${bgColor} flex items-center justify-center  transition-all `}>
                           <ActionIcon className={`w-4 h-4 ${iconColor}`} strokeWidth={2} />
                         </div>
 
