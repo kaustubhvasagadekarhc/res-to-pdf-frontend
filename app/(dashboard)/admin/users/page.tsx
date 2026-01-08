@@ -21,7 +21,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -38,7 +38,13 @@ import { Label } from "@/components/ui/label";
 export default function UserManagementPage() {
   useAuthGuard("Admin");
 
-  const { users, isLoading: ctxLoading, refreshData, updateLocalUser } = useAdmin();
+  const {
+    users,
+    isLoading: ctxLoading,
+    refreshData,
+    updateLocalUser,
+    removeLocalUser,
+  } = useAdmin();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -52,62 +58,73 @@ export default function UserManagementPage() {
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Sync local loading state with context loading
   useEffect(() => {
     setLoading(ctxLoading);
   }, [ctxLoading]);
 
-  const handleRoleUpdate = async (
-    userId: string,
-    currentRole: "USER" | "ADMIN" = "USER"
-  ) => {
+  const handleRoleUpdate = useCallback(
+    async (userId: string, currentRole: "USER" | "ADMIN" = "USER") => {
+      try {
+        const newRole = currentRole === "USER" ? "ADMIN" : "USER";
+        // Optimistic update
+        updateLocalUser(userId, { userType: newRole });
+
+        await adminService.patchAdminUsersRole({
+          id: userId,
+          requestBody: { userType: newRole },
+        });
+      } catch (error) {
+        console.error("Failed to update role:", error);
+        toast.error("Failed to update user role");
+        // Revert optimization if needed (or just refresh)
+        refreshData();
+      }
+    },
+    [updateLocalUser, refreshData]
+  );
+
+  const handleVerifyUpdate = useCallback(
+    async (userId: string, isVerified: boolean) => {
+      try {
+        // Optimistic update
+        updateLocalUser(userId, { isVerified: !isVerified });
+
+        await adminService.patchAdminUsersVerify({
+          id: userId,
+          requestBody: { isVerified: !isVerified },
+        });
+      } catch (error) {
+        console.error("Failed to update verification:", error);
+        toast.error("Failed to update verification status");
+        refreshData();
+      }
+    },
+    [updateLocalUser, refreshData]
+  );
+
+  const handleDeleteUser = useCallback(async () => {
+    if (!deleteUserId) return;
     try {
-      const newRole = currentRole === "USER" ? "ADMIN" : "USER";
-      // Optimistic update
-      updateLocalUser(userId, { userType: newRole });
+      setIsDeleting(true);
+      // Optimistic local removal
+      removeLocalUser(deleteUserId);
 
-      await adminService.patchAdminUsersRole({
-        id: userId,
-        requestBody: { userType: newRole },
-      });
-      // Refresh to ensure consistency
-      refreshData();
-    } catch (error) {
-      console.error("Failed to update role:", error);
-      toast.error("Failed to update user role");
-      // Revert optimization if needed (or just refresh)
-      refreshData();
-    }
-  };
-
-  const handleVerifyUpdate = async (userId: string, isVerified: boolean) => {
-    try {
-      // Optimistic update
-      updateLocalUser(userId, { isVerified: !isVerified });
-
-      await adminService.patchAdminUsersVerify({
-        id: userId,
-        requestBody: { isVerified: !isVerified },
-      });
-      refreshData();
-    } catch (error) {
-      console.error("Failed to update verification:", error);
-      toast.error("Failed to update verification status");
-      refreshData();
-    }
-  };
-
-  const handleDeleteUser = async (userId: string) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
-    try {
-      await adminService.deleteAdminUsers({ id: userId });
-      refreshData(); // Refresh list
+      await adminService.deleteAdminUsers({ id: deleteUserId });
+      setDeleteUserId(null);
     } catch (error) {
       console.error("Failed to delete user:", error);
       toast.error("Failed to delete user");
+      // Best-effort sync with server state
+      refreshData();
+      setDeleteUserId(null);
+    } finally {
+      setIsDeleting(false);
     }
-  };
+  }, [deleteUserId, removeLocalUser, refreshData]);
 
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -176,35 +193,47 @@ export default function UserManagementPage() {
   };
 
   // Calculate KPI metrics
-  const totalUsers = users.length;
-  const adminCount = users.filter((user) => user.userType === "ADMIN").length;
-  const verifiedCount = users.filter((user) => user.isVerified).length;
-  const unverifiedCount = users.filter((user) => !user.isVerified).length;
+  const { totalUsers, adminCount, verifiedCount, unverifiedCount } = useMemo(() => {
+    const totalUsers = users.length;
+    const adminCount = users.filter((user) => user.userType === "ADMIN").length;
+    const verifiedCount = users.filter((user) => user.isVerified).length;
+    const unverifiedCount = users.filter((user) => !user.isVerified).length;
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesRole =
-      roleFilter === "all" ||
-      (roleFilter === "admin" && user.userType === "ADMIN") ||
-      (roleFilter === "user" && user.userType === "USER");
-    
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "verified" && user.isVerified) ||
-      (statusFilter === "unverified" && !user.isVerified);
-    
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+    return { totalUsers, adminCount, verifiedCount, unverifiedCount };
+  }, [users]);
+
+  const filteredUsers = useMemo(
+    () =>
+      users.filter((user) => {
+        const matchesSearch =
+          user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.email?.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesRole =
+          roleFilter === "all" ||
+          (roleFilter === "admin" && user.userType === "ADMIN") ||
+          (roleFilter === "user" && user.userType === "USER");
+
+        const matchesStatus =
+          statusFilter === "all" ||
+          (statusFilter === "verified" && user.isVerified) ||
+          (statusFilter === "unverified" && !user.isVerified);
+
+        return matchesSearch && matchesRole && matchesStatus;
+      }),
+    [users, searchQuery, roleFilter, statusFilter]
+  );
 
   // Pagination calculations
-  const totalFilteredUsers = filteredUsers.length;
-  const totalPages = Math.ceil(totalFilteredUsers / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+  const { totalFilteredUsers, totalPages, startIndex, endIndex, paginatedUsers } = useMemo(() => {
+    const totalFilteredUsers = filteredUsers.length;
+    const totalPages = Math.ceil(totalFilteredUsers / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+    return { totalFilteredUsers, totalPages, startIndex, endIndex, paginatedUsers };
+  }, [filteredUsers, currentPage, itemsPerPage]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -577,7 +606,7 @@ export default function UserManagementPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => user.id && handleDeleteUser(user.id)}
+                    onClick={() => user.id && setDeleteUserId(user.id)}
                     className="h-9 w-9 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                     title="Delete User"
                   >
@@ -675,6 +704,49 @@ export default function UserManagementPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={!!deleteUserId}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setDeleteUserId(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete user?</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. The user will be permanently removed from the system.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => !isDeleting && setDeleteUserId(null)}
+              className="text-slate-500 hover:bg-slate-100"
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteUser}
+              disabled={isDeleting}
+              className="bg-rose-600 hover:bg-rose-700 text-white"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete User"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
