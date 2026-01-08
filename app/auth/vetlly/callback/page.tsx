@@ -10,32 +10,21 @@ function VettlyCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const handleSSOCallback = useCallback(async (code: string, state: string | null) => {
+  const handleSSOCallback = useCallback(async (code: string, secret: string, state: string | null) => {
     try {
-      // Verify state if stored
-      let ssoSecret: string | null = null;
+      // Verify state if stored (optional security check)
       if (typeof window !== "undefined") {
         const storedState = sessionStorage.getItem("vetlly_sso_state");
         if (storedState && state && storedState !== state) {
           throw new Error("Invalid state parameter. Possible CSRF attack.");
         }
         sessionStorage.removeItem("vetlly_sso_state");
-        
-        // Retrieve sso_user_secret from sessionStorage
-        ssoSecret = sessionStorage.getItem("vetlly_sso_secret");
-        if (ssoSecret) {
-          sessionStorage.removeItem("vetlly_sso_secret");
-        }
       }
 
-      if (!ssoSecret) {
-        throw new Error("SSO secret not found. Please try again.");
-      }
-
-      // Call backend to verify candidate with sso_code and sso_secret
+      // Call backend to verify candidate with sso_code and sso_secret (both from URL)
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
       const response = await fetch(
-        `${apiUrl}/auth/vetlly/callback?sso_code=${encodeURIComponent(code)}&sso_secret=${encodeURIComponent(ssoSecret)}${state ? `&state=${encodeURIComponent(state)}` : ""}`,
+        `${apiUrl}/auth/vetlly/callback?sso_code=${encodeURIComponent(code)}&sso_secret=${encodeURIComponent(secret)}${state ? `&state=${encodeURIComponent(state)}` : ""}`,
         {
           method: "GET",
           credentials: "include", // Include cookies
@@ -91,8 +80,9 @@ function VettlyCallbackContent() {
   }, [router]);
 
   useEffect(() => {
-    // Get the SSO code from URL (Vettly sends sso_code, not code)
+    // Get both sso_code and sso_secret from URL (Vettly now sends both!)
     const ssoCode = searchParams.get("sso_code") || searchParams.get("code"); // Fallback to 'code' for compatibility
+    const ssoSecret = searchParams.get("sso_secret"); // Get sso_secret from URL
     const error = searchParams.get("error");
     const state = searchParams.get("state");
 
@@ -102,9 +92,12 @@ function VettlyCallbackContent() {
       return;
     }
 
-    if (ssoCode) {
-      // Verify candidate with sso_code and sso_secret via backend
-      handleSSOCallback(ssoCode, state);
+  if (ssoCode && ssoSecret) {
+      // Both values are in URL - call backend immediately
+      handleSSOCallback(ssoCode, ssoSecret, state);
+    } else if (ssoCode) {
+      // Missing sso_secret - error
+      router.replace(`/login?error=${encodeURIComponent("Missing SSO secret in callback")}`);
     }
   }, [searchParams, router, handleSSOCallback]);
 
