@@ -348,6 +348,7 @@ export const EditResumeContainer = () => {
         handleSavePdfName={handleSavePdfName}
         currentStep={currentStep}
         setCurrentStep={setCurrentStep}
+        canClose={true}
       />
     </div>
   );

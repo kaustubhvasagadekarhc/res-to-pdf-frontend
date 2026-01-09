@@ -43,7 +43,7 @@ export const useEditResume = () => {
   const [projectTechInputs, setProjectTechInputs] = useState<{ [key: number]: string }>({});
   
   // Modal states
-  const [isRenameModalOpen, setIsRenameModalOpen] = useState(true);
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [tempPdfName, setTempPdfName] = useState("");
   const [isRenameClicked, setIsRenameClicked] = useState(false);
   
@@ -100,6 +100,14 @@ export const useEditResume = () => {
       saveResumeToStorage(resumeData);
     }
   }, [resumeData]);
+
+  // Show rename modal when entering step 1 if pdfName is not set
+  useEffect(() => {
+    if (currentStep === 1 && resumeData && (!resumeData.pdfName || resumeData.pdfName.trim() === "")) {
+      setTempPdfName(resumeData.pdfName || "");
+      setIsRenameModalOpen(true);
+    }
+  }, [currentStep, resumeData]);
 
   // Validation
   const validatePersonalDetails = (): boolean => {
@@ -497,14 +505,18 @@ export const useEditResume = () => {
   const handleNext = () => {
     if (currentStep < 7) {
       if (currentStep === 1) {
-        if (!validatePersonalDetails()) return;
-        // Show rename modal only if pdfName is not already set
+        // Validate personal details first
+        if (!validatePersonalDetails()) {
+          return;
+        }
+        // If pdfName is not set, show modal (it should already be open, but ensure it is)
         if (!resumeData?.pdfName || resumeData.pdfName.trim() === "") {
           setTempPdfName(resumeData?.pdfName || "");
           setIsRenameModalOpen(true);
-          return;
+          return; // Don't proceed until name is saved
         }
       }
+      // Only proceed to next step if validation passes and name is set
       setCurrentStep((prev) => prev + 1);
     }
   };
@@ -533,7 +545,8 @@ export const useEditResume = () => {
    
     setIsRenameModalOpen(false);
     setIsRenameClicked(false);
-    setCurrentStep(currentStep + 1);
+    // Don't increment step - just save the name and close modal
+    // User must click "Next" button to proceed to step 2
   };
 
   const handleBack = () => {
