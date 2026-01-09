@@ -364,13 +364,7 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
                 </>
               ) : (
                 <>
-                  <Image
-                    src="/favicon.png"
-                    alt="Vettly Logo"
-                    className="w-5 h-5"
-                    width={20}
-                    height={20}
-                  />
+               <Image src="/favicon.png" alt="Vettly Logo" width={5} height={5} className="w-5 h-5" />
                   Sign in with Vettly
                 </>
               )}

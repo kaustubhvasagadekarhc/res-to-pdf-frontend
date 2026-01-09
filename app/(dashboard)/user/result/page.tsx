@@ -279,7 +279,7 @@ export default function ResultPage() {
                   Download
                 </button>
                 <button
-                  onClick={() => router.push("/user/edit")}
+                  onClick={() => router.push("/user/edit-resume")}
                   className="flex items-center gap-2 px-3 py-1.5 bg-slate-600 text-white rounded-md hover:bg-slate-700 transition text-sm"
                 >
                   <Edit3 className="w-4 h-4" />

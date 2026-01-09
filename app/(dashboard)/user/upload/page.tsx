@@ -66,7 +66,7 @@ export default function UploadPage() {
       }
 
       sessionStorage.setItem("resumeData", JSON.stringify(response.parsed));
-      router.push("/user/edit");
+      router.push("/user/edit-resume");
     } catch (error: unknown) {
       console.error("Resume upload failed:", error);
       setError(error instanceof Error ? error.message : "Upload failed");
@@ -179,7 +179,7 @@ export default function UploadPage() {
                   );
                   sessionStorage.removeItem("resumeId");
                   sessionStorage.removeItem("resumeFileName");
-                  router.push("/user/edit");
+                  router.push("/user/edit-resume");
                 }}
                 className="
   group relative inline-flex items-center justify-center

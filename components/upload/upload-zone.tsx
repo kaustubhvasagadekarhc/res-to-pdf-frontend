@@ -113,7 +113,7 @@ export function UploadZone() {
         sessionStorage.setItem("resumeData", JSON.stringify(result.parsed));
 
         // Redirect to Edit page (Draft)
-        router.push("/user/edit/draft");
+        router.push("/user/edit-resume");
       } else {
         setError(`Error: ${result.error || "Upload failed"}`);
       }
