@@ -250,16 +250,16 @@ export function RegisterForm({ onLoginClick }: RegisterFormProps) {
         
 
         {/* Welcome Tag */}
-        <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full w-fit" style={{ backgroundColor: '#f0f9ff' }}>
+        {/* <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full w-fit" style={{ backgroundColor: '#f0f9ff' }}>
           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#0ea5e9' }} />
           <span className="text-sm font-medium" style={{ color: '#0284c7' }}>Get Started</span>
-        </div>
+        </div> */}
 
         <Card className="w-full border-0 bg-transparent shadow-none">
           <CardHeader className="text-left pb-2 pt-0 px-0">
            
             <CardDescription className="text-gray-600 text-base">
-              Create your account to start building and converting your resume to PDF
+            <span className="text-gray-900 font-size-lg font-bold"> Create your account </span> to start building and converting your resume to PDF
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 pt-6 px-0">
@@ -420,10 +420,10 @@ export function RegisterForm({ onLoginClick }: RegisterFormProps) {
 
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200"></div>
+                  {/* <div className="w-full border-t border-gray-200"></div> */}
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-500 font-medium">
+                  <span className="px-2 text-gray-500 font-medium">
                     Or continue with
                   </span>
                 </div>
@@ -477,9 +477,9 @@ export function RegisterForm({ onLoginClick }: RegisterFormProps) {
               )}
             </p>
            
-            <p className="text-xs text-gray-400 text-center ">
+            {/* <p className="text-xs text-gray-400 text-center ">
               © 2026 Vettly. All rights reserved.
-            </p>
+            </p> */}
           </CardFooter>
         </Card>
       </motion.div>
