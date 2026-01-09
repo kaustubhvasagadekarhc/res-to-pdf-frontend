@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Loader2, User, FileText, Code, Briefcase, GraduationCap, CheckCircle2, ArrowRight } from "lucide-react";
+import { Loader2, User, FileText, Code, Briefcase, GraduationCap, CheckCircle2} from "lucide-react";
 import { useEditResume } from "@/hooks/user/useEditResume";
 import { PersonalInfo } from "./form/sections/PersonalInfo";
 import { Summary } from "./form/sections/Summary";
@@ -122,9 +122,7 @@ export const EditResumeContainer = () => {
     handleNext,
     handleSavePdfName,
     handleBack,
-    validatePersonalDetails,
-    formatToMonthInput,
-    formatFromMonthInput,
+    
     formatNameInput,
     formatLocationInput,
     formatMobileInput,
@@ -245,8 +243,6 @@ export const EditResumeContainer = () => {
                       updateProjectField={updateProjectField}
                       addWorkExpTech={addWorkExpTech}
                       removeWorkExpTech={removeWorkExpTech}
-                      formatToMonthInput={formatToMonthInput}
-                      formatFromMonthInput={formatFromMonthInput}
                     />
                   )}
 
@@ -256,8 +252,6 @@ export const EditResumeContainer = () => {
                       updateEducation={updateEducation}
                       addEducation={addEducation}
                       deleteEducation={deleteEducation}
-                      formatToMonthInput={formatToMonthInput}
-                      formatFromMonthInput={formatFromMonthInput}
                     />
                   )}
 

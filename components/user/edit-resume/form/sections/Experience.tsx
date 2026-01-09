@@ -1,8 +1,9 @@
 "use client";
 
 import { ResumeData, ValidationErrors } from "@/lib/resume/resume.types";
-import { Trash2, Plus, X } from "lucide-react";
+import { Trash2, Plus, X, Calendar } from "lucide-react";
 import { AutoHeightTextarea } from "../../AutoHeightTextarea";
+import { MonthYearPicker } from "../../MonthYearPicker";
 
 interface ExperienceProps {
   resumeData: ResumeData;
@@ -17,8 +18,6 @@ interface ExperienceProps {
   updateProjectField: (expIndex: number, projIndex: number, field: string, value: string) => void;
   addWorkExpTech: (e: React.KeyboardEvent<HTMLInputElement>, expIndex: number, projIndex: number) => void;
   removeWorkExpTech: (expIndex: number, projIndex: number, techToRemove: string) => void;
-  formatToMonthInput: (value: string) => string;
-  formatFromMonthInput: (value: string) => string;
 }
 
 export const Experience = ({
@@ -34,8 +33,6 @@ export const Experience = ({
   updateProjectField,
   addWorkExpTech,
   removeWorkExpTech,
-  formatToMonthInput,
-  formatFromMonthInput,
 }: ExperienceProps) => {
   return (
     <div className="space-y-6 pl-4">
@@ -78,43 +75,29 @@ export const Experience = ({
               />
             </div>
             <div className="space-y-1">
-              <label className="text-md px-2 font-semibold text-slate-700">
+              <label className="text-md px-2 font-semibold text-slate-700 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-slate-400" />
                 Start Date
               </label>
-              <input
-                type="month"
-                value={formatToMonthInput(exp.period_from)}
-                onChange={(e) => {
-                  const monthValue = e.target.value;
-                  const formattedValue = formatFromMonthInput(monthValue);
-                  updateWorkExperience(index, "period_from", formattedValue);
-                }}
-                className={`w-full bg-white border rounded-sm px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 text-slate-700 ${
-                  workExpDateErrors[`workExp_${index}_dates`]
-                    ? "border-rose-500 focus:border-rose-500"
-                    : "border-slate-300 focus:border-[var(--primary)]"
-                }`}
+              <MonthYearPicker
+                value={exp.period_from}
+                onChange={(value) => updateWorkExperience(index, "period_from", value)}
+                placeholder="Select start date"
+                error={!!workExpDateErrors[`workExp_${index}_dates`]}
               />
             </div>
             <div className="space-y-1">
-              <label className="text-md px-2 font-semibold text-slate-700">
+              <label className="text-md px-2 font-semibold text-slate-700 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-slate-400" />
                 End Date
               </label>
               <div className="flex gap-2">
-                <input
-                  type="month"
-                  value={exp.period_to.toLowerCase() === "present" ? "" : formatToMonthInput(exp.period_to)}
-                  onChange={(e) => {
-                    const monthValue = e.target.value;
-                    const formattedValue = formatFromMonthInput(monthValue);
-                    updateWorkExperience(index, "period_to", formattedValue);
-                  }}
+                <MonthYearPicker
+                  value={exp.period_to.toLowerCase() === "present" ? "" : exp.period_to}
+                  onChange={(value) => updateWorkExperience(index, "period_to", value)}
+                  placeholder="Select end date"
+                  error={!!workExpDateErrors[`workExp_${index}_dates`]}
                   disabled={exp.period_to.toLowerCase() === "present"}
-                  className={`flex-1 bg-white border rounded-sm px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed ${
-                    workExpDateErrors[`workExp_${index}_dates`]
-                      ? "border-rose-500 focus:border-rose-500"
-                      : "border-slate-300 focus:border-[var(--primary)]"
-                  }`}
                 />
                 <button
                   type="button"

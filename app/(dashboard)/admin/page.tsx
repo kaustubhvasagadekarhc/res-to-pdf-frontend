@@ -253,7 +253,7 @@ export default function AdminDashboard() {
                 <div className="absolute left-5 top-0 bottom-0 w-[1px] bg-gradient-to-b from-slate-200 via-slate-200 to-transparent"></div>
                 
                 <div className="space-y-10">
-                  {recentActivities.slice(0, 5).map((activity, index) => {
+                  {recentActivities.slice(0, 5).map((activity) => {
                     const { icon: ActionIcon, bgColor, iconColor } = getActionIcon(activity.action);
                     const actionDetails = getActionDetails(activity);
                     const userName = activity.user?.email || "System";

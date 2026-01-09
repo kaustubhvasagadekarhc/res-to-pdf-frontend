@@ -1,15 +1,14 @@
 "use client";
 
 import { ResumeData } from "@/lib/resume/resume.types";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Calendar } from "lucide-react";
+import { MonthYearPicker } from "../../MonthYearPicker";
 
 interface EducationProps {
   resumeData: ResumeData;
   updateEducation: (index: number, field: string, value: string) => void;
   addEducation: () => void;
   deleteEducation: (index: number) => void;
-  formatToMonthInput: (value: string) => string;
-  formatFromMonthInput: (value: string) => string;
 }
 
 export const Education = ({
@@ -17,8 +16,6 @@ export const Education = ({
   updateEducation,
   addEducation,
   deleteEducation,
-  formatToMonthInput,
-  formatFromMonthInput,
 }: EducationProps) => {
   return (
     <div className="space-y-6 pl-4">
@@ -76,18 +73,14 @@ export const Education = ({
               />
             </div>
             <div className="space-y-1">
-              <label className="text-md px-2 font-semibold text-slate-700">
+              <label className="text-md px-2 font-semibold text-slate-700 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-slate-400" />
                 Graduation Date
               </label>
-              <input
-                type="month"
-                value={formatToMonthInput(edu.graduation_year)}
-                onChange={(e) => {
-                  const monthValue = e.target.value;
-                  const formattedValue = formatFromMonthInput(monthValue);
-                  updateEducation(index, "graduation_year", formattedValue);
-                }}
-                className="w-full bg-white border rounded-sm border-slate-300 px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] text-slate-700"
+              <MonthYearPicker
+                value={edu.graduation_year}
+                onChange={(value) => updateEducation(index, "graduation_year", value)}
+                placeholder="Select graduation date"
               />
             </div>
           </div>
