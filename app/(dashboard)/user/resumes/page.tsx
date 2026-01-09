@@ -68,7 +68,7 @@ export default function ResumesPage() {
         sessionStorage.setItem("resumeData", resume.content);
       }
 
-      router.push(`/user/edit?id=${resume.id}`);
+      router.push(`/user/edit-resume?id=${resume.id}`);
     } catch (error) {
       console.error("Error preparing resume for editing:", error);
       toast.error("Failed to load resume data for editing");
@@ -80,7 +80,7 @@ export default function ResumesPage() {
       window.open(resume.fileUrl, "_blank");
     } else {
       // If no file URL exists, navigate to edit page
-      router.push(`/user/edit?id=${resume.id}`);
+      router.push(`/user/edit-resume?id=${resume.id}`);
     }
   };
 
