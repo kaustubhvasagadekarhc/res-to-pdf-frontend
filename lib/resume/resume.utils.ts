@@ -5,13 +5,13 @@ import { ResumeData } from "./resume.types";
  */
 export const formatToMonthInput = (value: string): string => {
   if (!value || value.toLowerCase() === "present") return "";
-  
+
   // Try to parse "month - yyyy" or "month yyyy" format
   const match = value.match(/^([a-zA-Z]+)\s*-\s*(\d{4})$|^([a-zA-Z]+)\s+(\d{4})$/);
   if (match) {
     const monthName = (match[1] || match[3]).toLowerCase();
     const year = match[2] || match[4];
-    
+
     const monthMap: { [key: string]: number } = {
       'january': 1, 'jan': 1,
       'february': 2, 'feb': 2,
@@ -26,18 +26,18 @@ export const formatToMonthInput = (value: string): string => {
       'november': 11, 'nov': 11,
       'december': 12, 'dec': 12,
     };
-    
+
     const monthNum = monthMap[monthName];
     if (monthNum && year) {
       return `${year}-${String(monthNum).padStart(2, '0')}`;
     }
   }
-  
+
   // If already in YYYY-MM format, return as-is
   if (/^\d{4}-\d{2}$/.test(value)) {
     return value;
   }
-  
+
   return "";
 };
 
@@ -46,23 +46,23 @@ export const formatToMonthInput = (value: string): string => {
  */
 export const formatFromMonthInput = (value: string): string => {
   if (!value) return "";
-  
+
   // Parse YYYY-MM format
   const match = value.match(/^(\d{4})-(\d{2})$/);
   if (match) {
     const year = match[1];
     const monthNum = parseInt(match[2], 10);
-    
+
     const monthNames = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-    
+
     if (monthNum >= 1 && monthNum <= 12) {
       return `${monthNames[monthNum - 1]} - ${year}`;
     }
   }
-  
+
   return value;
 };
 
@@ -71,12 +71,12 @@ export const formatFromMonthInput = (value: string): string => {
  */
 export const parseDateFromFormat = (value: string): Date | null => {
   if (!value || value.toLowerCase() === "present") return null;
-  
-  const match = value.match(/^([a-zA-Z]+)\s*-\s*(\d{4})$/);
+
+  const match = value.match(/^(\d{4})-(\d{2})$/);
   if (match) {
     const monthName = match[1].toLowerCase();
     const year = parseInt(match[2], 10);
-    
+
     const monthMap: { [key: string]: number } = {
       'january': 0, 'jan': 0,
       'february': 1, 'feb': 1,
@@ -91,13 +91,13 @@ export const parseDateFromFormat = (value: string): Date | null => {
       'november': 10, 'nov': 10,
       'december': 11, 'dec': 11,
     };
-    
+
     const monthIndex = monthMap[monthName];
     if (monthIndex !== undefined && !isNaN(year)) {
       return new Date(year, monthIndex, 1);
     }
   }
-  
+
   return null;
 };
 
@@ -234,7 +234,7 @@ export const getMissingFieldsForStep = (
   resumeData: ResumeData | null
 ): boolean => {
   if (!resumeData) return true;
-  
+
   switch (stepKey) {
     case "personal":
       return (
@@ -265,7 +265,7 @@ export const getMissingFieldsForStep = (
       }
       return resumeData.work_experience.some(
         (exp) =>
-          !exp.company || !exp.position || !exp.period_from || !exp.period_to
+          !exp.company || !exp.position || !exp.period_from || !exp.period_to || !exp.responsibilities || exp.responsibilities.length === 0
       );
     case "projects":
     default:

@@ -50,7 +50,7 @@ export const Experience = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div className="space-y-1">
               <label className="text-md px-2 font-semibold text-slate-700">
-                Company
+                Company <span className="text-rose-500">*</span>
               </label>
               <input
                 value={exp.company}
@@ -63,7 +63,7 @@ export const Experience = ({
             </div>
             <div className="space-y-1">
               <label className="text-md px-2 font-semibold text-slate-700">
-                Position
+                Position <span className="text-rose-500">*</span>
               </label>
               <input
                 value={exp.position}
@@ -77,7 +77,7 @@ export const Experience = ({
             <div className="space-y-1">
               <label className="text-md px-2 font-semibold text-slate-700 flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-slate-400" />
-                Start Date
+                Start Date <span className="text-rose-500">*</span>
               </label>
               <MonthYearPicker
                 value={exp.period_from}
@@ -89,7 +89,7 @@ export const Experience = ({
             <div className="space-y-1">
               <label className="text-md px-2 font-semibold text-slate-700 flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-slate-400" />
-                End Date
+                End Date <span className="text-rose-500">*</span>
               </label>
               <div className="flex gap-2">
                 <MonthYearPicker
@@ -99,6 +99,7 @@ export const Experience = ({
                   error={!!workExpDateErrors[`workExp_${index}_dates`]}
                   disabled={exp.period_to.toLowerCase() === "present"}
                 />
+
                 <button
                   type="button"
                   onClick={() => {
@@ -108,16 +109,17 @@ export const Experience = ({
                       updateWorkExperience(index, "period_to", "Present");
                     }
                   }}
-                  className={`px-4 py-3 border rounded-sm border-slate-300 transition-all duration-200 text-sm font-medium ${
-                    exp.period_to.toLowerCase() === "present"
-                      ? "bg-[var(--primary)] text-white border-[var(--primary)]"
-                      : "bg-white text-slate-700 hover:bg-slate-50"
-                  }`}
+                  className={`px-4 py-3 border rounded-sm border-slate-300 transition-all duration-200 text-sm font-medium ${exp.period_to.toLowerCase() === "present"
+                    ? "bg-[var(--primary)] text-white border-[var(--primary)]"
+                    : "bg-white text-slate-700 hover:bg-slate-50"
+                    }`}
                 >
                   Present
                 </button>
               </div>
+
             </div>
+
             {workExpDateErrors[`workExp_${index}_dates`] && (
               <div className="col-span-2">
                 <p className="text-xs text-rose-500 px-2 mt-1">
@@ -125,6 +127,20 @@ export const Experience = ({
                 </p>
               </div>
             )}
+
+          </div>
+          <div className="space-y-1">
+            <label className="text-md px-2 font-semibold text-slate-700">
+              Job Responsibilities <span className="text-rose-500">*</span>
+            </label>
+            <AutoHeightTextarea
+              value={exp.responsibilities?.join('\n') || ''}
+              onChange={(e) =>
+                updateWorkExperience(index, "responsibilities", e.target.value)
+              }
+              className="w-full bg-white border rounded-sm px-4 py-3 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 min-h-[100px] resize-none"
+              placeholder="List your key responsibilities (each line will be a bullet point)"
+            />
           </div>
           <div className="mt-4 pt-4 border-t border-slate-100">
             <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">
@@ -147,7 +163,7 @@ export const Experience = ({
                         updateProjectField(index, pIdx, "name", e.target.value)
                       }
                       placeholder="e.g. Lead Frontend Development"
-                      className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-sm"
+                      className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b  transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-sm"
                     />
                   </div>
                   <div className="space-y-1">
@@ -160,7 +176,7 @@ export const Experience = ({
                         updateProjectField(index, pIdx, "description", e.target.value)
                       }
                       placeholder="What did you achieve? Use bullet points if needed..."
-                      className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-sm min-h-[100px] resize-none"
+                      className="w-full bg-white border rounded-sm  px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-sm min-h-[100px] resize-none"
                     />
                   </div>
                   <div className="space-y-1">
@@ -177,7 +193,7 @@ export const Experience = ({
                       }
                       onKeyDown={(e) => addWorkExpTech(e, index, pIdx)}
                       placeholder="Add tech (Press Enter)"
-                      className="w-full bg-white border rounded-sm border-slate-300 px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-xs"
+                      className="w-full bg-white border rounded-sm  px-4 py-2 border-b border-gray-300 transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300 text-xs"
                     />
                     <div className="flex flex-wrap gap-1 mb-2">
                       {proj.technologies.map((tech, tIdx) => (

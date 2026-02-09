@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useUser } from "@/contexts/UserContext";
@@ -29,28 +29,28 @@ import {
 export const useEditResume = () => {
   const router = useRouter();
   const { refreshResumes } = useUser();
-  
+
   // Main state
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [currentResumeId, setCurrentResumeId] = useState<string | null>(null);
-  
+
   // Input states
   const [skillInput, setSkillInput] = useState("");
   const [workExpTechInputs, setWorkExpTechInputs] = useState<{ [key: string]: string }>({});
   const [projectTechInputs, setProjectTechInputs] = useState<{ [key: number]: string }>({});
-  
+
   // Modal states
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [tempPdfName, setTempPdfName] = useState("");
   const [isRenameClicked, setIsRenameClicked] = useState(false);
-  
+
   // Analysis state
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  
+
   // Validation states
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [workExpDateErrors, setWorkExpDateErrors] = useState<ValidationErrors>({});
@@ -246,7 +246,16 @@ export const useEditResume = () => {
   const updateWorkExperience = (index: number, field: string, value: string) => {
     if (!resumeData) return;
     const updated = [...resumeData.work_experience];
-    updated[index] = { ...updated[index], [field]: value };
+
+    if (field === "responsibilities") {
+      updated[index] = {
+        ...updated[index],
+        responsibilities: value.split("\n").map((r) => r.trim()).filter((r) => r)
+      };
+    } else {
+      // If we are strictly typed, we should handle specific fields, but this generic handler works for strings
+      updated[index] = { ...updated[index], [field]: value };
+    }
 
     if (field === "period_from" || field === "period_to") {
       const from = field === "period_from" ? value : updated[index].period_from;
@@ -256,7 +265,7 @@ export const useEditResume = () => {
       // Validate dates
       const errorKey = `workExp_${index}_dates`;
       const dateError = validateWorkExperienceDates(from, to);
-      
+
       setWorkExpDateErrors((prev) => {
         const newErrors = { ...prev };
         if (dateError) {
@@ -284,6 +293,7 @@ export const useEditResume = () => {
           duration: "",
           period_from: "",
           period_to: "",
+          responsibilities: [],
           projects: [],
         },
       ],
@@ -526,9 +536,9 @@ export const useEditResume = () => {
       toast.error("Please enter a valid name");
       return;
     }
-    
+
     setIsRenameClicked(true);
-    
+
     if (resumeData) {
       setResumeData({ ...resumeData, pdfName: tempPdfName });
 
@@ -542,7 +552,7 @@ export const useEditResume = () => {
         }
       }
     }
-   
+
     setIsRenameModalOpen(false);
     setIsRenameClicked(false);
     // Don't increment step - just save the name and close modal
@@ -558,11 +568,11 @@ export const useEditResume = () => {
   // Check if form is complete
   const isFormComplete = resumeData
     ? [1, 2, 3, 4, 5, 6, 7].every(
-        (step) => !getMissingFieldsForStep(
-          ["personal", "summary", "skills", "experience", "education", "projects", "review"][step - 1],
-          resumeData
-        )
+      (step) => !getMissingFieldsForStep(
+        ["personal", "summary", "skills", "experience", "education", "projects", "review"][step - 1],
+        resumeData
       )
+    )
     : false;
 
   return {
@@ -589,7 +599,7 @@ export const useEditResume = () => {
     validationErrors,
     workExpDateErrors,
     isFormComplete,
-    
+
     // Actions
     updatePersonal,
     updateSummary,
@@ -617,7 +627,7 @@ export const useEditResume = () => {
     handleSavePdfName,
     handleBack,
     validatePersonalDetails,
-    
+
     // Utils
     formatToMonthInput,
     formatFromMonthInput,

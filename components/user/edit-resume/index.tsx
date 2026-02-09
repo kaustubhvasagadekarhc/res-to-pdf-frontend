@@ -122,7 +122,6 @@ export const EditResumeContainer = () => {
     handleNext,
     handleSavePdfName,
     handleBack,
-    
     formatNameInput,
     formatLocationInput,
     formatMobileInput,

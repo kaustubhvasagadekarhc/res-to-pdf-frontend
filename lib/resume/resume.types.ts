@@ -23,6 +23,7 @@ export interface ResumeData {
     duration: string;
     period_from: string;
     period_to: string;
+    responsibilities: string[];
     projects: Array<{
       name: string;
       description: string;

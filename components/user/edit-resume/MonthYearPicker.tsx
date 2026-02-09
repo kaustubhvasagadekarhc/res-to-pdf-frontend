@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { ChevronDown, Calendar } from "lucide-react";
 
 interface MonthYearPickerProps {
-  value: string; // Format: "Jan - 2024" or empty
+  value: string; // Format: "2024-05" or empty
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
@@ -25,11 +25,6 @@ const MONTHS = [
   { value: 9, label: "October" },
   { value: 10, label: "November" },
   { value: 11, label: "December" },
-];
-
-const SHORT_MONTHS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 ];
 
 const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -65,21 +60,15 @@ export const MonthYearPicker = ({
   // Helper function to parse value and return display values
   const parseValue = useCallback((val: string) => {
     if (val) {
-      // Parse "Jan - 2024" or "January - 2024" format
-      const match = val.match(/^([a-zA-Z]+)\s*-\s*(\d{4})$/);
+      // Parse "yyyy-mm" format (e.g., "2024-05")
+      const match = val.match(/^(\d{4})-(\d{2})$/);
       if (match) {
-        const monthName = match[1].toLowerCase();
-        const year = parseInt(match[2], 10);
+        const year = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10) - 1; // Convert to 0-based month
         
-        // Find month index
-        const monthIndex = MONTHS.findIndex(
-          (m) => m.label.toLowerCase() === monthName || 
-                 SHORT_MONTHS[m.value].toLowerCase() === monthName
-        );
-        
-        if (monthIndex !== -1 && !isNaN(year)) {
+        if (month >= 0 && month <= 11 && !isNaN(year)) {
           return {
-            month: MONTHS[monthIndex].value,
+            month: month,
             year: year,
             day: 1,
           };
@@ -148,7 +137,8 @@ export const MonthYearPicker = ({
 
   const handleDaySelect = (day: number) => {
     setSelectedDay(day);
-    const formatted = `${SHORT_MONTHS[displayMonth]} - ${displayYear}`;
+    const monthStr = String(displayMonth + 1).padStart(2, '0');
+    const formatted = `${displayYear}-${monthStr}`;
     onChange(formatted);
     setIsOpen(false);
   };
@@ -172,18 +162,14 @@ export const MonthYearPicker = ({
   const getDisplayValue = () => {
     if (!value) return placeholder;
     
-    const match = value.match(/^([a-zA-Z]+)\s*-\s*(\d{4})$/);
+    const match = value.match(/^(\d{4})-(\d{2})$/);
     if (match) {
-      const monthName = match[1];
-      const year = match[2];
-      // Convert short month to full month name for display
-      const monthIndex = SHORT_MONTHS.findIndex(
-        (m) => m.toLowerCase() === monthName.toLowerCase()
-      );
-      if (monthIndex !== -1) {
-        const fullMonthName = MONTHS[monthIndex].label;
-        const day = selectedDay || 1;
-        return `${fullMonthName} ${day}, ${year}`;
+      const year = match[1];
+      const monthNum = parseInt(match[2], 10);
+      
+      if (monthNum >= 1 && monthNum <= 12) {
+        const fullMonthName = MONTHS[monthNum - 1].label;
+        return `${fullMonthName} ${year}`;
       }
     }
     return value;
@@ -290,4 +276,3 @@ export const MonthYearPicker = ({
     </div>
   );
 };
-
