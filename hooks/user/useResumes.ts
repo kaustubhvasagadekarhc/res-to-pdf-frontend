@@ -11,7 +11,6 @@ import {
   renameResumeFile,
   prepareResumeForEdit,
   downloadResumeFile,
-  viewResume,
 } from "@/lib/resume/resume-operations.api";
 
 export const useResumes = () => {
@@ -41,6 +40,13 @@ export const useResumes = () => {
     renamingId: null,
     toastMessage: null,
   });
+
+  // PDF viewer state
+  const [pdfViewerState, setPdfViewerState] = useState<{
+    isOpen: boolean;
+    pdfUrl: string;
+    fileName: string;
+  }>({ isOpen: false, pdfUrl: "", fileName: "" });
 
   // Trigger fetch if needed
   useEffect(() => {
@@ -144,10 +150,14 @@ export const useResumes = () => {
 
   const handleViewResume = (resume: Resume) => {
     if (resume.fileUrl) {
-      viewResume(resume);
+      setPdfViewerState({ isOpen: true, pdfUrl: resume.fileUrl, fileName: resume.fileName });
     } else {
       router.push(`/user/edit-resume?id=${resume.id}`);
     }
+  };
+
+  const closePdfViewer = () => {
+    setPdfViewerState({ isOpen: false, pdfUrl: "", fileName: "" });
   };
 
   const handleDownloadResume = (resume: Resume) => {
@@ -283,6 +293,10 @@ export const useResumes = () => {
     dialogState,
     setNewFileName: (name: string) =>
       setDialogState((prev) => ({ ...prev, newFileName: name })),
+
+    // PDF Viewer
+    pdfViewerState,
+    closePdfViewer,
 
     // Actions
     handleEditResume,

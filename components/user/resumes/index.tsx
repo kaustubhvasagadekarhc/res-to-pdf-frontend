@@ -9,6 +9,7 @@ import { ResumesList } from "./ResumesList";
 import { EmptyState } from "./EmptyState";
 import { DeleteConfirmDialog } from "./dialogs/DeleteConfirmDialog";
 import { RenameDialog } from "./dialogs/RenameDialog";
+import { ViewPdfModal } from "./dialogs/ViewPdfModal";
 import { useRouter } from "next/navigation";
 
 export const ResumesContainer = () => {
@@ -38,6 +39,8 @@ export const ResumesContainer = () => {
     openRenameDialog,
     cancelRename,
     performRename,
+    pdfViewerState,
+    closePdfViewer,
   } = useResumes();
 
   return (
@@ -132,6 +135,14 @@ export const ResumesContainer = () => {
           onCancel={cancelRename}
           onConfirm={performRename}
           onFileNameChange={setNewFileName}
+        />
+
+        {/* PDF Viewer Modal */}
+        <ViewPdfModal
+          isOpen={pdfViewerState.isOpen}
+          pdfUrl={pdfViewerState.pdfUrl}
+          fileName={pdfViewerState.fileName}
+          onClose={closePdfViewer}
         />
 
         {/* Toast */}
