@@ -19,7 +19,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import Cookies from "js-cookie";
 import { downloadPdf, generatePdf, savePdfResponse } from "@/lib/resume/resume.api";
 
 export default function UploadPage() {
@@ -141,75 +140,6 @@ export default function UploadPage() {
     }
   };
 
-  const handleDirectGenerate = async () => {
-    if (!parsedData) {
-      toast.error("No resume data available to generate PDF");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      apiClient.refreshTokenFromCookies();
-      const token = Cookies.get("auth-token") || Cookies.get("access_token");
-
-      if (!token) {
-        throw new Error("Authentication required. Please log in again.");
-      }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/generate/pdf`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            personal: parsedData.personal,
-            summary: parsedData.summary,
-            skills: parsedData.skills,
-            work_experience: parsedData.work_experience,
-            education: parsedData.education,
-            projects: parsedData.projects,
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || `Failed to generate PDF: ${response.statusText}`,
-        );
-      }
-
-      const pdfBlob = await response.blob();
-
-      if (!pdfBlob || pdfBlob.size === 0) {
-        throw new Error("Received empty PDF response");
-      }
-
-      const url = window.URL.createObjectURL(pdfBlob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${parsedData.pdfName || "resume"}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      toast.success("PDF generated and downloaded successfully!");
-      setShowActionModal(false);
-    } catch (error: unknown) {
-      console.error("PDF generation failed:", error);
-      const errorMsg =
-        error instanceof Error ? error.message : "Failed to generate PDF";
-      toast.error(errorMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
 const handleGenerate = async () => {
     if (!parsedData) return;
     setLoading(true);
@@ -288,7 +218,7 @@ const handleGenerate = async () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 pt-2">
-            {!file ? (
+            {/* {!file ? ( */}
               <button
                 onClick={() => {
                   setShowModal(true);
@@ -300,7 +230,7 @@ const handleGenerate = async () => {
                 <Upload className="w-5 h-5" />
                 Upload Resume
               </button>
-            ) : (
+            {/* ) : (
               <div className="flex flex-col gap-4 w-full sm:w-auto">
                 <div className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-sm shadow-sm">
                   <div className="w-10 h-10 bg-indigo-50 rounded-sm flex items-center justify-center text-indigo-600">
@@ -340,7 +270,7 @@ const handleGenerate = async () => {
                   {loading ? "Processing..." : "Generate PDF"}
                 </button>
               </div>
-            )}
+            )} */}
 
             {!file && (
               <button
@@ -775,7 +705,3 @@ const handleGenerate = async () => {
     </div>
   );
 }
-function refreshResumes(arg0: boolean) {
-  throw new Error("Function not implemented.");
-}
-
