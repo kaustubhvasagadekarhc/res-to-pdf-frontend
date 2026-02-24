@@ -1,4 +1,4 @@
-import { ResumeData, CategorizedSkills } from "./resume.types";
+import { ResumeData, CategorizedSkills, DEFAULT_SKILL_CATEGORIES } from "./resume.types";
 
 /**
  * Convert "month - yyyy" format to "YYYY-MM" for month input
@@ -274,30 +274,25 @@ export const getMissingFieldsForStep = (
 };
 
 /**
- * Normalize skills from any legacy format to CategorizedSkills.
- * Handles: string[], { technical: string[] }, Record<string, string[]>
+ * Normalize skills to CategorizedSkills, ensuring all 7 default categories exist.
  */
 export const normalizeSkills = (skills: unknown): CategorizedSkills => {
+  // Start with all default categories as empty arrays
+  const result: CategorizedSkills = {};
+  for (const cat of DEFAULT_SKILL_CATEGORIES) {
+    result[cat] = [];
+  }
+
   if (skills && typeof skills === "object" && !Array.isArray(skills)) {
     const obj = skills as Record<string, unknown>;
-    if ("technical" in obj && Array.isArray(obj.technical)) {
-      return { Technologies: obj.technical as string[] };
-    }
-    const result: CategorizedSkills = {};
     for (const [key, value] of Object.entries(obj)) {
       if (Array.isArray(value)) {
         result[key] = value.filter((v) => typeof v === "string");
       }
     }
-    return result;
   }
 
-  if (Array.isArray(skills)) {
-    const filtered = skills.filter((s) => typeof s === "string" && s.trim());
-    return filtered.length > 0 ? { Technologies: filtered } : {};
-  }
-
-  return {};
+  return result;
 };
 
 /**
