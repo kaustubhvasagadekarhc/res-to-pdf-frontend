@@ -1,8 +1,13 @@
 "use client";
 
 import { apiClient, resumeService } from "@/app/api/client";
-import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { useUser } from "@/contexts/UserContext";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
+import {
+  downloadPdf,
+  generatePdf,
+  savePdfResponse,
+} from "@/lib/resume/resume.api";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
@@ -19,7 +24,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { downloadPdf, generatePdf, savePdfResponse } from "@/lib/resume/resume.api";
 
 export default function UploadPage() {
   useAuthGuard("User");
@@ -31,7 +35,9 @@ export default function UploadPage() {
   const [showModal, setShowModal] = useState(false);
   const [showActionModal, setShowActionModal] = useState(false);
   const [parseType, setParseType] = useState("quick");
-  const [parsedData, setParsedData] = useState<Record<string, unknown> | null>(null);
+  const [parsedData, setParsedData] = useState<Record<string, unknown> | null>(
+    null,
+  );
   const [isDragOver, setIsDragOver] = useState(false);
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -140,7 +146,7 @@ export default function UploadPage() {
     }
   };
 
-const handleGenerate = async () => {
+  const handleGenerate = async () => {
     if (!parsedData) return;
     setLoading(true);
 
@@ -172,18 +178,12 @@ const handleGenerate = async () => {
     } catch (error: unknown) {
       console.error("PDF generation failed:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to generate PDF"
+        error instanceof Error ? error.message : "Failed to generate PDF",
       );
     } finally {
       setLoading(false);
     }
   };
-
-
-
-
-
-
 
   const closeModal = () => {
     setShowModal(false);
@@ -219,17 +219,17 @@ const handleGenerate = async () => {
 
           <div className="flex flex-col sm:flex-row gap-4 pt-2">
             {/* {!file ? ( */}
-              <button
-                onClick={() => {
-                  setShowModal(true);
-                  setFile(null);
-                  setError("");
-                }}
-                className="px-8 py-4 bg-[var(--accent)] hover:bg-indigo-600 text-white rounded-sm font-bold text-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 justify-center"
-              >
-                <Upload className="w-5 h-5" />
-                Upload Resume
-              </button>
+            <button
+              onClick={() => {
+                setShowModal(true);
+                setFile(null);
+                setError("");
+              }}
+              className="px-8 py-4 bg-[var(--accent)] hover:bg-indigo-600 text-white rounded-sm font-bold text-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 justify-center"
+            >
+              <Upload className="w-5 h-5" />
+              Upload Resume
+            </button>
             {/* ) : (
               <div className="flex flex-col gap-4 w-full sm:w-auto">
                 <div className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-sm shadow-sm">
@@ -272,59 +272,43 @@ const handleGenerate = async () => {
               </div>
             )} */}
 
-            {!file && (
-              <button
-                onClick={() => {
-                  const emptyResume = {
-                    personal: {
-                      name: "",
-                      designation: "",
-                      email: "",
-                      mobile: "",
-                      location: "",
-                      gender: "",
-                      marital_status: "",
-                    },
-                    summary: "",
-                    skills: [],
-                    education: [],
-                    work_experience: [],
-                    projects: [],
-                  };
-                  sessionStorage.setItem(
-                    "resumeData",
-                    JSON.stringify(emptyResume),
-                  );
-                  sessionStorage.removeItem("resumeId");
-                  sessionStorage.removeItem("resumeFileName");
-                  router.push("/user/edit-resume");
-                }}
-                className="
-  group relative inline-flex items-center justify-center
-  px-8 py-4 rounded-sm font-semibold text-lg
-  text-[var(--accent)]
-  bg-white
-  border border-slate-200
-  shadow-sm
-  transition-all duration-300
-  hover:shadow-md
-  hover:-translate-y-[1px]
-  hover:bg-slate-100
-  active:translate-y-0
-"
-              >
-                <span className="relative z-10">Make Your Own Resume</span>
+            <button
+              onClick={() => {
+                const emptyResume = {
+                  personal: {
+                    name: "",
+                    designation: "",
+                    email: "",
+                    mobile: "",
+                    location: "",
+                    gender: "",
+                    marital_status: "",
+                  },
+                  summary: "",
+                  skills: {},
+                  education: [],
+                  work_experience: [],
+                  projects: [],
+                };
+                sessionStorage.setItem(
+                  "resumeData",
+                  JSON.stringify(emptyResume),
+                );
+                sessionStorage.removeItem("resumeId");
+                sessionStorage.removeItem("resumeFileName");
+                router.push("/user/edit-resume");
+              }}
+              className="px-8 py-4 rounded-sm font-semibold text-lggroup relative inline-flex items-center justify-centerbg-whitetext-[var(--accent)]shadow-smborder border-slate-200hover:shadow-mdtransition-all duration-300hover:bg-slate-100hover:-translate-y-[1px]active:translate-y-0"
+            >
+              <span className="relative z-10">Make Your Own Resume</span>
 
-                <span
-                  className="
-    pointer-events-none absolute inset-0 rounded-sm
-    bg-gradient-to-r from-[var(--accent)]/10 to-purple-500/10
-    opacity-0 group-hover:opacity-100
-    transition-opacity duration-300
-  "
-                />
-              </button>
-            )}
+              <span
+                className="pointer-events-none absolute inset-0 rounded-sm
+                            bg-gradient-to-r from-[var(--accent)]/10 to-purple-500/10
+                            opacity-0 group-hover:opacity-100
+                            transition-opacity duration-300"
+              />
+            </button>
           </div>
 
           <AnimatePresence>

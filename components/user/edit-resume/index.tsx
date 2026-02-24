@@ -5,15 +5,32 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Loader2, User, FileText, Code, Briefcase, GraduationCap, CheckCircle2} from "lucide-react";
 import { useEditResume } from "@/hooks/user/useEditResume";
-import { PersonalInfo } from "./form/sections/PersonalInfo";
-import { Summary } from "./form/sections/Summary";
-import { Skills } from "./form/sections/Skills";
-import { Experience } from "./form/sections/Experience";
-import { Education } from "./form/sections/Education";
-import { Projects } from "./form/sections/Projects";
-import { Review } from "./form/sections/Review";
 import { RenameModal } from "./dialogs/RenameModal";
 import { StepInfo } from "@/lib/resume/resume.types";
+import dynamic from "next/dynamic";
+
+// Lazy load form sections for better code splitting
+const PersonalInfo = dynamic(
+  () => import("./form/sections/PersonalInfo").then((mod) => mod.PersonalInfo)
+);
+const Summary = dynamic(
+  () => import("./form/sections/Summary").then((mod) => mod.Summary)
+);
+const Skills = dynamic(
+  () => import("./form/sections/Skills").then((mod) => mod.Skills)
+);
+const Experience = dynamic(
+  () => import("./form/sections/Experience").then((mod) => mod.Experience)
+);
+const Education = dynamic(
+  () => import("./form/sections/Education").then((mod) => mod.Education)
+);
+const Projects = dynamic(
+  () => import("./form/sections/Projects").then((mod) => mod.Projects)
+);
+const Review = dynamic(
+  () => import("./form/sections/Review").then((mod) => mod.Review)
+);
 
 const STEPS: StepInfo[] = [
   { id: 1, key: "personal", label: "Personal Details", icon: User },
@@ -81,8 +98,8 @@ export const EditResumeContainer = () => {
     generating,
     currentStep,
     setCurrentStep,
-    skillInput,
-    setSkillInput,
+    skillInputs,
+    setSkillInputs,
     workExpTechInputs,
     setWorkExpTechInputs,
     projectTechInputs,
@@ -99,8 +116,10 @@ export const EditResumeContainer = () => {
     isFormComplete,
     updatePersonal,
     updateSummary,
-    addSkill,
-    removeSkill,
+    addSkillToCategory,
+    removeSkillFromCategory,
+    addCategory,
+    removeCategory,
     updateEducation,
     addEducation,
     deleteEducation,
@@ -221,10 +240,12 @@ export const EditResumeContainer = () => {
                   {currentStep === 3 && (
                     <Skills
                       resumeData={resumeData}
-                      skillInput={skillInput}
-                      setSkillInput={setSkillInput}
-                      addSkill={addSkill}
-                      removeSkill={removeSkill}
+                      skillInputs={skillInputs}
+                      setSkillInputs={setSkillInputs}
+                      addSkillToCategory={addSkillToCategory}
+                      removeSkillFromCategory={removeSkillFromCategory}
+                      addCategory={addCategory}
+                      removeCategory={removeCategory}
                     />
                   )}
 

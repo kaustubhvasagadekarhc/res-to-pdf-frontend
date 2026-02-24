@@ -7,10 +7,27 @@ import { SearchAndFilters } from "./SearchAndFilters";
 import { ResumesTable } from "./ResumesTable";
 import { ResumesList } from "./ResumesList";
 import { EmptyState } from "./EmptyState";
-import { DeleteConfirmDialog } from "./dialogs/DeleteConfirmDialog";
-import { RenameDialog } from "./dialogs/RenameDialog";
-import { ViewPdfModal } from "./dialogs/ViewPdfModal";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+
+// Lazy load heavy dialog components
+const DeleteConfirmDialog = dynamic(
+  () =>
+    import("./dialogs/DeleteConfirmDialog").then(
+      (mod) => mod.DeleteConfirmDialog
+    ),
+  { ssr: false }
+);
+
+const RenameDialog = dynamic(
+  () => import("./dialogs/RenameDialog").then((mod) => mod.RenameDialog),
+  { ssr: false }
+);
+
+const ViewPdfModal = dynamic(
+  () => import("./dialogs/ViewPdfModal").then((mod) => mod.ViewPdfModal),
+  { ssr: false }
+);
 
 export const ResumesContainer = () => {
   useAuthGuard("User");
