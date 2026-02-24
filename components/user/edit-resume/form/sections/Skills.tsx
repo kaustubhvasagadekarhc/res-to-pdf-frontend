@@ -6,7 +6,7 @@ import {
 } from "@/lib/resume/resume.types";
 import { normalizeSkills } from "@/lib/resume/resume.utils";
 import { X } from "lucide-react";
-import { useState } from "react";
+// import { useState } from "react";
 
 interface SkillsProps {
   resumeData: ResumeData;
