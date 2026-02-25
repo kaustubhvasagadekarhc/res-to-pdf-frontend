@@ -47,7 +47,6 @@ export function ForgotPasswordForm() {
         setError(response.data.message || "Failed to send reset code");
       }
     } catch (err: unknown) {
-      console.error("Forgot password error:", err);
       const axiosError = err as AxiosError;
       const errorMessage =
         axiosError.response?.data?.message ||

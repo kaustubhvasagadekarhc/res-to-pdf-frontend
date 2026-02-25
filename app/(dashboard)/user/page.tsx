@@ -1,4 +1,5 @@
 "use client";
+
 import { apiClient, dashboardService } from "@/app/api/client";
 import { useUser } from "@/contexts/UserContext";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
@@ -23,19 +24,21 @@ export default function UserDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchResumes();
+    if (user?.id) {
+      fetchResumes();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.id]);
 
   const fetchResumes = async () => {
+    if (!user?.id) {
+      setResumes([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-
-      if (!user?.id) {
-        setResumes([]);
-        return;
-      }
-
       apiClient.refreshTokenFromCookies();
 
       const response = await dashboardService.postDashboardResumes({
@@ -43,13 +46,12 @@ export default function UserDashboard() {
       });
 
       if (response && Array.isArray(response.data)) {
-        // Map the response to our ResumeCard interface
         const mappedResumes = response.data.map((item) => ({
           id: item.id || "",
           fileName: item.jobTitle
             ? `${item.jobTitle || "Resume"}.pdf`
             : "Resume.pdf",
-          fileUrl: "", // In a real implementation, this would come from the API
+          fileUrl: "",
           createdAt: item.createdAt || new Date().toISOString(),
           updatedAt: item.updatedAt || new Date().toISOString(),
           status: "completed" as const,
@@ -58,8 +60,7 @@ export default function UserDashboard() {
       } else {
         setResumes([]);
       }
-    } catch (err) {
-      console.error("Failed to fetch resumes:", err);
+    } catch {
       setResumes([]);
     } finally {
       setLoading(false);
@@ -67,7 +68,7 @@ export default function UserDashboard() {
   };
 
   if (loading) {
-    // Show a loading state while fetching resumes
+   
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -78,6 +79,5 @@ export default function UserDashboard() {
     );
   }
 
-  // Show the appropriate page based on whether the user has any resumes
   return resumes.length > 0 ? <ResumesPage /> : <UploadPage />;
 }

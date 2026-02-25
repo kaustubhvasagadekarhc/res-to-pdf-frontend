@@ -12,6 +12,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         <Sonner
             theme={theme as ToasterProps["theme"]}
             className="toaster group"
+            position="bottom-center"
             toastOptions={{
                 classNames: {
                     toast:
@@ -23,7 +24,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
                         "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
                 },
             }}
-            duration={2000} // Default duration as requested (2 seconds)
+            duration={2000} 
             {...props}
         />
     )

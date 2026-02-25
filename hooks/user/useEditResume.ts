@@ -15,6 +15,7 @@ import {
   formatEducationFieldInput,
   formatMobileInput,
   getMissingFieldsForStep,
+  normalizeSkills,
 } from "@/lib/resume/resume.utils";
 import {
   generatePdf,
@@ -38,7 +39,7 @@ export const useEditResume = () => {
   const [currentResumeId, setCurrentResumeId] = useState<string | null>(null);
 
   // Input states
-  const [skillInput, setSkillInput] = useState("");
+  const [skillInputs, setSkillInputs] = useState<Record<string, string>>({});
   const [workExpTechInputs, setWorkExpTechInputs] = useState<{ [key: string]: string }>({});
   const [projectTechInputs, setProjectTechInputs] = useState<{ [key: number]: string }>({});
 
@@ -68,22 +69,20 @@ export const useEditResume = () => {
       if (resumeId) {
         // This is an existing resume being edited
         try {
-          console.log(`Loading existing resume with ID: ${resumeId}`);
           const storedData = loadResumeFromStorage();
           if (storedData) {
-            setResumeData(storedData);
+            setResumeData({ ...storedData, skills: normalizeSkills(storedData.skills) });
           } else {
             router.push("/user/upload");
           }
-        } catch (error) {
-          console.error("Error loading resume data:", error);
+        } catch {
           router.push("/user/upload");
         }
       } else {
         // Load from sessionStorage (new resume or from upload)
         const storedData = loadResumeFromStorage();
         if (storedData) {
-          setResumeData(storedData);
+          setResumeData({ ...storedData, skills: normalizeSkills(storedData.skills) });
         } else {
           router.push("/user/upload");
         }
@@ -185,26 +184,64 @@ export const useEditResume = () => {
     setResumeData({ ...resumeData, summary: value });
   };
 
-  const addSkill = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && skillInput.trim()) {
+  const addSkillToCategory = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    category: string
+  ) => {
+    if (e.key === "Enter" && (skillInputs[category] || "").trim()) {
       e.preventDefault();
       if (!resumeData) return;
-      const newSkill = skillInput.trim();
-      if (!resumeData.skills.includes(newSkill)) {
+      const newSkill = (skillInputs[category] || "").trim();
+      const currentSkills = normalizeSkills(resumeData.skills);
+      const categorySkills = currentSkills[category] || [];
+      if (!categorySkills.includes(newSkill)) {
         setResumeData({
           ...resumeData,
-          skills: [...resumeData.skills, newSkill],
+          skills: {
+            ...currentSkills,
+            [category]: [...categorySkills, newSkill],
+          },
         });
       }
-      setSkillInput("");
+      setSkillInputs({ ...skillInputs, [category]: "" });
     }
   };
 
-  const removeSkill = (skillToRemove: string) => {
+  const removeSkillFromCategory = (category: string, skillToRemove: string) => {
     if (!resumeData) return;
+    const currentSkills = normalizeSkills(resumeData.skills);
     setResumeData({
       ...resumeData,
-      skills: resumeData.skills.filter((s) => s !== skillToRemove),
+      skills: {
+        ...currentSkills,
+        [category]: (currentSkills[category] || []).filter(
+          (s) => s !== skillToRemove
+        ),
+      },
+    });
+  };
+
+  const addCategory = (categoryName: string) => {
+    if (!resumeData) return;
+    const currentSkills = normalizeSkills(resumeData.skills);
+    if (categoryName.trim() && !currentSkills[categoryName.trim()]) {
+      setResumeData({
+        ...resumeData,
+        skills: {
+          ...currentSkills,
+          [categoryName.trim()]: [],
+        },
+      });
+    }
+  };
+
+  const removeCategory = (categoryName: string) => {
+    if (!resumeData) return;
+    const currentSkills = normalizeSkills(resumeData.skills);
+    const { [categoryName]: _, ...rest } = currentSkills;
+    setResumeData({
+      ...resumeData,
+      skills: rest,
     });
   };
 
@@ -465,8 +502,7 @@ export const useEditResume = () => {
     try {
       const result = await analyzeResume(resumeData);
       setAnalysisResult(result);
-    } catch (error) {
-      console.error("Analysis failed", error);
+    } catch {
       toast.error("Failed to analyze resume");
     } finally {
       setAnalyzing(false);
@@ -479,7 +515,6 @@ export const useEditResume = () => {
 
     try {
       const response = await generatePdf(resumeData);
-      console.log("PDF generation successful:", response);
 
       let downloadUrl = "";
       let downloadFileName = `${resumeData.personal.name || "resume"}.pdf`;
@@ -503,7 +538,6 @@ export const useEditResume = () => {
       toast.success("Resume generated and downloaded!");
       router.push("/user");
     } catch (error: unknown) {
-      console.error("PDF generation failed:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to generate PDF"
       );
@@ -547,8 +581,8 @@ export const useEditResume = () => {
         try {
           await renameResume(currentResumeId, tempPdfName.trim());
           toast.success("Resume name updated");
-        } catch (error) {
-          console.error("Failed to rename resume:", error);
+        } catch {
+          /* ignored */
         }
       }
     }
@@ -583,8 +617,8 @@ export const useEditResume = () => {
     currentStep,
     setCurrentStep,
     currentResumeId,
-    skillInput,
-    setSkillInput,
+    skillInputs,
+    setSkillInputs,
     workExpTechInputs,
     setWorkExpTechInputs,
     projectTechInputs,
@@ -603,8 +637,10 @@ export const useEditResume = () => {
     // Actions
     updatePersonal,
     updateSummary,
-    addSkill,
-    removeSkill,
+    addSkillToCategory,
+    removeSkillFromCategory,
+    addCategory,
+    removeCategory,
     updateEducation,
     addEducation,
     deleteEducation,

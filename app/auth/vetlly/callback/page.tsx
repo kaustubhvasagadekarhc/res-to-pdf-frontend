@@ -71,8 +71,6 @@ function VettlyCallbackContent() {
         router.replace(returnUrl);
       }
     } catch (error) {
-      console.error("SSO callback error:", error);
-
       // Redirect to login with error
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       router.replace(`/login?error=${encodeURIComponent(errorMessage)}`);

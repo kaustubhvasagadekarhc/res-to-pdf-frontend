@@ -1,3 +1,15 @@
+export type CategorizedSkills = Record<string, string[]>;
+
+export const DEFAULT_SKILL_CATEGORIES = [
+  "Technologies",
+  "Languages",
+  "Tools",
+  "Databases",
+  "Operating Systems",
+  "IDE's",
+  "Application/Web Server's",
+] as const;
+
 export interface ResumeData {
   pdfName: string;
   personal: {
@@ -10,7 +22,7 @@ export interface ResumeData {
     marital_status: string;
   };
   summary: string;
-  skills: string[];
+  skills: CategorizedSkills;
   education: Array<{
     institution: string;
     degree: string;

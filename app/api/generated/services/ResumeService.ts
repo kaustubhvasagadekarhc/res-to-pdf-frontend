@@ -78,4 +78,32 @@ export class ResumeService {
             },
         });
     }
+
+    /**
+     * Upload and parse a resume PDF
+     * @returns any Resume parsed successfully
+     * @throws ApiError
+     */
+    public static postUploadVertex({
+        formData,
+    }: {
+        formData: {
+            file?: Blob;
+            parseType: 'quick' | 'inferred' | 'generative';
+        },
+    }): CancelablePromise<{
+        uploaded?: Record<string, any>;
+        parsed?: Record<string, any>;
+    }> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/upload/vertex',
+            formData: formData,
+            mediaType: 'multipart/form-data',
+            errors: {
+                400: `File is missing`,
+                500: `Internal server error`,
+            },
+        });
+    }
 }

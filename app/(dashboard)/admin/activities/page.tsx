@@ -88,8 +88,7 @@ export default function ActivitiesPage() {
       } else {
         setActivities([]);
       }
-    } catch (error) {
-      console.error("Failed to load activities", error);
+    } catch {
       toast.error("Failed to load activity logs");
     } finally {
       setLoading(false);

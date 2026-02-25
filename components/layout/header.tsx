@@ -17,12 +17,11 @@ export function Header({ onMenuClick }: HeaderProps) {
   const router = useRouter();
   const { user } = useUser();
 
-  console.log("Header User:", user?.name);
   const handleLogout = async () => {
     try {
       await authService.postAuthLogout();
-    } catch (error) {
-      console.error("Logout failed:", error);
+    } catch {
+      /* ignored */
     } finally {
       legacyAuthService.clearToken();
       router.push("/login");

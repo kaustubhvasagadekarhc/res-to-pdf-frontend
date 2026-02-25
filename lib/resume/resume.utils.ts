@@ -1,4 +1,4 @@
-import { ResumeData } from "./resume.types";
+import { ResumeData, CategorizedSkills, DEFAULT_SKILL_CATEGORIES } from "./resume.types";
 
 /**
  * Convert "month - yyyy" format to "YYYY-MM" for month input
@@ -246,7 +246,7 @@ export const getMissingFieldsForStep = (
     case "summary":
       return !resumeData.summary || resumeData.summary.trim() === "";
     case "skills":
-      return !resumeData.skills || resumeData.skills.length === 0;
+      return !resumeData.skills || isSkillsEmpty(resumeData.skills);
     case "education":
       return (
         !resumeData.education ||
@@ -271,5 +271,41 @@ export const getMissingFieldsForStep = (
     default:
       return false;
   }
+};
+
+/**
+ * Normalize skills to CategorizedSkills, ensuring all 7 default categories exist.
+ */
+export const normalizeSkills = (skills: unknown): CategorizedSkills => {
+  // Start with all default categories as empty arrays
+  const result: CategorizedSkills = {};
+  for (const cat of DEFAULT_SKILL_CATEGORIES) {
+    result[cat] = [];
+  }
+
+  if (skills && typeof skills === "object" && !Array.isArray(skills)) {
+    const obj = skills as Record<string, unknown>;
+    for (const [key, value] of Object.entries(obj)) {
+      if (Array.isArray(value)) {
+        result[key] = value.filter((v) => typeof v === "string");
+      }
+    }
+  }
+
+  return result;
+};
+
+/**
+ * Check if categorized skills are empty (no categories with items).
+ */
+export const isSkillsEmpty = (skills: CategorizedSkills): boolean => {
+  return Object.values(skills).every((arr) => arr.length === 0);
+};
+
+/**
+ * Flatten categorized skills to a single array.
+ */
+export const flattenSkills = (skills: CategorizedSkills): string[] => {
+  return Object.values(skills).flat();
 };
 

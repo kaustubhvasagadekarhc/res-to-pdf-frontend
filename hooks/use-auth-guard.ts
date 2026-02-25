@@ -19,20 +19,16 @@ export function useAuthGuard(requiredRole?: 'Admin' | 'User') {
 
     // Wait for user data to load - don't redirect while loading
     if (loading) {
-      console.log("AuthGuard: Waiting for user data to load...");
       return;
     }
 
     // If user exists, check role and mark as checked
     if (user) {
-      console.log("AuthGuard: User found:", user.email);
-      
       // Check role if required
       if (requiredRole) {
         const userType = user.userType;
         
         if (requiredRole === 'Admin' && userType !== 'ADMIN') {
-          console.log("AuthGuard: User is not admin, redirecting to /user");
           hasCheckedRef.current = true;
           router.replace('/user');
           return;
@@ -52,7 +48,6 @@ export function useAuthGuard(requiredRole?: 'Admin' | 'User') {
     // No user and not loading - redirect to login
     // Only redirect once to prevent loops
     if (!hasCheckedRef.current) {
-      console.log("AuthGuard: No user found, redirecting to login");
       hasCheckedRef.current = true;
       router.replace('/login');
     }

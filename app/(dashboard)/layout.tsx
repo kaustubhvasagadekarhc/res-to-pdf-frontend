@@ -1,13 +1,24 @@
 "use client";
 
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { Header } from "@/components/layout/header";
-import { Sidebar, SidebarItem } from "@/components/layout/sidebar";
 import { Activity, Home, Settings, Users } from "lucide-react";
 import { UserProvider, useUser } from "@/contexts/UserContext";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
+import type { SidebarItem } from "@/components/layout/sidebar";
+
+// Lazy load heavy layout components
+const Header = dynamic(
+  () => import("@/components/layout/header").then((mod) => mod.Header),
+  {
+    ssr: false,
+  }
+);
+const Sidebar = dynamic(() => import("@/components/layout/sidebar").then((mod) => mod.Sidebar), {
+  ssr: false,
+});
 
 // Admin Sidebar Items
 const adminItems: SidebarItem[] = [
