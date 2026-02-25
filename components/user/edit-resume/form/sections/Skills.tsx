@@ -6,7 +6,6 @@ import {
 } from "@/lib/resume/resume.types";
 import { normalizeSkills } from "@/lib/resume/resume.utils";
 import { X } from "lucide-react";
-// import { useState } from "react";
 
 interface SkillsProps {
   resumeData: ResumeData;
@@ -27,10 +26,8 @@ export const Skills = ({
   setSkillInputs,
   addSkillToCategory,
   removeSkillFromCategory,
-  // addCategory,
   removeCategory,
 }: SkillsProps) => {
-  // const [newCategoryInput, setNewCategoryInput] = useState("");
   const skills = normalizeSkills(resumeData.skills);
 
   // Ensure default categories exist on first render
@@ -47,14 +44,6 @@ export const Skills = ({
 
   const isDefaultCategory = (cat: string) =>
     (DEFAULT_SKILL_CATEGORIES as readonly string[]).includes(cat);
-
-  // const handleAddCategory = () => {
-  //   const name = newCategoryInput.trim();
-  //   if (name && !categories.includes(name)) {
-  //     addCategory(name);
-  //     setNewCategoryInput("");
-  //   }
-  // };
 
   return (
     <div className="space-y-4 pl-4">
@@ -129,30 +118,6 @@ export const Skills = ({
           </div>
         ))}
 
-        {/* Add Custom Category */}
-        {/* <div className="flex items-center gap-2 pt-1">
-          <input
-            type="text"
-            value={newCategoryInput}
-            onChange={(e) => setNewCategoryInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleAddCategory();
-              }
-            }}
-            className="flex-1 bg-white border rounded-sm border-slate-300 px-3 py-2 text-sm transition-all duration-200 focus:outline-none focus:border-b-2 focus:border-[var(--primary)] placeholder:text-slate-300"
-            placeholder="Add a custom category..."
-          />
-          <button
-            onClick={handleAddCategory}
-            disabled={!newCategoryInput.trim()}
-            className="px-3 py-2 rounded-sm text-sm font-medium text-white bg-[var(--primary)] hover:bg-[var(--primary-700)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-          >
-            <Plus className="w-4 h-4" />
-            Add
-          </button>
-        </div> */}
       </div>
     </div>
   );

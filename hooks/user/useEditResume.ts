@@ -69,15 +69,13 @@ export const useEditResume = () => {
       if (resumeId) {
         // This is an existing resume being edited
         try {
-          console.log(`Loading existing resume with ID: ${resumeId}`);
           const storedData = loadResumeFromStorage();
           if (storedData) {
             setResumeData({ ...storedData, skills: normalizeSkills(storedData.skills) });
           } else {
             router.push("/user/upload");
           }
-        } catch (error) {
-          console.error("Error loading resume data:", error);
+        } catch {
           router.push("/user/upload");
         }
       } else {
@@ -504,8 +502,7 @@ export const useEditResume = () => {
     try {
       const result = await analyzeResume(resumeData);
       setAnalysisResult(result);
-    } catch (error) {
-      console.error("Analysis failed", error);
+    } catch {
       toast.error("Failed to analyze resume");
     } finally {
       setAnalyzing(false);
@@ -518,7 +515,6 @@ export const useEditResume = () => {
 
     try {
       const response = await generatePdf(resumeData);
-      console.log("PDF generation successful:", response);
 
       let downloadUrl = "";
       let downloadFileName = `${resumeData.personal.name || "resume"}.pdf`;
@@ -542,7 +538,6 @@ export const useEditResume = () => {
       toast.success("Resume generated and downloaded!");
       router.push("/user");
     } catch (error: unknown) {
-      console.error("PDF generation failed:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to generate PDF"
       );
@@ -586,8 +581,8 @@ export const useEditResume = () => {
         try {
           await renameResume(currentResumeId, tempPdfName.trim());
           toast.success("Resume name updated");
-        } catch (error) {
-          console.error("Failed to rename resume:", error);
+        } catch {
+          /* ignored */
         }
       }
     }

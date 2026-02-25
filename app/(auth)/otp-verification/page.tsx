@@ -55,8 +55,8 @@ function OTPVerificationContent() {
       const token = response.token || response.data?.token;
       if (token) {
         tokenService.setToken(token);
-        try { apiClient.refreshTokenFromCookies(); } catch (e) {
-          console.warn("Could not refresh API client token from cookies", e);
+        try { apiClient.refreshTokenFromCookies(); } catch {
+          /* ignored */
         }
 
         try {
@@ -64,15 +64,13 @@ function OTPVerificationContent() {
           const userData = user as { userType?: string; type?: string };
           const userType = userData?.userType || userData?.type || "user";
           router.push(userType === "admin" || userType === "ADMIN" ? "/admin" : "/user");
-        } catch (meErr) {
-          console.warn("Failed to fetch user after OTP verification:", meErr);
+        } catch {
           router.push("/user");
         }
       } else {
         router.push("/user");
       }
     } catch (error: unknown) {
-      console.error("OTP verification failed:", error);
       const apiError = error as { body?: { message?: string }; message?: string };
       setError(apiError?.body?.message || apiError?.message || "Invalid OTP");
     } finally {
@@ -120,7 +118,6 @@ function OTPVerificationContent() {
       });
       setTimer(299);
     } catch (error: unknown) {
-      console.error("Resend OTP failed:", error);
       const apiError = error as { body?: { message?: string }; message?: string };
       setError(apiError?.body?.message || apiError?.message || "Failed to resend OTP");
     } finally {

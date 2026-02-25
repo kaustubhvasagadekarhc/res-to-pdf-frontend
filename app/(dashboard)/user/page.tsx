@@ -60,8 +60,7 @@ export default function UserDashboard() {
       } else {
         setResumes([]);
       }
-    } catch (err) {
-      console.error("Failed to fetch resumes:", err);
+    } catch {
       setResumes([]);
     } finally {
       setLoading(false);

@@ -54,11 +54,10 @@ export const SearchAndFilters = ({
           {/* Date Filter */}
           <div className="relative flex-1 sm:flex-initial">
             <button
-              onClick={() =>
-                (
-                  document.getElementById("date-filter") as HTMLInputElement
-                ).showPicker()
-              }
+              onClick={() => {
+                const el = document.getElementById("date-filter") as HTMLInputElement | null;
+                el?.showPicker();
+              }}
               className={`flex items-center justify-between gap-2 bg-white border rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors w-full sm:min-w-[130px] ${
                 filters.dateFilter
                   ? "border-blue-400"

@@ -98,8 +98,6 @@ export default function ResultPage() {
         requestBody: JSON.parse(resumeData),
       });
 
-      console.log("API Response:", response);
-
       // Handle direct Blob response
       if (response instanceof Blob) {
         const url = window.URL.createObjectURL(response);
@@ -145,8 +143,7 @@ export default function ResultPage() {
           return url;
         }
       }
-    } catch (err) {
-      console.error("Error generating PDF preview:", err);
+    } catch {
       setPreviewError(
         "Failed to generate PDF preview. You can try downloading the PDF."
       );
@@ -159,9 +156,6 @@ export default function ResultPage() {
 
     const fetchPdfUrl = async () => {
       if (pdfGenerated && !pdfBlobUrl) {
-        // Debug: log what's in sessionStorage
-        console.log("PDF Response:", sessionStorage.getItem("pdfResponse"));
-
         const url = await createPdfUrl();
         if (isMounted && url) {
           setPdfBlobUrl(url);
@@ -236,8 +230,7 @@ export default function ResultPage() {
       } else {
         alert("Unable to generate PDF for download. Please try again.");
       }
-    } catch (error) {
-      console.error("Download failed:", error);
+    } catch {
       alert("Download failed. Please try again.");
     }
   };

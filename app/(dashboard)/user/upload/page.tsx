@@ -130,7 +130,6 @@ export default function UploadPage() {
       setShowModal(false);
       setShowActionModal(true);
     } catch (error: unknown) {
-      console.error("Resume upload failed:", error);
       const errorMsg = error instanceof Error ? error.message : "Upload failed";
       setError(errorMsg);
       toast.error(errorMsg);
@@ -153,7 +152,6 @@ export default function UploadPage() {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = await generatePdf(parsedData as any);
-      console.log("PDF generation successful:", response);
 
       let downloadUrl = "";
       let downloadFileName = `${(parsedData.personal as Record<string, unknown>)?.name || "resume"}.pdf`;
@@ -176,7 +174,6 @@ export default function UploadPage() {
       toast.success("Resume generated and downloaded!");
       router.push("/user");
     } catch (error: unknown) {
-      console.error("PDF generation failed:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to generate PDF",
       );
@@ -191,7 +188,6 @@ export default function UploadPage() {
     setError("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
-  console.log("resume file:", file);
   return (
     <div className="min-h-[calc(100vh-80px)] bg-[#F8FAFC] flex items-center justify-center p-6 lg:p-12 overflow-hidden relative">
       {/* Background Decor */}
@@ -225,7 +221,7 @@ export default function UploadPage() {
                 setFile(null);
                 setError("");
               }}
-              className="px-8 py-4 bg-[var(--accent)] hover:bg-indigo-600 text-white rounded-sm font-bold text-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 justify-center"
+              className="px-8 py-4 bg-[var(--accent)] hover:bg-indigo-500 text-white rounded-sm font-bold text-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 justify-center"
             >
               <Upload className="w-5 h-5" />
               Upload Resume
@@ -298,7 +294,19 @@ export default function UploadPage() {
                 sessionStorage.removeItem("resumeFileName");
                 router.push("/user/edit-resume");
               }}
-              className="px-8 py-4 rounded-sm font-semibold text-lggroup relative inline-flex items-center justify-centerbg-whitetext-[var(--accent)]shadow-smborder border-slate-200hover:shadow-mdtransition-all duration-300hover:bg-slate-100hover:-translate-y-[1px]active:translate-y-0"
+              className="
+  group relative inline-flex items-center justify-center
+  px-8 py-4 rounded-sm font-semibold text-lg
+  text-[var(--accent)]
+  bg-white
+  border border-slate-200
+  shadow-sm
+  transition-all duration-300
+  hover:shadow-md
+  hover:-translate-y-[1px]
+  hover:bg-slate-100
+  active:translate-y-0
+"
             >
               <span className="relative z-10">Make Your Own Resume</span>
 

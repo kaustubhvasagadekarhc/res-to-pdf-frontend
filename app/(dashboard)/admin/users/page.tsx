@@ -77,8 +77,7 @@ export default function UserManagementPage() {
           id: userId,
           requestBody: { userType: newRole },
         });
-      } catch (error) {
-        console.error("Failed to update role:", error);
+      } catch {
         toast.error("Failed to update user role");
         // Revert optimization if needed (or just refresh)
         refreshData();
@@ -97,8 +96,7 @@ export default function UserManagementPage() {
           id: userId,
           requestBody: { isVerified: !isVerified },
         });
-      } catch (error) {
-        console.error("Failed to update verification:", error);
+      } catch {
         toast.error("Failed to update verification status");
         refreshData();
       }
@@ -115,8 +113,7 @@ export default function UserManagementPage() {
 
       await adminService.deleteAdminUsers({ id: deleteUserId });
       setDeleteUserId(null);
-    } catch (error) {
-      console.error("Failed to delete user:", error);
+    } catch {
       toast.error("Failed to delete user");
       // Best-effort sync with server state
       refreshData();
@@ -148,8 +145,7 @@ export default function UserManagementPage() {
           setInviteName("");
           toast.info("Resume parsed but no contact details were found.");
         }
-      } catch (error) {
-        console.error("Failed to parse resume:", error);
+      } catch {
         toast.error("Failed to parse resume");
       } finally {
         setIsParsing(false);
@@ -174,7 +170,6 @@ export default function UserManagementPage() {
       toast.success("User invited successfully");
       refreshData();
     } catch (error: unknown) {
-      console.error("Failed to invite user:", error);
       const apiError = error as {
         status?: number;
         body?: { message?: string };

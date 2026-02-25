@@ -112,13 +112,10 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
       const response = await authService.postAuthLogin({
         requestBody: formData,
       });
-      console.log("Login response:", response);
 
       const token = extractTokenFromResponse(response);
       const user = extractUserFromResponse(response);
       const message = extractMessageFromResponse(response) ?? "";
-      console.log("Extracted token:", token ? "Found" : "Not found");
-      console.log("Extracted user:", user);
 
       if (token) {
         // Set token in cookie (backend also sets httpOnly cookie, but we set a readable one too)
@@ -130,19 +127,15 @@ export function LoginForm({ onRegisterClick }: LoginFormProps) {
         if (user) {
           const userType =
             (user.type as string) || (user.userType as string) || "user";
-          console.log("User type:", userType);
           if (userType === "admin" || userType === "ADMIN") {
             redirectPath = "/admin";
           }
         }
         router.replace(redirectPath);
       } else {
-        console.error("No token in response:", response);
         setError(message || "Login failed. No token received.");
       }
     } catch (err: unknown) {
-      console.error("Login error:", err);
-
       let errorMessage = "Login failed";
 
       // Check for network errors first

@@ -92,7 +92,6 @@ export function ResetPasswordForm({ email }: ResetPasswordFormProps) {
       setTimer(599);
       setError("");
     } catch (err: unknown) {
-      console.error("Resend OTP failed:", err);
       const axiosError = err as AxiosError;
       const errorMessage =
         axiosError.response?.data?.message ||
@@ -145,7 +144,6 @@ export function ResetPasswordForm({ email }: ResetPasswordFormProps) {
         setError(response.data.message || "Failed to reset password");
       }
     } catch (err: unknown) {
-      console.error("Reset password error:", err);
       const axiosError = err as AxiosError;
       const errorMessage =
         axiosError.response?.data?.message ||

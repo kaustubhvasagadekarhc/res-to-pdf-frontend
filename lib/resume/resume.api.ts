@@ -126,8 +126,18 @@ export const savePdfResponse = (response: unknown, downloadUrl: string, download
         }
         const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], { type: "application/pdf" });
+        // Revoke any previous blob URL to prevent memory leaks
+        const prevResponse = sessionStorage.getItem("pdfResponse");
+        if (prevResponse) {
+          try {
+            const prev = JSON.parse(prevResponse);
+            if (prev.pdfUrl?.startsWith('blob:')) {
+              URL.revokeObjectURL(prev.pdfUrl);
+            }
+          } catch { /* ignore */ }
+        }
         const blobUrl = URL.createObjectURL(blob);
-        
+
         sessionStorage.setItem(
           "pdfResponse",
           JSON.stringify({

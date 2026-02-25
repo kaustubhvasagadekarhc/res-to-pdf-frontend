@@ -78,8 +78,7 @@ export default function SettingsPage() {
             });
             toast.success("Settings updated successfully");
             refreshData(); // Ensure context is perfectly synced
-        } catch (error) {
-            console.error("Failed to update settings", error);
+        } catch {
             toast.error("Failed to update settings");
             refreshData(); // Revert on error
         } finally {

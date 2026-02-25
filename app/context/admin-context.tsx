@@ -77,8 +77,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
                 });
             }
 
-        } catch (error) {
-            console.error("Failed to fetch admin data", error);
+        } catch {
+            /* ignored */
         } finally {
             setIsLoading(false);
         }

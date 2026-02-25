@@ -3,7 +3,7 @@
  * Uses sessionStorage for better security (tokens cleared when tab closes)
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const TOKEN_KEY = "auth_token";
 
 /**
@@ -30,8 +30,8 @@ export const getAuthToken = async (): Promise<string | null> => {
         return data.token;
       }
     }
-  } catch (err) {
-    console.error("Failed to fetch token:", err);
+  } catch {
+    /* ignored */
   }
   return null;
 };
