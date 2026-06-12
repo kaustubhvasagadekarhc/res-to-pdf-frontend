@@ -29,7 +29,7 @@ export function UploadZone() {
       const token = await getAuthToken();
       if (!token) {
         setError(
-          "Access token required. Unable to fetch authentication token. Please check your connection and try again."
+          "Access token required. Unable to fetch authentication token. try again later."
         );
         setHasToken(false);
       } else {
